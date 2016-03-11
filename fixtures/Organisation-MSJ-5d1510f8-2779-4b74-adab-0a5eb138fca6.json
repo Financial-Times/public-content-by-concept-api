@@ -1,0 +1,11 @@
+{
+  "uuid": "5d1510f8-2779-4b74-adab-0a5eb138fca6",
+  "properName": "The Mall Street Journal",
+  "identifiers": [
+    {
+      "authority": "http://api.ft.com/system/FACTSET-EDM",
+      "identifierValue": "00BBBB-E"
+    }
+  ],
+  "type": "Organisation"
+}

@@ -1,0 +1,15 @@
+{
+  "uuid": "eac853f5-3859-4c08-8540-55e043719400",
+  "properName": "Fakebook, Inc.",
+  "identifiers": [
+    {
+      "authority": "http://api.ft.com/system/FACTSET-EDM",
+      "identifierValue": "00AAA-E"
+    },
+    {
+      "authority": "http://api.ft.com/system/LEI",
+      "identifierValue": "BQ4BKCS1HXDV9TTTTTTTT"
+    }
+  ],
+  "type": "PublicCompany"
+}
