@@ -25,9 +25,9 @@ type test struct {
 func TestGetHandler(t *testing.T) {
 	assert := assert.New(t)
 	tests := []test{
-		{"Success", newRequest("GET", fmt.Sprintf("/content/%s/annotations", knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusOK, "", "[]"},
-		{"NotFound", newRequest("GET", fmt.Sprintf("/content/%s/annotations", "99999"), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusNotFound, "", message("No annotations found for content with uuid 99999.")},
-		{"ReadError", newRequest("GET", fmt.Sprintf("/content/%s/annotations", knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID, failRead: true}, http.StatusServiceUnavailable, "", message("Error getting annotations for content with uuid 12345, err=TEST failing to READ")},
+		{"Success", newRequest("GET", fmt.Sprintf("/content?isAnnotatedBy=http://api.ft.com/things/%s", knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusOK, "", "[]"},
+		{"NotFound", newRequest("GET", fmt.Sprintf("/content?isAnnotatedBy=http://api.ft.com/things/%s", "99999"), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusNotFound, "", message("No content found for concept with uuid 99999.")},
+		{"ReadError", newRequest("GET", fmt.Sprintf("/content?isAnnotatedBy=http://api.ft.com/things/%s", knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID, failRead: true}, http.StatusServiceUnavailable, "", message("Error getting content for concept with uuid 12345, err=TEST failing to READ")},
 	}
 
 	for _, test := range tests {

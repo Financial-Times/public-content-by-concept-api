@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/Financial-Times/go-fthealth/v1a"
-	"github.com/gorilla/mux"
 )
 
 type httpHandlers struct {
@@ -62,8 +61,6 @@ func (hh *httpHandlers) methodNotAllowedHandler(w http.ResponseWriter, r *http.R
 }
 
 func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	uuid := vars["uuid"]
 
 	m, _ := url.ParseQuery(r.URL.RawQuery)
 
@@ -100,13 +97,13 @@ func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		msg := fmt.Sprintf(`{"message":"Error getting content for concept with uuid %s, err=%s"}`, uuid, err.Error())
+		msg := fmt.Sprintf(`{"message":"Error getting content for concept with uuid %s, err=%s"}`, conceptUuid, err.Error())
 		w.Write([]byte(msg))
 		return
 	}
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
-		msg := fmt.Sprintf(`{"message":"No content found for concept with uuid %s."}`, uuid)
+		msg := fmt.Sprintf(`{"message":"No content found for concept with uuid %s."}`, conceptUuid)
 		w.Write([]byte(msg))
 		return
 	}
@@ -116,7 +113,7 @@ func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Reque
 
 	if err = json.NewEncoder(w).Encode(contentList); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		msg := fmt.Sprintf(`{"message":"Error parsing content for content with uuid %s, err=%s"}`, uuid, err.Error())
+		msg := fmt.Sprintf(`{"message":"Error parsing content for concept with uuid %s, err=%s"}`, conceptUuid, err.Error())
 		w.Write([]byte(msg))
 	}
 }
