@@ -46,8 +46,8 @@ func (cd cypherDriver) read(conceptUUID string) (cntList ContentList, found bool
 	results := []neoReadStruct{}
 	query := &neoism.CypherQuery{
 		Statement: `
-					MATCH (c:Content)-[rel]->(cc:Concept{uuid:{conceptUUID}})
-					RETURN collect({uuid:c.uuid, types:labels(c)})`,
+		MATCH (c:Content)-[rel]->(cc:Concept{uuid:"2384fa7a-d514-3d6a-a0ea-3a711f66d0d8"})
+    RETURN c.uuid as uuid, labels(c) as types`,
 		Parameters: neoism.Props{"conceptUUID": conceptUUID},
 		Result:     &results,
 	}
@@ -62,9 +62,9 @@ func (cd cypherDriver) read(conceptUUID string) (cntList ContentList, found bool
 	if (len(results)) == 0 {
 		return ContentList{}, false, nil
 	}
-	contentList := []Content{}
-	contentList, err = neoReadStructToContentList(&results, cd.env)
-	return contentList, found, nil
+
+	contentList, err := neoReadStructToContentList(&results, cd.env)
+	return contentList, true, nil
 }
 
 func neoReadStructToContentList(neo *[]neoReadStruct, env string) (cntList []Content, err error) {

@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Financial-Times/go-fthealth/v1a"
-	"github.com/gorilla/mux"
 	"net/url"
 	"strings"
+
+	"github.com/Financial-Times/go-fthealth/v1a"
+	"github.com/gorilla/mux"
 )
 
 type httpHandlers struct {
@@ -99,13 +100,13 @@ func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		msg := fmt.Sprintf(`{"message":"Error getting content for content with uuid %s, err=%s"}`, uuid, err.Error())
+		msg := fmt.Sprintf(`{"message":"Error getting content for concept with uuid %s, err=%s"}`, uuid, err.Error())
 		w.Write([]byte(msg))
 		return
 	}
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
-		msg := fmt.Sprintf(`{"message":"No content found for content with uuid %s."}`, uuid)
+		msg := fmt.Sprintf(`{"message":"No content found for concept with uuid %s."}`, uuid)
 		w.Write([]byte(msg))
 		return
 	}
