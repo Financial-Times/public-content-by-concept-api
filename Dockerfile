@@ -8,11 +8,11 @@ RUN apk add --update bash \
   && export GOPATH=/gopath \
   && REPO_PATH="github.com/Financial-Times/public-content-by-concept-api" \
   && mkdir -p $GOPATH/src/${REPO_PATH} \
-  && cp -r public-annotations-api/* $GOPATH/src/${REPO_PATH} \
+  && cp -r public-content-by-concept-api/* $GOPATH/src/${REPO_PATH} \
   && cd $GOPATH/src/${REPO_PATH} \
   && go get -t ./... \
   && go build \
-  && mv public-annotations-api /app \
+  && mv public-content-by-concept-api /app \
   && apk del go git bzr \
   && rm -rf $GOPATH /var/cache/apk/*
 
