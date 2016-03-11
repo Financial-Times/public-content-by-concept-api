@@ -59,7 +59,7 @@ func (cd cypherDriver) read(conceptUUID string) (cntList ContentList, found bool
 	}
 	log.Debugf("Found %d pieces of content for uuid: %s", len(results), conceptUUID)
 
-	if (len(*results)) == 0 {
+	if (len(results)) == 0 {
 		return ContentList{}, false, nil
 	}
 	contentList := []Content{}
