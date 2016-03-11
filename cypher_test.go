@@ -24,82 +24,69 @@ const (
 	MetalMickeyConceptUUID = "0483bef8-5797-40b8-9b25-b12e492f63c6"
 )
 
-func TestRetrieveMultipleAnnotations(t *testing.T) {
-	assert := assert.New(t)
-	expectedAnnotations := []annotation{getExpectedFakebookAnnotation(),
-		getExpectedMallStreetJournalAnnotation(),
-		getExpectedMetalMickeyAnnotation()}
-	db := getDatabaseConnectionAndCheckClean(t, assert)
-	batchRunner := neoutils.NewBatchCypherRunner(neoutils.StringerDb{db}, 1)
-
-	// writeContent(assert, db, &batchRunner)
-	// writeOrganisations(assert, db, &batchRunner)
-	// writeV1Annotations(assert, db, &batchRunner)
-	// writeV2Annotations(assert, db, &batchRunner)
-	// writeSubjects(assert, db, &batchRunner)
-
-	contentRW := writeContent(assert, db, &batchRunner)
-	organisationRW := writeOrganisations(assert, db, &batchRunner)
-	annotationsRWV1 := writeV1Annotations(assert, db, &batchRunner)
-	annotationsRWV2 := writeV2Annotations(assert, db, &batchRunner)
-	subjectsRW := writeSubjects(assert, db, &batchRunner)
-
-	defer cleanDB(db, t, assert)
-	defer deleteContent(contentRW)
-	defer deleteOrganisations(organisationRW)
-	defer deleteAnnotations(annotationsRWV1)
-	defer deleteAnnotations(annotationsRWV2)
-	defer deleteSubjects(subjectsRW)
-
-	annotationsDriver := newCypherDriver(db, "prod")
-	anns, found, err := annotationsDriver.read(contentUUID)
-	assert.NoError(err, "Unexpected error for content %s", contentUUID)
-	assert.True(found, "Found no annotations for content %s", contentUUID)
-	assert.Equal(len(expectedAnnotations), len(anns), "Didn't get the same number of annotations")
-	assertListContainsAll(assert, anns, getExpectedFakebookAnnotation(), getExpectedMallStreetJournalAnnotation(), getExpectedMetalMickeyAnnotation())
-}
-
-func TestRetrieveNoAnnotationsWhenThereAreNonePresent(t *testing.T) {
+func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	assert := assert.New(t)
 	db := getDatabaseConnectionAndCheckClean(t, assert)
 	batchRunner := neoutils.NewBatchCypherRunner(neoutils.StringerDb{db}, 1)
 
 	contentRW := writeContent(assert, db, &batchRunner)
 	organisationRW := writeOrganisations(assert, db, &batchRunner)
-	subjectsRW := writeSubjects(assert, db, &batchRunner)
-
-	defer cleanDB(db, t, assert)
-	defer deleteContent(contentRW)
-	defer deleteOrganisations(organisationRW)
-	defer deleteSubjects(subjectsRW)
-
-	annotationsDriver := newCypherDriver(db, "prod")
-	anns, found, err := annotationsDriver.read(contentUUID)
-	assert.NoError(err, "Unexpected error for content %s", contentUUID)
-	assert.False(found, "Found annotations for content %s", contentUUID)
-	assert.Equal(0, len(anns), "Didn't get the same number of annotations")
-}
-
-func TestRetrieveNoAnnotationsWhenThereAreNoConceptsPresent(t *testing.T) {
-	assert := assert.New(t)
-	db := getDatabaseConnectionAndCheckClean(t, assert)
-	batchRunner := neoutils.NewBatchCypherRunner(neoutils.StringerDb{db}, 1)
-
-	contentRW := writeContent(assert, db, &batchRunner)
-	annotationsRWV1 := writeV1Annotations(assert, db, &batchRunner)
 	annotationsRWV2 := writeV2Annotations(assert, db, &batchRunner)
 
 	defer cleanDB(db, t, assert)
 	defer deleteContent(contentRW)
-	defer deleteAnnotations(annotationsRWV1)
+	defer deleteOrganisations(organisationRW)
 	defer deleteAnnotations(annotationsRWV2)
 
-	annotationsDriver := newCypherDriver(db, "prod")
-	anns, found, err := annotationsDriver.read(contentUUID)
-	assert.NoError(err, "Unexpected error for content %s", contentUUID)
-	assert.False(found, "Found annotations for content %s", contentUUID)
-	assert.Equal(0, len(anns), "Didn't get the same number of annotations, anns=%s", anns)
+	contentByConceptDriver := newCypherDriver(db, "prod")
+	content, found, err := contentByConceptDriver.read(MSJConceptUUID)
+	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
+	assert.True(found, "Found no matching content for concept %s", MSJConceptUUID)
+	assert.Equal(1, len(content), "Didn't get the same list of content")
+	//assertListContainsAll(assert, anns, getExpectedFakebookAnnotation(), getExpectedMallStreetJournalAnnotation(), getExpectedMetalMickeyAnnotation())
 }
+
+// func TestRetrieveNoAnnotationsWhenThereAreNonePresent(t *testing.T) {
+// 	assert := assert.New(t)
+// 	db := getDatabaseConnectionAndCheckClean(t, assert)
+// 	batchRunner := neoutils.NewBatchCypherRunner(neoutils.StringerDb{db}, 1)
+//
+// 	contentRW := writeContent(assert, db, &batchRunner)
+// 	organisationRW := writeOrganisations(assert, db, &batchRunner)
+// 	subjectsRW := writeSubjects(assert, db, &batchRunner)
+//
+// 	defer cleanDB(db, t, assert)
+// 	defer deleteContent(contentRW)
+// 	defer deleteOrganisations(organisationRW)
+// 	defer deleteSubjects(subjectsRW)
+//
+// 	annotationsDriver := newCypherDriver(db, "prod")
+// 	anns, found, err := annotationsDriver.read(contentUUID)
+// 	assert.NoError(err, "Unexpected error for content %s", contentUUID)
+// 	assert.False(found, "Found annotations for content %s", contentUUID)
+// 	assert.Equal(0, len(anns), "Didn't get the same number of annotations")
+// }
+//
+// func TestRetrieveNoAnnotationsWhenThereAreNoConceptsPresent(t *testing.T) {
+// 	assert := assert.New(t)
+// 	db := getDatabaseConnectionAndCheckClean(t, assert)
+// 	batchRunner := neoutils.NewBatchCypherRunner(neoutils.StringerDb{db}, 1)
+//
+// 	contentRW := writeContent(assert, db, &batchRunner)
+// 	annotationsRWV1 := writeV1Annotations(assert, db, &batchRunner)
+// 	annotationsRWV2 := writeV2Annotations(assert, db, &batchRunner)
+//
+// 	defer cleanDB(db, t, assert)
+// 	defer deleteContent(contentRW)
+// 	defer deleteAnnotations(annotationsRWV1)
+// 	defer deleteAnnotations(annotationsRWV2)
+//
+// 	annotationsDriver := newCypherDriver(db, "prod")
+// 	anns, found, err := annotationsDriver.read(contentUUID)
+// 	assert.NoError(err, "Unexpected error for content %s", contentUUID)
+// 	assert.False(found, "Found annotations for content %s", contentUUID)
+// 	assert.Equal(0, len(anns), "Didn't get the same number of annotations, anns=%s", anns)
+// }
 
 func writeContent(assert *assert.Assertions, db *neoism.Database, batchRunner *neoutils.CypherRunner) baseftrwapp.Service {
 	contentRW := content.NewCypherDriver(*batchRunner, db)
@@ -213,43 +200,4 @@ func cleanDB(db *neoism.Database, t *testing.T, assert *assert.Assertions) {
 	}
 	err := db.CypherBatch(qs)
 	assert.NoError(err)
-}
-
-func getExpectedFakebookAnnotation() annotation {
-	return annotation{
-		Predicate: "http://www.ft.com/ontology/annotation/mentions",
-		ID:        "http://api.ft.com/things/eac853f5-3859-4c08-8540-55e043719400",
-		APIURL:    "http://api.ft.com/organisations/eac853f5-3859-4c08-8540-55e043719400",
-		Types: []string{
-			"http://www.ft.com/ontology/organisation/Organisation",
-			"http://www.ft.com/ontology/company/PublicCompany",
-			"http://www.ft.com/ontology/company/Company",
-		},
-		LeiCode:   "BQ4BKCS1HXDV9TTTTTTTT",
-		PrefLabel: "Fakebook, Inc.",
-	}
-}
-
-func getExpectedMallStreetJournalAnnotation() annotation {
-	return annotation{
-		Predicate: "http://www.ft.com/ontology/annotation/mentions",
-		ID:        "http://api.ft.com/things/5d1510f8-2779-4b74-adab-0a5eb138fca6",
-		APIURL:    "http://api.ft.com/organisations/5d1510f8-2779-4b74-adab-0a5eb138fca6",
-		Types: []string{
-			"http://www.ft.com/ontology/organisation/Organisation",
-		},
-		PrefLabel: "The Mall Street Journal",
-	}
-}
-
-func getExpectedMetalMickeyAnnotation() annotation {
-	return annotation{
-		Predicate: "http://www.ft.com/ontology/classification/isClassifiedBy",
-		ID:        "http://api.ft.com/things/0483bef8-5797-40b8-9b25-b12e492f63c6",
-		APIURL:    "http://api.ft.com/things/0483bef8-5797-40b8-9b25-b12e492f63c6",
-		Types: []string{
-			"http://www.ft.com/ontology/Subject",
-		},
-		PrefLabel: "Metal Mickey",
-	}
 }

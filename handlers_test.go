@@ -56,12 +56,12 @@ type dummyService struct {
 	failRead    bool
 }
 
-func (dS dummyService) read(contentUUID string) (annotations, bool, error) {
+func (dS dummyService) read(contentUUID string) (ContentList, bool, error) {
 	if dS.failRead {
 		return nil, false, errors.New("TEST failing to READ")
 	}
 	if contentUUID == dS.contentUUID {
-		return []annotation{}, true, nil
+		return ContentList{}, true, nil
 	}
 	return nil, false, nil
 }
