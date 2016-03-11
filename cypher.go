@@ -46,8 +46,9 @@ func (cd cypherDriver) read(conceptUUID string) (cntList ContentList, found bool
 	results := []neoReadStruct{}
 	query := &neoism.CypherQuery{
 		Statement: `
-		MATCH (c:Content)-[rel]->(cc:Concept{uuid:"2384fa7a-d514-3d6a-a0ea-3a711f66d0d8"})
-    RETURN c.uuid as uuid, labels(c) as types`,
+		MATCH (c:Content)-[rel]->(cc:Concept{uuid:{conceptUUID}})
+    RETURN c.uuid as uuid, labels(c) as types
+		ORDER BY c.publishedDateEpoch`,
 		Parameters: neoism.Props{"conceptUUID": conceptUUID},
 		Result:     &results,
 	}
@@ -68,11 +69,11 @@ func (cd cypherDriver) read(conceptUUID string) (cntList ContentList, found bool
 }
 
 func neoReadStructToContentList(neo *[]neoReadStruct, env string) (cntList []Content, err error) {
-	cntList = make([]Content, len(*neo))
+	cntList = ContentList{}
 	for _, neoCon := range *neo {
 		var con = Content{}
 		con.APIURL = mapper.APIURL(neoCon.UUID, neoCon.Types, env)
-		con.ID = "http://www.ft.com/things/" + con.ID
+		con.ID = "http://www.ft.com/things/" + con.ID //Not using mapper as this has a different prefix
 		cntList = append(cntList, con)
 	}
 	return cntList, nil
