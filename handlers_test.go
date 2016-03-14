@@ -56,12 +56,12 @@ type dummyService struct {
 	failRead    bool
 }
 
-func (dS dummyService) read(contentUUID string) (ContentList, bool, error) {
+func (dS dummyService) read(contentUUID string) (contentList, bool, error) {
 	if dS.failRead {
 		return nil, false, errors.New("TEST failing to READ")
 	}
 	if contentUUID == dS.contentUUID {
-		return ContentList{}, true, nil
+		return contentList{}, true, nil
 	}
 	return nil, false, nil
 }

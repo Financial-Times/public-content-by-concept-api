@@ -8,7 +8,7 @@ import (
 
 	annrw "github.com/Financial-Times/annotations-rw-neo4j/annotations"
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
-	"github.com/Financial-Times/content-rw-neo4j/content"
+	cnt "github.com/Financial-Times/content-rw-neo4j/content"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/Financial-Times/organisations-rw-neo4j/organisations"
 	"github.com/Financial-Times/subjects-rw-neo4j/subjects"
@@ -39,57 +39,79 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	defer deleteAnnotations(annotationsRWV2)
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
-	content, found, err := contentByConceptDriver.read(MSJConceptUUID)
+	contentList, found, err := contentByConceptDriver.read(MSJConceptUUID)
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.True(found, "Found no matching content for concept %s", MSJConceptUUID)
-	assert.Equal(1, len(content), "Didn't get the same list of content")
-	//assertListContainsAll(assert, anns, getExpectedFakebookAnnotation(), getExpectedMallStreetJournalAnnotation(), getExpectedMetalMickeyAnnotation())
+	assert.Equal(1, len(contentList), "Didn't get the same list of content")
+	assertListContainsAll(assert, contentList, getExpectedContent())
 }
 
-// func TestRetrieveNoAnnotationsWhenThereAreNonePresent(t *testing.T) {
-// 	assert := assert.New(t)
-// 	db := getDatabaseConnectionAndCheckClean(t, assert)
-// 	batchRunner := neoutils.NewBatchCypherRunner(neoutils.StringerDb{db}, 1)
-//
-// 	contentRW := writeContent(assert, db, &batchRunner)
-// 	organisationRW := writeOrganisations(assert, db, &batchRunner)
-// 	subjectsRW := writeSubjects(assert, db, &batchRunner)
-//
-// 	defer cleanDB(db, t, assert)
-// 	defer deleteContent(contentRW)
-// 	defer deleteOrganisations(organisationRW)
-// 	defer deleteSubjects(subjectsRW)
-//
-// 	annotationsDriver := newCypherDriver(db, "prod")
-// 	anns, found, err := annotationsDriver.read(contentUUID)
-// 	assert.NoError(err, "Unexpected error for content %s", contentUUID)
-// 	assert.False(found, "Found annotations for content %s", contentUUID)
-// 	assert.Equal(0, len(anns), "Didn't get the same number of annotations")
-// }
-//
-// func TestRetrieveNoAnnotationsWhenThereAreNoConceptsPresent(t *testing.T) {
-// 	assert := assert.New(t)
-// 	db := getDatabaseConnectionAndCheckClean(t, assert)
-// 	batchRunner := neoutils.NewBatchCypherRunner(neoutils.StringerDb{db}, 1)
-//
-// 	contentRW := writeContent(assert, db, &batchRunner)
-// 	annotationsRWV1 := writeV1Annotations(assert, db, &batchRunner)
-// 	annotationsRWV2 := writeV2Annotations(assert, db, &batchRunner)
-//
-// 	defer cleanDB(db, t, assert)
-// 	defer deleteContent(contentRW)
-// 	defer deleteAnnotations(annotationsRWV1)
-// 	defer deleteAnnotations(annotationsRWV2)
-//
-// 	annotationsDriver := newCypherDriver(db, "prod")
-// 	anns, found, err := annotationsDriver.read(contentUUID)
-// 	assert.NoError(err, "Unexpected error for content %s", contentUUID)
-// 	assert.False(found, "Found annotations for content %s", contentUUID)
-// 	assert.Equal(0, len(anns), "Didn't get the same number of annotations, anns=%s", anns)
-// }
+func TestFindMatchingContentForV1Annotation(t *testing.T) {
+	assert := assert.New(t)
+	db := getDatabaseConnectionAndCheckClean(t, assert)
+	batchRunner := neoutils.NewBatchCypherRunner(neoutils.StringerDb{db}, 1)
+
+	contentRW := writeContent(assert, db, &batchRunner)
+	organisationRW := writeOrganisations(assert, db, &batchRunner)
+	annotationsRWV1 := writeV1Annotations(assert, db, &batchRunner)
+	subjectsRW := writeSubjects(assert, db, &batchRunner)
+
+	defer cleanDB(db, t, assert)
+	defer deleteContent(contentRW)
+	defer deleteOrganisations(organisationRW)
+	defer deleteAnnotations(annotationsRWV1)
+	defer deleteSubjects(subjectsRW)
+
+	contentByConceptDriver := newCypherDriver(db, "prod")
+	contentList, found, err := contentByConceptDriver.read(MetalMickeyConceptUUID)
+	assert.NoError(err, "Unexpected error for concept %s", MetalMickeyConceptUUID)
+	assert.True(found, "Found no matching content for concept %s", MetalMickeyConceptUUID)
+	assert.Equal(1, len(contentList), "Didn't get the same list of content")
+	assertListContainsAll(assert, contentList, getExpectedContent())
+}
+
+func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
+	assert := assert.New(t)
+	db := getDatabaseConnectionAndCheckClean(t, assert)
+	batchRunner := neoutils.NewBatchCypherRunner(neoutils.StringerDb{db}, 1)
+
+	contentRW := writeContent(assert, db, &batchRunner)
+	organisationRW := writeOrganisations(assert, db, &batchRunner)
+
+	defer cleanDB(db, t, assert)
+	defer deleteContent(contentRW)
+	defer deleteOrganisations(organisationRW)
+
+	contentByConceptDriver := newCypherDriver(db, "prod")
+	content, found, err := contentByConceptDriver.read(MSJConceptUUID)
+	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
+	assert.False(found, "Found annotations for concept %s", MSJConceptUUID)
+	assert.Equal(0, len(content), "Should not get any content items")
+}
+
+func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
+	assert := assert.New(t)
+	db := getDatabaseConnectionAndCheckClean(t, assert)
+	batchRunner := neoutils.NewBatchCypherRunner(neoutils.StringerDb{db}, 1)
+
+	contentRW := writeContent(assert, db, &batchRunner)
+	annotationsRWV1 := writeV1Annotations(assert, db, &batchRunner)
+	annotationsRWV2 := writeV2Annotations(assert, db, &batchRunner)
+
+	defer cleanDB(db, t, assert)
+	defer deleteContent(contentRW)
+	defer deleteAnnotations(annotationsRWV1)
+	defer deleteAnnotations(annotationsRWV2)
+
+	contentByConceptDriver := newCypherDriver(db, "prod")
+	contentList, found, err := contentByConceptDriver.read(MSJConceptUUID)
+	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
+	assert.False(found, "Found annotations for concept %s", MSJConceptUUID)
+	assert.Equal(0, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
+}
 
 func writeContent(assert *assert.Assertions, db *neoism.Database, batchRunner *neoutils.CypherRunner) baseftrwapp.Service {
-	contentRW := content.NewCypherDriver(*batchRunner, db)
+	contentRW := cnt.NewCypherDriver(*batchRunner, db)
 	assert.NoError(contentRW.Initialise())
 	writeJSONToService(contentRW, "./fixtures/Content-3fc9fe3e-af8c-4f7f-961a-e5065392bb31.json", assert)
 	return contentRW
@@ -112,17 +134,6 @@ func deleteOrganisations(organisationRW baseftrwapp.Service) {
 	organisationRW.Delete(FakebookConceptUUID)
 }
 
-func writeSubjects(assert *assert.Assertions, db *neoism.Database, batchRunner *neoutils.CypherRunner) baseftrwapp.Service {
-	subjectsRW := subjects.NewCypherSubjectsService(*batchRunner, db)
-	assert.NoError(subjectsRW.Initialise())
-	writeJSONToService(subjectsRW, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json", assert)
-	return subjectsRW
-}
-
-func deleteSubjects(subjectsRW baseftrwapp.Service) {
-	subjectsRW.Delete(MetalMickeyConceptUUID)
-}
-
 func writeV1Annotations(assert *assert.Assertions, db *neoism.Database, batchRunner *neoutils.CypherRunner) annrw.Service {
 	annotationsRW := annrw.NewAnnotationsService(*batchRunner, db, "v1")
 	assert.NoError(annotationsRW.Initialise())
@@ -135,6 +146,17 @@ func writeV2Annotations(assert *assert.Assertions, db *neoism.Database, batchRun
 	assert.NoError(annotationsRW.Initialise())
 	writeJSONToAnnotationsService(annotationsRW, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json", assert)
 	return annotationsRW
+}
+
+func writeSubjects(assert *assert.Assertions, db *neoism.Database, batchRunner *neoutils.CypherRunner) baseftrwapp.Service {
+	subjectsRW := subjects.NewCypherSubjectsService(*batchRunner, db)
+	assert.NoError(subjectsRW.Initialise())
+	writeJSONToService(subjectsRW, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json", assert)
+	return subjectsRW
+}
+
+func deleteSubjects(subjectsRW baseftrwapp.Service) {
+	subjectsRW.Delete(MetalMickeyConceptUUID)
 }
 
 func deleteAnnotations(annotationsRW annrw.Service) {
@@ -200,4 +222,11 @@ func cleanDB(db *neoism.Database, t *testing.T, assert *assert.Assertions) {
 	}
 	err := db.CypherBatch(qs)
 	assert.NoError(err)
+}
+
+func getExpectedContent() content {
+	return content{
+		ID:     "http://www.ft.com/things/" + contentUUID,
+		APIURL: "http://api.ft.com/content/" + contentUUID,
+	}
 }

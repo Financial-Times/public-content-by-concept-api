@@ -13,7 +13,7 @@ _NB You will need to tag a commit in order to build, since the UI asks for a tag
 * `cd $GOPATH/src/github.com/Financial-Times/public-content-by-concept-api`
 * `go test ./...`
 * `go install`
-* `$GOPATH/bin/public-annotations-api --neo-url={neo4jUrl} --port={port} --log-level={DEBUG|INFO|WARN|ERROR}--cache-duration{e.g. 22h10m3s}`
+* `$GOPATH/bin/public-content-by-concept-api --neo-url={neo4jUrl} --port={port} --log-level={DEBUG|INFO|WARN|ERROR}--cache-duration{e.g. 22h10m3s}`
 _Optional arguments are:
 --neo-url defaults to http://localhost:7474/db/data, which is the out of box url for a local neo4j instance.
 --port defaults to 8080.
