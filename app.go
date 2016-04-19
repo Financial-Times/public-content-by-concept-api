@@ -73,27 +73,34 @@ func runServer(neoURL string, port string, cacheDuration string, env string) {
 
 	httpHandlers := httpHandlers{newCypherDriver(db, env), cacheControlHeader}
 
-	servicesRouter := mux.NewRouter()
+	r := router(httpHandlers)
 
 	// Healthchecks and standards first
-	servicesRouter.HandleFunc("/__health", v1a.Handler("Content-by-Concept Healthchecks", "Checks for accessing neo4j", httpHandlers.healthCheck()))
 	http.HandleFunc(status.PingPath, status.PingHandler)
 	http.HandleFunc(status.PingPathDW, status.PingHandler)
 	http.HandleFunc(status.BuildInfoPath, status.BuildInfoHandler)
 	http.HandleFunc(status.BuildInfoPathDW, status.BuildInfoHandler)
+	http.HandleFunc("/__health", v1a.Handler("Content-by-Concept Healthchecks", "Checks for accessing neo4j", httpHandlers.healthCheck()))
 	http.HandleFunc("/__gtg", httpHandlers.goodToGo)
 
+	http.Handle("/", r)
+
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
+		log.Fatalf("Unable to start server: %v", err)
+	}
+}
+
+func router(hh httpHandlers) http.Handler {
+	servicesRouter := mux.NewRouter()
+
 	// Then API specific ones:
-	servicesRouter.HandleFunc("/content", httpHandlers.getContentByConcept).Methods("GET")
-	servicesRouter.HandleFunc("/content", httpHandlers.methodNotAllowedHandler)
+	servicesRouter.HandleFunc("/content", hh.getContentByConcept).Methods("GET")
+	servicesRouter.HandleFunc("/content", hh.methodNotAllowedHandler)
 
 	// Then monitoring
 	var monitoringRouter http.Handler = servicesRouter
 	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
 	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
-	http.Handle("/", monitoringRouter)
 
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatalf("Unable to start server: %v", err)
-	}
+	return monitoringRouter
 }
