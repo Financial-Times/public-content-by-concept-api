@@ -11,6 +11,7 @@ import (
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	"github.com/Financial-Times/go-fthealth/v1a"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
+	status "github.com/Financial-Times/service-status-go/httphandlers"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
@@ -72,36 +73,27 @@ func runServer(neoURL string, port string, cacheDuration string, env string) {
 
 	httpHandlers := httpHandlers{newCypherDriver(db, env), cacheControlHeader}
 
-	r := router(httpHandlers)
-	// The following endpoints should not be monitored or logged (varnish calls one of these every second, depending on config)
-	// The top one of these build info endpoints feels more correct, but the lower one matches what we have in Dropwizard,
-	// so it's what apps expect currently same as ping, the content of build-info needs more definition
-	http.HandleFunc("/__build-info", httpHandlers.buildInfoHandler)
-	http.HandleFunc("/build-info", httpHandlers.buildInfoHandler)
+	servicesRouter := mux.NewRouter()
+
+	// Healthchecks and standards first
+	servicesRouter.HandleFunc("/__health", v1a.Handler("Content-by-Concept Healthchecks", "Checks for accessing neo4j", httpHandlers.healthCheck()))
+	http.HandleFunc(status.PingPath, status.PingHandler)
+	http.HandleFunc(status.PingPathDW, status.PingHandler)
+	http.HandleFunc(status.BuildInfoPath, status.BuildInfoHandler)
+	http.HandleFunc(status.BuildInfoPathDW, status.BuildInfoHandler)
 	http.HandleFunc("/__gtg", httpHandlers.goodToGo)
 
-	http.Handle("/", r)
+	// Then API specific ones:
+	servicesRouter.HandleFunc("/content", httpHandlers.getContentByConcept).Methods("GET")
+	servicesRouter.HandleFunc("/content", httpHandlers.methodNotAllowedHandler)
+
+	// Then monitoring
+	var monitoringRouter http.Handler = servicesRouter
+	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
+	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
+	http.Handle("/", monitoringRouter)
 
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatalf("Unable to start server: %v", err)
 	}
-}
-
-func router(hh httpHandlers) http.Handler {
-	servicesRouter := mux.NewRouter()
-
-	// Healthchecks and standards first
-	servicesRouter.HandleFunc("/__health", v1a.Handler("Content-by-Concept Healthchecks", "Checks for accessing neo4j", hh.healthCheck()))
-	servicesRouter.HandleFunc("/ping", hh.ping)
-	servicesRouter.HandleFunc("/__ping", hh.ping)
-
-	// Then API specific ones:
-	servicesRouter.HandleFunc("/content", hh.getContentByConcept).Methods("GET")
-	servicesRouter.HandleFunc("/content", hh.methodNotAllowedHandler)
-
-	var monitoringRouter http.Handler = servicesRouter
-	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
-	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
-
-	return monitoringRouter
 }
