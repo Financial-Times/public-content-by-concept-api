@@ -48,7 +48,7 @@ func (cd cypherDriver) read(conceptUUID string) (cntList contentList, found bool
 		Statement: `
 		MATCH (c:Content)-[rel]->(cc:Concept{uuid:{conceptUUID}})
     	RETURN c.uuid as uuid, labels(c) as types
-		ORDER BY c.publishedDateEpoch
+		ORDER BY c.publishedDateEpoch DESC
 		LIMIT({maxContentItems})`,
 		Parameters: neoism.Props{
 			"conceptUUID":     conceptUUID,
