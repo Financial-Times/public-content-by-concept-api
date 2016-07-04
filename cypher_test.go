@@ -159,7 +159,6 @@ func writeSubjects(assert *assert.Assertions, db *neoism.Database, batchRunner *
 }
 
 func deleteSubjects(subjectsRW baseftrwapp.Service) {
-	fmt.Printf("halihó - próbálkozom")
 	subjectsRW.Delete(MetalMickeyConceptUUID)
 }
 
