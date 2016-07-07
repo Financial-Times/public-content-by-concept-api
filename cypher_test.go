@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"fmt"
 	annrw "github.com/Financial-Times/annotations-rw-neo4j/annotations"
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	cnt "github.com/Financial-Times/content-rw-neo4j/content"
