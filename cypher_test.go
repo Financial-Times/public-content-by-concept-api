@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 
@@ -33,7 +32,6 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	organisationRW := writeOrganisations(assert, db, &batchRunner)
 	annotationsRWV2 := writeV2Annotations(assert, db, &batchRunner)
 
-	defer cleanDB(db, t, assert)
 	defer deleteContent(contentRW)
 	defer deleteOrganisations(organisationRW)
 	defer deleteAnnotations(annotationsRWV2)
@@ -56,11 +54,10 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 	annotationsRWV1 := writeV1Annotations(assert, db, &batchRunner)
 	subjectsRW := writeSubjects(assert, db, &batchRunner)
 
-	defer cleanDB(db, t, assert)
 	defer deleteContent(contentRW)
 	defer deleteOrganisations(organisationRW)
-	defer deleteAnnotations(annotationsRWV1)
 	defer deleteSubjects(subjectsRW)
+	defer deleteAnnotations(annotationsRWV1)
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
 	contentList, found, err := contentByConceptDriver.read(MetalMickeyConceptUUID)
@@ -78,7 +75,6 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 	contentRW := writeContent(assert, db, &batchRunner)
 	organisationRW := writeOrganisations(assert, db, &batchRunner)
 
-	defer cleanDB(db, t, assert)
 	defer deleteContent(contentRW)
 	defer deleteOrganisations(organisationRW)
 
@@ -98,10 +94,16 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 	annotationsRWV1 := writeV1Annotations(assert, db, &batchRunner)
 	annotationsRWV2 := writeV2Annotations(assert, db, &batchRunner)
 
-	defer cleanDB(db, t, assert)
+	organisationRW := organisations.NewCypherOrganisationService(batchRunner, db)
+	assert.NoError(organisationRW.Initialise())
+	subjectsRW := subjects.NewCypherSubjectsService(batchRunner, db)
+	assert.NoError(subjectsRW.Initialise())
+
 	defer deleteContent(contentRW)
-	defer deleteAnnotations(annotationsRWV1)
+	defer deleteSubjects(subjectsRW)
+	defer deleteOrganisations(organisationRW)
 	defer deleteAnnotations(annotationsRWV2)
+	defer deleteAnnotations(annotationsRWV1)
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
 	contentList, found, err := contentByConceptDriver.read(MSJConceptUUID)
@@ -192,7 +194,6 @@ func assertListContainsAll(assert *assert.Assertions, list interface{}, items ..
 
 func getDatabaseConnectionAndCheckClean(t *testing.T, assert *assert.Assertions) *neoism.Database {
 	db := getDatabaseConnection(t, assert)
-	cleanDB(db, t, assert)
 	return db
 }
 
@@ -205,23 +206,6 @@ func getDatabaseConnection(t *testing.T, assert *assert.Assertions) *neoism.Data
 	db, err := neoism.Connect(url)
 	assert.NoError(err, "Failed to connect to Neo4j")
 	return db
-}
-
-func cleanDB(db *neoism.Database, t *testing.T, assert *assert.Assertions) {
-	uuids := []string{
-		contentUUID,
-		MSJConceptUUID,
-		FakebookConceptUUID,
-		MetalMickeyConceptUUID,
-	}
-
-	qs := make([]*neoism.CypherQuery, len(uuids))
-	for i, uuid := range uuids {
-		qs[i] = &neoism.CypherQuery{
-			Statement: fmt.Sprintf("MATCH (a:Thing {uuid: '%s'}) DETACH DELETE a", uuid)}
-	}
-	err := db.CypherBatch(qs)
-	assert.NoError(err)
 }
 
 func getExpectedContent() content {

@@ -1,15 +1,11 @@
 {
   "uuid": "eac853f5-3859-4c08-8540-55e043719400",
+  "prefLabel": "Fakebook, Inc.",
   "properName": "Fakebook, Inc.",
-  "identifiers": [
-    {
-      "authority": "http://api.ft.com/system/FACTSET-EDM",
-      "identifierValue": "00AAA-E"
-    },
-    {
-      "authority": "http://api.ft.com/system/LEI",
-      "identifierValue": "BQ4BKCS1HXDV9TTTTTTTT"
-    }
-  ],
+  "alternativeIdentifiers": {
+    "leiCode": "BQ4BKCS1HXDV9TTTTTTTT",
+    "factsetIdentifier": "00AAA-E",
+    "uuids": ["eac853f5-3859-4c08-8540-55e043719400"]
+  },
   "type": "PublicCompany"
 }
