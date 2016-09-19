@@ -11,12 +11,12 @@ import (
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	"github.com/Financial-Times/go-fthealth/v1a"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
+	"github.com/Financial-Times/neo-utils-go/neoutils"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
 	"github.com/rcrowley/go-metrics"
-	"github.com/Financial-Times/neo-utils-go/neoutils"
 )
 
 func main() {
@@ -57,9 +57,9 @@ func main() {
 		Desc:  "environment this app is running in",
 	})
 	cacheDuration := app.String(cli.StringOpt{
-		Name:  "cache-duration",
-		Value: "30s",
-		Desc:  "Duration Get requests should be cached for. e.g. 2h45m would set the max-age value to '7440' seconds",
+		Name:   "cache-duration",
+		Value:  "30s",
+		Desc:   "Duration Get requests should be cached for. e.g. 2h45m would set the max-age value to '7440' seconds",
 		EnvVar: "CACHE_DURATION",
 	})
 
