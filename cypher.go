@@ -1,9 +1,8 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
+	"github.com/Financial-Times/neo-utils-go/neoutils"
 	log "github.com/Sirupsen/logrus"
 	"github.com/jmcvetta/neoism"
 )
@@ -16,25 +15,16 @@ type driver interface {
 
 // CypherDriver struct
 type cypherDriver struct {
-	db  *neoism.Database
-	env string
+	conn neoutils.NeoConnection
+	env  string
 }
 
-func newCypherDriver(db *neoism.Database, env string) cypherDriver {
-	return cypherDriver{db, env}
+func newCypherDriver(conn neoutils.NeoConnection, env string) cypherDriver {
+	return cypherDriver{conn, env}
 }
 
 func (cd cypherDriver) checkConnectivity() error {
-	results := []struct {
-		ID int
-	}{}
-	query := &neoism.CypherQuery{
-		Statement: "MATCH (x) RETURN ID(x) LIMIT 1",
-		Result:    &results,
-	}
-	err := cd.db.Cypher(query)
-	log.Debugf("CheckConnectivity results:%+v  err: %+v", results, err)
-	return err
+	return neoutils.Check(cd.conn)
 }
 
 type neoReadStruct struct {
@@ -58,17 +48,11 @@ func (cd cypherDriver) read(conceptUUID string) (cntList contentList, found bool
 		Result: &results,
 	}
 
-	err = cd.db.Cypher(query)
-	if err != nil {
-		log.Errorf("Error looking up uuid %s with query %s from neoism: %+v", conceptUUID, query.Statement, err)
-		return contentList{}, false, fmt.Errorf("Error accessing content datastore for concept with uuid: %s", conceptUUID)
+	if err := cd.conn.CypherBatch([]*neoism.CypherQuery{query}); err != nil || len(results) == 0 {
+		return contentList{}, false, err
 	}
 
 	log.Debugf("Found %d pieces of content for uuid: %s", len(results), conceptUUID)
-
-	if (len(results)) == 0 {
-		return contentList{}, false, nil
-	}
 
 	contentList, err := neoReadStructToContentList(&results, cd.env)
 	return contentList, true, nil
