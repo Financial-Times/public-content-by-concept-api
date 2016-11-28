@@ -9,7 +9,7 @@ import (
 
 // Driver interface
 type driver interface {
-	read(id string) (cntList contentList, found bool, err error)
+	read(id string, limit int, fromDateEpoch int64, toDateEpoch int64) (contentList, bool, error)
 	checkConnectivity() error
 }
 
@@ -32,18 +32,25 @@ type neoReadStruct struct {
 	Types []string `json:"types"`
 }
 
-func (cd cypherDriver) read(conceptUUID string) (cntList contentList, found bool, err error) {
+func (cd cypherDriver) read(conceptUUID string, limit int, fromDateEpoch int64, toDateEpoch int64) (contentList, bool, error) {
 	results := []neoReadStruct{}
+	var whereClause string
+	if fromDateEpoch > 0 && toDateEpoch > 0 {
+		whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate} "
+	}
 	query := &neoism.CypherQuery{
 		Statement: `
 		MATCH (upp:UPPIdentifier{value:{conceptUUID}})-[:IDENTIFIES]->(cc:Concept)
-		MATCH (c:Content)-[rel]->(cc)
-    		RETURN c.uuid as uuid, labels(c) as types
+		MATCH (c:Content)-[rel]->(cc)` +
+			whereClause +
+			`RETURN c.uuid as uuid, labels(c) as types
 		ORDER BY c.publishedDateEpoch DESC
 		LIMIT({maxContentItems})`,
 		Parameters: neoism.Props{
 			"conceptUUID":     conceptUUID,
-			"maxContentItems": maxContentItems,
+			"maxContentItems": limit,
+			"fromDate":        fromDateEpoch,
+			"toDate":          toDateEpoch,
 		},
 		Result: &results,
 	}
@@ -54,23 +61,22 @@ func (cd cypherDriver) read(conceptUUID string) (cntList contentList, found bool
 
 	log.Debugf("Found %d pieces of content for uuid: %s", len(results), conceptUUID)
 
-	contentList, err := neoReadStructToContentList(&results, cd.env)
-	return contentList, true, nil
+	cntList := neoReadStructToContentList(&results, cd.env)
+	return cntList, true, nil
 }
 
-func neoReadStructToContentList(neo *[]neoReadStruct, env string) (cntList []content, err error) {
-	cntList = contentList{}
+func neoReadStructToContentList(neo *[]neoReadStruct, env string) []content {
+	cntList := contentList{}
 	for _, neoCon := range *neo {
 		var con = content{}
 		con.APIURL = mapper.APIURL(neoCon.UUID, neoCon.Types, env)
 		con.ID = wwwThingsPrefix + neoCon.UUID //Not using mapper as this has a different prefix (www.ft.com not api.ft.com)
 		cntList = append(cntList, con)
 	}
-	return cntList, nil
+	return cntList
 }
 
 const (
-	contentType     = "content"
-	maxContentItems = 50
+	defaultLimit    = 50
 	wwwThingsPrefix = "http://www.ft.com/things/"
 )

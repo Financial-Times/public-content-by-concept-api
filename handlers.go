@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"net/url"
-	"strings"
-
 	"github.com/Financial-Times/go-fthealth/v1a"
+	log "github.com/Sirupsen/logrus"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type httpHandlers struct {
@@ -93,7 +95,39 @@ func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Reque
 
 	conceptUuid := strings.TrimPrefix(conceptUri, thingURIPrefix)
 
-	contentList, found, err := hh.contentDriver.read(conceptUuid)
+	limitParam := m.Get("limit")
+	var limit int
+	var err error
+
+	if limitParam == "" {
+		log.Infof("No limit provided. Using default: %v", defaultLimit)
+		limit = defaultLimit
+	} else {
+		limit, err = strconv.Atoi(limitParam)
+	}
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	fromDateParam := m.Get("fromDate")
+	toDateParam := m.Get("toDate")
+	var fromDateEpoch, toDateEpoch int64
+
+	if fromDateParam == "" {
+		log.Infof("No fromDate supplied.")
+	} else {
+		fromDateEpoch = convertStringToDateTimeEpoch(fromDateParam)
+	}
+
+	if toDateParam == "" {
+		log.Infof("No toDate supplied")
+	} else {
+		toDateEpoch = convertStringToDateTimeEpoch(toDateParam)
+	}
+
+	contentList, found, err := hh.contentDriver.read(conceptUuid, limit, fromDateEpoch, toDateEpoch)
 
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
@@ -116,6 +150,17 @@ func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Reque
 		msg := fmt.Sprintf(`{"message":"Error parsing content for concept with uuid %s, err=%s"}`, conceptUuid, err.Error())
 		w.Write([]byte(msg))
 	}
+}
+
+func convertStringToDateTimeEpoch(dateString string) int64 {
+	datetime, err := time.Parse("2006-01-02", dateString)
+
+	if err != nil {
+		log.Warnf("Date can't be parsed: %v\n", dateString)
+		return 0
+	}
+
+	return datetime.Unix()
 }
 
 const (
