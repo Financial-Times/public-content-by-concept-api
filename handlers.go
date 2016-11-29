@@ -108,6 +108,8 @@ func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		msg := fmt.Sprintf(`{"message":"Error limit is not a number: %s."}`, limitParam)
+		w.Write([]byte(msg))
 		return
 	}
 
