@@ -28,7 +28,7 @@ const (
 
 func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := getDatabaseConnection(t, assert)
+	db := getDatabaseConnection(assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	organisationRW := writeOrganisations(assert, db)
@@ -49,12 +49,12 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 
 func TestFindMatchingContentForV1Annotation(t *testing.T) {
 	assert := assert.New(t)
-	db, im := getDatabaseConnection(t, assert)
+	db := getDatabaseConnection(assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	organisationRW := writeOrganisations(assert, db)
 	annotationsRWV1 := writeV1Annotations(assert, db)
-	subjectsRW := writeSubjects(assert, db, im)
+	subjectsRW := writeSubjects(assert, db)
 
 	defer deleteContent(contentRW)
 	defer deleteOrganisations(organisationRW)
@@ -72,7 +72,7 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 
 func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := getDatabaseConnection(t, assert)
+	db := getDatabaseConnection(assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	contentRW2 := writeContent(assert, db, content2UUID)
@@ -97,12 +97,12 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 
 func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 	assert := assert.New(t)
-	db, im := getDatabaseConnection(t, assert)
+	db := getDatabaseConnection(assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	organisationRW := writeOrganisations(assert, db)
 	annotationsRWV1 := writeV1Annotations(assert, db)
-	subjectsRW := writeSubjects(assert, db, im)
+	subjectsRW := writeSubjects(assert, db)
 
 	defer deleteContent(contentRW)
 	defer deleteOrganisations(organisationRW)
@@ -121,7 +121,7 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 
 func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := getDatabaseConnection(t, assert)
+	db := getDatabaseConnection(assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	organisationRW := writeOrganisations(assert, db)
@@ -139,7 +139,7 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 
 func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 	assert := assert.New(t)
-	db, im := getDatabaseConnection(t, assert)
+	db := getDatabaseConnection(assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	annotationsRWV1 := writeV1Annotations(assert, db)
@@ -147,7 +147,7 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 
 	organisationRW := organisations.NewCypherOrganisationService(db)
 	assert.NoError(organisationRW.Initialise())
-	subjectsRW := subjects.NewCypherSubjectsService(db, im)
+	subjectsRW := subjects.NewCypherSubjectsService(db)
 	assert.NoError(subjectsRW.Initialise())
 
 	defer deleteContent(contentRW)
@@ -202,8 +202,8 @@ func writeV2Annotations(assert *assert.Assertions, db neoutils.NeoConnection, id
 	return annotationsRW
 }
 
-func writeSubjects(assert *assert.Assertions, db neoutils.NeoConnection, im neoutils.IndexManager) baseftrwapp.Service {
-	subjectsRW := subjects.NewCypherSubjectsService(db, im)
+func writeSubjects(assert *assert.Assertions, db neoutils.NeoConnection) baseftrwapp.Service {
+	subjectsRW := subjects.NewCypherSubjectsService(db)
 	assert.NoError(subjectsRW.Initialise())
 	writeJSONToService(subjectsRW, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json", assert)
 	return subjectsRW
@@ -261,7 +261,7 @@ func assertListContainsAll(assert *assert.Assertions, list interface{}, items ..
 	}
 }
 
-func getDatabaseConnection(t *testing.T, assert *assert.Assertions) (neoutils.NeoConnection, neoutils.IndexManager) {
+func getDatabaseConnection(assert *assert.Assertions) neoutils.NeoConnection {
 	url := os.Getenv("NEO4J_TEST_URL")
 	if url == "" {
 		url = "http://localhost:7474/db/data"
@@ -270,9 +270,7 @@ func getDatabaseConnection(t *testing.T, assert *assert.Assertions) (neoutils.Ne
 	conf.Transactional = false
 	db, err := neoutils.Connect(url, conf)
 	assert.NoError(err, "Failed to connect to Neo4j")
-	im, err := neoism.Connect(url)
-	assert.NoError(err, "Failed to connect to Neo4j with neoism")
-	return db, im
+	return db
 }
 
 func getExpectedContent() content {
