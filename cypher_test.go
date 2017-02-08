@@ -190,14 +190,14 @@ func deleteOrganisations(organisationRW baseftrwapp.Service) {
 }
 
 func writeV1Annotations(assert *assert.Assertions, db neoutils.NeoConnection) annrw.Service {
-	annotationsRW := annrw.NewCypherAnnotationsService(db, "v1", "annotations-v1")
+	annotationsRW := annrw.NewCypherAnnotationsService(db, "v1")
 	assert.NoError(annotationsRW.Initialise())
 	writeJSONToAnnotationsService(annotationsRW, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json", assert)
 	return annotationsRW
 }
 
 func writeV2Annotations(assert *assert.Assertions, db neoutils.NeoConnection, id string) annrw.Service {
-	annotationsRW := annrw.NewCypherAnnotationsService(db, "v2", "annotations-v2")
+	annotationsRW := annrw.NewCypherAnnotationsService(db, "v2")
 	assert.NoError(annotationsRW.Initialise())
 	writeJSONToAnnotationsService(annotationsRW, id, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json", assert)
 	return annotationsRW
