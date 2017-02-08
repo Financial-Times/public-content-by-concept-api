@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"time"
+
 	annrw "github.com/Financial-Times/annotations-rw-neo4j/annotations"
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	cnt "github.com/Financial-Times/content-rw-neo4j/content"
@@ -14,7 +16,6 @@ import (
 	"github.com/Financial-Times/subjects-rw-neo4j/subjects"
 	"github.com/jmcvetta/neoism"
 	"github.com/stretchr/testify/assert"
-	"time"
 )
 
 const (
@@ -34,7 +35,7 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	organisationRW := writeOrganisations(assert, db)
 	annotationsRWV2 := writeV2Annotations(assert, db, contentUUID)
 
-	defer deleteContent(contentRW)
+	defer deleteContent(contentRW, contentUUID)
 	defer deleteOrganisations(organisationRW)
 	defer deleteAnnotations(annotationsRWV2)
 	defer cleanUpBrandAndIdentifier(db, t, assert)
@@ -56,7 +57,7 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 	annotationsRWV1 := writeV1Annotations(assert, db)
 	subjectsRW := writeSubjects(assert, db)
 
-	defer deleteContent(contentRW)
+	defer deleteContent(contentRW, contentUUID)
 	defer deleteOrganisations(organisationRW)
 	defer deleteSubjects(subjectsRW)
 	defer deleteAnnotations(annotationsRWV1)
@@ -80,8 +81,8 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 	annotationsRW1 := writeV2Annotations(assert, db, contentUUID)
 	annotationsRW2 := writeV2Annotations(assert, db, content2UUID)
 
-	defer deleteContent(contentRW)
-	defer deleteContent(contentRW2)
+	defer deleteContent(contentRW, contentUUID)
+	defer deleteContent(contentRW2, content2UUID)
 	defer deleteOrganisations(organisationRW)
 	defer deleteAnnotations(annotationsRW1)
 	defer deleteAnnotations(annotationsRW2)
@@ -104,7 +105,7 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 	annotationsRWV1 := writeV1Annotations(assert, db)
 	subjectsRW := writeSubjects(assert, db)
 
-	defer deleteContent(contentRW)
+	defer deleteContent(contentRW, contentUUID)
 	defer deleteOrganisations(organisationRW)
 	defer deleteSubjects(subjectsRW)
 	defer deleteAnnotations(annotationsRWV1)
@@ -126,7 +127,7 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 	contentRW := writeContent(assert, db, contentUUID)
 	organisationRW := writeOrganisations(assert, db)
 
-	defer deleteContent(contentRW)
+	defer deleteContent(contentRW, contentUUID)
 	defer deleteOrganisations(organisationRW)
 	defer cleanUpBrandAndIdentifier(db, t, assert)
 
@@ -150,7 +151,7 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 	subjectsRW := subjects.NewCypherSubjectsService(db)
 	assert.NoError(subjectsRW.Initialise())
 
-	defer deleteContent(contentRW)
+	defer deleteContent(contentRW, contentUUID)
 	defer deleteSubjects(subjectsRW)
 	defer deleteOrganisations(organisationRW)
 	defer deleteAnnotations(annotationsRWV2)
@@ -171,8 +172,8 @@ func writeContent(assert *assert.Assertions, db neoutils.NeoConnection, contentU
 	return contentRW
 }
 
-func deleteContent(contentRW baseftrwapp.Service) {
-	contentRW.Delete(contentUUID)
+func deleteContent(contentRW baseftrwapp.Service, UUID string) {
+	contentRW.Delete(UUID)
 }
 
 func writeOrganisations(assert *assert.Assertions, db neoutils.NeoConnection) baseftrwapp.Service {
