@@ -3,10 +3,9 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "pgmx0X+XNVrtRnC7EHUv6hX/sPk=",
+			"checksumSHA1": "nV+iZwjtm4ncxB/+L/w5tNEIWQU=",
 			"path": "github.com/Financial-Times/annotations-rw-neo4j/annotations",
-			"revision": "de1f9e4d0bfd4073d8288f81649cb2c57c53b1fc",
-			"revisionTime": "2017-01-18T09:18:52Z",
+			"revision": "aa64d7f26ed907b3cd8ad54b2744d3b6c2db32ae",
 			"version": "=0.2.0",
 			"versionExact": "0.2.0"
 		},
