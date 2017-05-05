@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"os"
 	"testing"
-
 	"time"
 
 	annrw "github.com/Financial-Times/annotations-rw-neo4j/annotations"
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
+	"github.com/Financial-Times/concepts-rw-neo4j/concepts"
 	cnt "github.com/Financial-Times/content-rw-neo4j/content"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/Financial-Times/organisations-rw-neo4j/organisations"
-	"github.com/Financial-Times/subjects-rw-neo4j/subjects"
 	"github.com/jmcvetta/neoism"
 	"github.com/stretchr/testify/assert"
 )
@@ -148,7 +147,7 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 
 	organisationRW := organisations.NewCypherOrganisationService(db)
 	assert.NoError(organisationRW.Initialise())
-	subjectsRW := subjects.NewCypherSubjectsService(db)
+	subjectsRW := concepts.NewConceptService(db)
 	assert.NoError(subjectsRW.Initialise())
 
 	defer deleteContent(contentRW, contentUUID)
@@ -204,7 +203,7 @@ func writeV2Annotations(assert *assert.Assertions, db neoutils.NeoConnection, id
 }
 
 func writeSubjects(assert *assert.Assertions, db neoutils.NeoConnection) baseftrwapp.Service {
-	subjectsRW := subjects.NewCypherSubjectsService(db)
+	subjectsRW := concepts.NewConceptService(db)
 	assert.NoError(subjectsRW.Initialise())
 	writeJSONToService(subjectsRW, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json", assert)
 	return subjectsRW
