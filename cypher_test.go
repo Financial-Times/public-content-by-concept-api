@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"os"
 	"testing"
-
 	"time"
 
 	annrw "github.com/Financial-Times/annotations-rw-neo4j/annotations"
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
+	"github.com/Financial-Times/concepts-rw-neo4j/concepts"
 	cnt "github.com/Financial-Times/content-rw-neo4j/content"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/Financial-Times/organisations-rw-neo4j/organisations"
-	"github.com/Financial-Times/subjects-rw-neo4j/subjects"
 	"github.com/jmcvetta/neoism"
 	"github.com/stretchr/testify/assert"
 )
@@ -148,7 +147,7 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 
 	organisationRW := organisations.NewCypherOrganisationService(db)
 	assert.NoError(organisationRW.Initialise())
-	subjectsRW := subjects.NewCypherSubjectsService(db)
+	subjectsRW := concepts.NewConceptService(db)
 	assert.NoError(subjectsRW.Initialise())
 
 	defer deleteContent(contentRW, contentUUID)
@@ -190,21 +189,21 @@ func deleteOrganisations(organisationRW baseftrwapp.Service) {
 }
 
 func writeV1Annotations(assert *assert.Assertions, db neoutils.NeoConnection) annrw.Service {
-	annotationsRW := annrw.NewCypherAnnotationsService(db, "v1")
+	annotationsRW := annrw.NewCypherAnnotationsService(db, "v1", "annotations-v1")
 	assert.NoError(annotationsRW.Initialise())
 	writeJSONToAnnotationsService(annotationsRW, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json", assert)
 	return annotationsRW
 }
 
 func writeV2Annotations(assert *assert.Assertions, db neoutils.NeoConnection, id string) annrw.Service {
-	annotationsRW := annrw.NewCypherAnnotationsService(db, "v2")
+	annotationsRW := annrw.NewCypherAnnotationsService(db, "v2", "annotations-v2")
 	assert.NoError(annotationsRW.Initialise())
 	writeJSONToAnnotationsService(annotationsRW, id, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json", assert)
 	return annotationsRW
 }
 
 func writeSubjects(assert *assert.Assertions, db neoutils.NeoConnection) baseftrwapp.Service {
-	subjectsRW := subjects.NewCypherSubjectsService(db)
+	subjectsRW := concepts.NewConceptService(db)
 	assert.NoError(subjectsRW.Initialise())
 	writeJSONToService(subjectsRW, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json", assert)
 	return subjectsRW

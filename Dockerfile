@@ -2,7 +2,8 @@ FROM alpine:3.4
 
 ENV SOURCE_DIR /public-content-by-concept-api-src
 
-ADD *.go .git $SOURCE_DIR/
+COPY *.go .git $SOURCE_DIR/
+COPY vendor/vendor.json $SOURCE_DIR/vendor/
 
 RUN apk add --update bash \
   && apk --update add git go \
@@ -21,9 +22,9 @@ RUN apk add --update bash \
   && mkdir -p $GOPATH/src/${REPO_PATH} \
   && cp -r $SOURCE_DIR/* $GOPATH/src/${REPO_PATH} \
   && cd $GOPATH/src/${REPO_PATH} \
-  && go get ./... \
-  && cd $GOPATH/src/${REPO_PATH} \
   && echo ${LDFLAGS} \
+  && go get -u github.com/kardianos/govendor \
+  && $GOPATH/bin/govendor sync \
   && go build -ldflags="${LDFLAGS}" \
   && mv public-content-by-concept-api / \
   && apk del go git \
