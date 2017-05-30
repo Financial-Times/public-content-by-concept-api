@@ -270,6 +270,7 @@ func getDatabaseConnection(t *testing.T, assert *assert.Assertions) neoutils.Neo
 	if url == "" {
 		url = "http://localhost:7474/db/data"
 	}
+
 	conf := neoutils.DefaultConnectionConfig()
 	conf.Transactional = false
 	db, err := neoutils.Connect(url, conf)

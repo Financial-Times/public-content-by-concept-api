@@ -78,6 +78,16 @@ func (dS dummyService) read(conceptUUID string, limit int, fromDateEpoch int64, 
 	return nil, false, nil
 }
 
+func (dS dummyService) readWithPredicate(conceptUUID string, label string, limit int, fromDateEpoch int64, toDateEpoch int64) (contentList, bool, error) {
+	if dS.failRead {
+		return nil, false, errors.New("TEST failing to READ")
+	}
+	if conceptUUID == dS.contentUUID {
+		return contentList{}, true, nil
+	}
+	return nil, false, nil
+}
+
 func (dS dummyService) checkConnectivity() error {
 	return nil
 }

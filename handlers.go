@@ -62,6 +62,20 @@ func (hh *httpHandlers) methodNotAllowedHandler(w http.ResponseWriter, r *http.R
 	return
 }
 
+func (hh *httpHandlers) selectContentByConceptHandler(w http.ResponseWriter, r *http.Request) {
+	predicate, found, err := getSingleValueQueryParameter(r, "withPredicate")
+	if err != nil {
+		writeHTTPMessage(w, http.StatusBadRequest, `More than one value found for query parameter "withPredicate". Expecting exactly one valid absolute predicate URI.`)
+		return
+	}
+
+	if found {
+		hh.getContentByConceptWithPredicate(w, r, predicate)
+	} else {
+		hh.getContentByConcept(w, r)
+	}
+}
+
 func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Request) {
 	conceptURI, found, err := getSingleValueQueryParameter(r, "isAnnotatedBy")
 	if !found {
