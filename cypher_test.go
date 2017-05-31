@@ -28,7 +28,7 @@ const (
 
 func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
+	db := getDatabaseConnection(t, assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	organisationRW := writeOrganisations(assert, db)
@@ -49,7 +49,7 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 
 func TestFindMatchingContentForV1Annotation(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
+	db := getDatabaseConnection(t, assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	organisationRW := writeOrganisations(assert, db)
@@ -72,7 +72,7 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 
 func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
+	db := getDatabaseConnection(t, assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	contentRW2 := writeContent(assert, db, content2UUID)
@@ -97,7 +97,7 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 
 func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
+	db := getDatabaseConnection(t, assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	organisationRW := writeOrganisations(assert, db)
@@ -121,7 +121,7 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 
 func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
+	db := getDatabaseConnection(t, assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	organisationRW := writeOrganisations(assert, db)
@@ -139,7 +139,7 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 
 func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
+	db := getDatabaseConnection(t, assert)
 
 	contentRW := writeContent(assert, db, contentUUID)
 	annotationsRWV1 := writeV1Annotations(assert, db)
@@ -261,11 +261,16 @@ func assertListContainsAll(assert *assert.Assertions, list interface{}, items ..
 	}
 }
 
-func getDatabaseConnection(assert *assert.Assertions) neoutils.NeoConnection {
+func getDatabaseConnection(t *testing.T, assert *assert.Assertions) neoutils.NeoConnection {
+	if testing.Short() {
+		t.Skip("Short flag set - skipping Neo4j integration test.")
+	}
+
 	url := os.Getenv("NEO4J_TEST_URL")
 	if url == "" {
 		url = "http://localhost:7474/db/data"
 	}
+
 	conf := neoutils.DefaultConnectionConfig()
 	conf.Transactional = false
 	db, err := neoutils.Connect(url, conf)

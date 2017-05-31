@@ -122,7 +122,7 @@ func router(hh httpHandlers) http.Handler {
 	servicesRouter := mux.NewRouter()
 
 	// Then API specific ones:
-	servicesRouter.HandleFunc("/content", hh.getContentByConcept).Methods("GET")
+	servicesRouter.HandleFunc("/content", hh.selectContentByConceptHandler).Methods("GET")
 	servicesRouter.HandleFunc("/content", hh.methodNotAllowedHandler)
 
 	// Then monitoring

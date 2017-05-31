@@ -10,6 +10,7 @@ import (
 // Driver interface
 type driver interface {
 	read(id string, limit int, fromDateEpoch int64, toDateEpoch int64) (contentList, bool, error)
+	readWithPredicate(conceptUUID string, predicateLabel string, limit int, fromDateEpoch int64, toDateEpoch int64) (contentList, bool, error)
 	checkConnectivity() error
 }
 
@@ -51,6 +52,43 @@ func (cd cypherDriver) read(conceptUUID string, limit int, fromDateEpoch int64, 
 			"maxContentItems": limit,
 			"fromDate":        fromDateEpoch,
 			"toDate":          toDateEpoch,
+		},
+		Result: &results,
+	}
+
+	if err := cd.conn.CypherBatch([]*neoism.CypherQuery{query}); err != nil || len(results) == 0 {
+		return contentList{}, false, err
+	}
+
+	log.Debugf("Found %d pieces of content for uuid: %s", len(results), conceptUUID)
+
+	cntList := neoReadStructToContentList(&results, cd.env)
+	return cntList, true, nil
+}
+
+func (cd cypherDriver) readWithPredicate(conceptUUID string, predicateLabel string, limit int, fromDateEpoch int64, toDateEpoch int64) (contentList, bool, error) {
+	results := []neoReadStruct{}
+
+	var whereClause string
+	if fromDateEpoch > 0 && toDateEpoch > 0 {
+		whereClause = " AND c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate} "
+	}
+
+	query := &neoism.CypherQuery{
+		Statement: `
+		MATCH (upp:UPPIdentifier{value:{conceptUUID}})-[:IDENTIFIES]->(cc:Concept)
+		MATCH (c:Content)-[rel]->(cc)
+			WHERE type(rel) = {predicate}` +
+			whereClause +
+			`RETURN c.uuid as uuid, labels(c) as types
+		ORDER BY c.publishedDateEpoch DESC
+		LIMIT({maxContentItems})`,
+		Parameters: neoism.Props{
+			"conceptUUID":     conceptUUID,
+			"maxContentItems": limit,
+			"fromDate":        fromDateEpoch,
+			"toDate":          toDateEpoch,
+			"predicate":       predicateLabel,
 		},
 		Result: &results,
 	}

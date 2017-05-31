@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Financial-Times/go-fthealth/v1a"
-	log "github.com/Sirupsen/logrus"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Financial-Times/go-fthealth/v1a"
+	log "github.com/Sirupsen/logrus"
 )
 
 type httpHandlers struct {
@@ -62,96 +62,128 @@ func (hh *httpHandlers) methodNotAllowedHandler(w http.ResponseWriter, r *http.R
 	return
 }
 
+func (hh *httpHandlers) selectContentByConceptHandler(w http.ResponseWriter, r *http.Request) {
+	predicate, found, err := getSingleValueQueryParameter(r, "withPredicate")
+	if err != nil {
+		writeHTTPMessage(w, http.StatusBadRequest, `More than one value found for query parameter "withPredicate". Expecting exactly one valid absolute predicate URI.`)
+		return
+	}
+
+	if found {
+		hh.getContentByConceptWithPredicate(w, r, predicate)
+	} else {
+		hh.getContentByConcept(w, r)
+	}
+}
+
 func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Request) {
-
-	m, _ := url.ParseQuery(r.URL.RawQuery)
-
-	_, isAnnotatedByPresent := m["isAnnotatedBy"]
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-	if !isAnnotatedByPresent {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(
-			`{"message": "Missing or empty query parameter isAnnotatedBy. Expecting valid absolute concept URI."}`))
+	conceptURI, found, err := getSingleValueQueryParameter(r, "isAnnotatedBy")
+	if !found {
+		writeHTTPMessage(w, http.StatusBadRequest, `Missing query parameter "isAnnotatedBy". Expecting exactly one valid absolute Concept URI.`)
 		return
 	}
 
-	if len(m["isAnnotatedBy"]) > 1 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(
-			`{"message": "Only one concept uri should be provided"}`))
+	if err != nil {
+		writeHTTPMessage(w, http.StatusBadRequest, `More than one value found for query parameter "isAnnotatedBy". Expecting exactly one valid absolute Concept URI.`)
 		return
 	}
 
-	conceptUri := m["isAnnotatedBy"][0]
-
-	if conceptUri == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(
-			`{"message": "Missing concept URI."}`))
+	if strings.TrimSpace(conceptURI) == "" {
+		writeHTTPMessage(w, http.StatusBadRequest, `No value specified for Concept URI.`)
 		return
 	}
 
-	conceptUuid := strings.TrimPrefix(conceptUri, thingURIPrefix)
+	limitText, found, err := getSingleValueQueryParameter(r, "limit")
+	if err != nil {
+		writeHTTPMessage(w, http.StatusBadRequest, `Please provide one value for "limit".`)
+		return
+	}
 
-	limitParam := m.Get("limit")
 	var limit int
-	var err error
-
-	if limitParam == "" {
+	if !found {
 		log.Infof("No limit provided. Using default: %v", defaultLimit)
 		limit = defaultLimit
 	} else {
-		limit, err = strconv.Atoi(limitParam)
+		limit, err = strconv.Atoi(limitText)
+		if err != nil {
+			writeHTTPMessage(w, http.StatusBadRequest, fmt.Sprintf("Error limit is not a number: %s.", limitText))
+			return
+		}
 	}
 
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		msg := fmt.Sprintf(`{"message":"Error limit is not a number: %s."}`, limitParam)
-		w.Write([]byte(msg))
-		return
-	}
+	conceptUUID := strings.TrimPrefix(conceptURI, thingURIPrefix)
 
-	fromDateParam := m.Get("fromDate")
-	toDateParam := m.Get("toDate")
-	var fromDateEpoch, toDateEpoch int64
-
-	if fromDateParam == "" {
-		log.Infof("No fromDate supplied.")
-	} else {
-		fromDateEpoch = convertStringToDateTimeEpoch(fromDateParam)
-	}
-
-	if toDateParam == "" {
-		log.Infof("No toDate supplied")
-	} else {
-		toDateEpoch = convertStringToDateTimeEpoch(toDateParam)
-	}
-
-	contentList, found, err := hh.contentDriver.read(conceptUuid, limit, fromDateEpoch, toDateEpoch)
-
-	if err != nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		msg := fmt.Sprintf(`{"message":"Error getting content for concept with uuid %s, err=%s"}`, conceptUuid, err.Error())
-		w.Write([]byte(msg))
-		return
-	}
+	toDateEpoch, found, err := getDateParam(r, "toDate")
 	if !found {
-		w.WriteHeader(http.StatusNotFound)
-		msg := fmt.Sprintf(`{"message":"No content found for concept with uuid %s."}`, conceptUuid)
-		w.Write([]byte(msg))
+		log.Infof("No toDate supplied.")
+	} else if err != nil {
+		writeHTTPMessage(w, http.StatusBadRequest, `More than one value for "toDate" supplied. Please provide exactly one value.`)
+		return
+	}
+
+	fromDateEpoch, found, err := getDateParam(r, "fromDate")
+	if !found {
+		log.Infof("No fromDate supplied.")
+	} else if err != nil {
+		writeHTTPMessage(w, http.StatusBadRequest, `More than one value for "fromDate" supplied. Please provide exactly one value.`)
+		return
+	}
+
+	contentByConcept, found, err := hh.contentDriver.read(conceptUUID, limit, fromDateEpoch, toDateEpoch)
+	if err != nil {
+		writeHTTPMessage(w, http.StatusServiceUnavailable, fmt.Sprintf("Error getting content for concept with uuid %s, err=%s", conceptUUID, err.Error()))
+		return
+	}
+
+	if !found {
+		writeHTTPMessage(w, http.StatusNotFound, fmt.Sprintf("No content found for concept with uuid %s.", conceptUUID))
+		return
+	}
+
+	responseJSON, err := json.Marshal(contentByConcept)
+	if err != nil {
+		writeHTTPMessage(w, http.StatusInternalServerError, fmt.Sprintf(`Error parsing content for concept with uuid %s, err=%s`, conceptUUID, err.Error()))
 		return
 	}
 
 	w.Header().Set("Cache-Control", hh.cacheControlHeader)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Write(responseJSON)
+}
 
-	if err = json.NewEncoder(w).Encode(contentList); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		msg := fmt.Sprintf(`{"message":"Error parsing content for concept with uuid %s, err=%s"}`, conceptUuid, err.Error())
-		w.Write([]byte(msg))
+func getDateParam(req *http.Request, name string) (int64, bool, error) {
+	dateParam, found, err := getSingleValueQueryParameter(req, name)
+	if err != nil || !found {
+		return 0, found, err
 	}
+
+	return convertStringToDateTimeEpoch(dateParam), found, nil
+}
+
+func getSingleValueQueryParameter(req *http.Request, param string) (string, bool, error) {
+	query := req.URL.Query()
+	values, found := query[param]
+	if len(values) > 1 {
+		return "", found, fmt.Errorf("specified multiple %v query parameters in the URL", param)
+	}
+
+	if len(values) < 1 {
+		return "", found, nil
+	}
+
+	return values[0], found, nil
+}
+
+func writeHTTPMessage(w http.ResponseWriter, status int, message string) {
+	resp := make(map[string]string)
+	resp["message"] = message
+
+	w.WriteHeader(status)
+	w.Header().Add("Content-Type", "application/json")
+
+	enc := json.NewEncoder(w)
+	enc.Encode(&resp)
 }
 
 func convertStringToDateTimeEpoch(dateString string) int64 {

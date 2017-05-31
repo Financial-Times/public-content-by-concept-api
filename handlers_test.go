@@ -26,8 +26,20 @@ func TestGetHandler(t *testing.T) {
 	assert := assert.New(t)
 	tests := []test{
 		{"Success", newRequest("GET", fmt.Sprintf("/content?isAnnotatedBy=http://api.ft.com/things/%s", knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusOK, "", "[]"},
+		{"SuccessWithLimit", newRequest("GET", fmt.Sprintf(`/content?isAnnotatedBy=http://api.ft.com/things/%s&limit=2`, knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusOK, "", "[]"},
+		{"SuccessWithToDate", newRequest("GET", fmt.Sprintf(`/content?isAnnotatedBy=%s&toDate=2006-01-02`, knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusOK, "", "[]"},
+		{"SuccessWithFromDate", newRequest("GET", fmt.Sprintf(`/content?isAnnotatedBy=%s&fromDate=2006-01-02`, knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusOK, "", "[]"},
+		{"SuccessDespiteInvalidFromDate", newRequest("GET", fmt.Sprintf(`/content?isAnnotatedBy=%s&fromDate=0`, knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusOK, "", "[]"},
+		{"SuccessDespiteInvalidToDate", newRequest("GET", fmt.Sprintf(`/content?isAnnotatedBy=%s&toDate=0`, knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusOK, "", "[]"},
 		{"NotFound", newRequest("GET", fmt.Sprintf("/content?isAnnotatedBy=http://api.ft.com/things/%s", "99999"), "application/json", nil), dummyService{contentUUID: knownUUID}, http.StatusNotFound, "", message("No content found for concept with uuid 99999.")},
 		{"ReadError", newRequest("GET", fmt.Sprintf("/content?isAnnotatedBy=http://api.ft.com/things/%s", knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID, failRead: true}, http.StatusServiceUnavailable, "", message("Error getting content for concept with uuid 12345, err=TEST failing to READ")},
+		{"LimitShouldBeNumber", newRequest("GET", fmt.Sprintf(`/content?isAnnotatedBy=http://api.ft.com/things/%s&limit=huh`, knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID, failRead: true}, http.StatusBadRequest, "", message("Error limit is not a number: huh.")},
+		{"ExactlyOneLimit", newRequest("GET", fmt.Sprintf(`/content?isAnnotatedBy=http://api.ft.com/things/%s&limit=10&limit=50`, knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID, failRead: true}, http.StatusBadRequest, "", message(`Please provide one value for \"limit\".`)},
+		{"MissingAnnotatedBy", newRequest("GET", "/content", "application/json", nil), dummyService{contentUUID: knownUUID, failRead: true}, http.StatusBadRequest, "", message(`Missing query parameter \"isAnnotatedBy\". Expecting exactly one valid absolute Concept URI.`)},
+		{"BlankAnnotatedBy", newRequest("GET", "/content?isAnnotatedBy=", "application/json", nil), dummyService{contentUUID: knownUUID, failRead: true}, http.StatusBadRequest, "", message(`No value specified for Concept URI.`)},
+		{"MoreThanOneAnnotatedBy", newRequest("GET", "/content?isAnnotatedBy=blah&isAnnotatedBy=blah-again", "application/json", nil), dummyService{contentUUID: knownUUID, failRead: true}, http.StatusBadRequest, "", message(`More than one value found for query parameter \"isAnnotatedBy\". Expecting exactly one valid absolute Concept URI.`)},
+		{"MoreThanOneToDate", newRequest("GET", fmt.Sprintf(`/content?isAnnotatedBy=%s&toDate=0&toDate=1`, knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID, failRead: true}, http.StatusBadRequest, "", message(`More than one value for \"toDate\" supplied. Please provide exactly one value.`)},
+		{"MoreThanOneFromDate", newRequest("GET", fmt.Sprintf(`/content?isAnnotatedBy=%s&fromDate=0&fromDate=1`, knownUUID), "application/json", nil), dummyService{contentUUID: knownUUID, failRead: true}, http.StatusBadRequest, "", message(`More than one value for \"fromDate\" supplied. Please provide exactly one value.`)},
 	}
 
 	for _, test := range tests {
@@ -57,6 +69,16 @@ type dummyService struct {
 }
 
 func (dS dummyService) read(conceptUUID string, limit int, fromDateEpoch int64, toDateEpoch int64) (contentList, bool, error) {
+	if dS.failRead {
+		return nil, false, errors.New("TEST failing to READ")
+	}
+	if conceptUUID == dS.contentUUID {
+		return contentList{}, true, nil
+	}
+	return nil, false, nil
+}
+
+func (dS dummyService) readWithPredicate(conceptUUID string, label string, limit int, fromDateEpoch int64, toDateEpoch int64) (contentList, bool, error) {
 	if dS.failRead {
 		return nil, false, errors.New("TEST failing to READ")
 	}
