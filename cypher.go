@@ -71,13 +71,14 @@ func (cd cypherDriver) readWithPredicate(conceptUUID string, predicateLabel stri
 
 	var whereClause string
 	if fromDateEpoch > 0 && toDateEpoch > 0 {
-		whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate} "
+		whereClause = " AND c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate} "
 	}
 
 	query := &neoism.CypherQuery{
 		Statement: `
 		MATCH (upp:UPPIdentifier{value:{conceptUUID}})-[:IDENTIFIES]->(cc:Concept)
-		MATCH (c:Content)-[rel:{predicate}]->(cc)` +
+		MATCH (c:Content)-[rel]->(cc)
+			WHERE type(rel) = {predicate}` +
 			whereClause +
 			`RETURN c.uuid as uuid, labels(c) as types
 		ORDER BY c.publishedDateEpoch DESC
