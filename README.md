@@ -1,13 +1,6 @@
 # Public API for Content By Concept (public-content-by-concept-api)
 __Provides a public API for Content retrieved via Concept that is mentioned stored in a Neo4J graph database__
 
-## Build & deployment etc:
-_NB You will need to tag a commit in order to build, since the UI asks for a tag to build / deploy_
-* [Jenkins view](http://ftjen10085-lvpr-uk-p:8181/view/JOBS-public-content-by-concept-api/)
-* [Build and publish to forge](http://ftjen10085-lvpr-uk-p:8181/job/public-content-by-concept-api-build)
-* [Deploy to Test](http://ftjen10085-lvpr-uk-p:8181/view/JOBS-public-content-by-concept-api/job/public-content-by-concept-api-deploy-test/)
-* [Deploy to Production](http://ftjen10085-lvpr-uk-p:8181/view/JOBS-public-content-by-concept-api/job/public-content-by-concept-api-deploy-to-prod/)
-
 
 ## Installation & running locally
 * `go get -u github.com/Financial-Times/public-content-by-concept-api`
