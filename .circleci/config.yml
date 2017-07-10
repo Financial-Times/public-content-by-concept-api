@@ -20,7 +20,7 @@ jobs:
       - run: |
           go get -u github.com/kardianos/govendor
       - run: |
-          go get -t -d -v ./...
+          govendor sync
       - run: |
           go build -v
       - run: |
