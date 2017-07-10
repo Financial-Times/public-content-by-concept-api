@@ -1,0 +1,21 @@
+{
+  "prefUUID":"9a07c16f-def0-457d-a04a-57ba68ba1e00",
+  "prefLabel":"Onyx Pike",
+  "type":"Brand",
+  "sourceRepresentations": [
+    {
+      "uuid": "4c4738cb-45df-43fe-ac7c-bab963b698ea",
+      "prefLabel": "Onyx Pikey Right",
+      "authority": "TME",
+      "authorityValue": "OOOOO-U3ViamVjdHM=",
+      "type": "Brand"
+    },{
+      "uuid": "9a07c16f-def0-457d-a04a-57ba68ba1e00",
+      "prefLabel": "Onyx Pike",
+      "parentUUID": "0635a44c-2e9e-49b6-b078-be53b0e5301b",
+      "authority": "Smartlogic",
+      "authorityValue": "9a07c16f-def0-457d-a04a-57ba68ba1e00",
+      "type": "Brand"
+    }
+  ]
+}

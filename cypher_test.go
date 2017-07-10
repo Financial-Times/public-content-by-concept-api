@@ -15,29 +15,54 @@ import (
 	"github.com/Financial-Times/organisations-rw-neo4j/organisations"
 	"github.com/jmcvetta/neoism"
 	"github.com/stretchr/testify/assert"
+	"log"
 )
 
 const (
 	//Generate uuids so there's no clash with real data
 	contentUUID            = "3fc9fe3e-af8c-4f7f-961a-e5065392bb31"
 	content2UUID           = "bfa97890-76ff-4a35-a775-b8768f7ea383"
+	content3UUID = "5a9c7429-e76b-4f37-b5d1-842d64a45167"
+	content4UUID = "8e193b84-4697-41aa-a480-065831d1d964"
 	MSJConceptUUID         = "5d1510f8-2779-4b74-adab-0a5eb138fca6"
 	FakebookConceptUUID    = "eac853f5-3859-4c08-8540-55e043719400"
 	MetalMickeyConceptUUID = "0483bef8-5797-40b8-9b25-b12e492f63c6"
+	OnyxPikeBrandUUID = "4c4738cb-45df-43fe-ac7c-bab963b698ea"
+	OnyxPikeBrandUUID2 = "9a07c16f-def0-457d-a04a-57ba68ba1e00"
+	OnyxPikeParentBrandUUID = "0635a44c-2e9e-49b6-b078-be53b0e5301b"
+
+
+
 )
+
+//Reusable Neo4J connection
+var db neoutils.NeoConnection
+
+func init() {
+	conf := neoutils.DefaultConnectionConfig()
+	conf.Transactional = false
+	db, _ = neoutils.Connect(neoUrl(), conf)
+	if db == nil {
+		panic("Cannot connect to Neo4J")
+	}
+}
+
+func neoUrl() string {
+	url := os.Getenv("NEO4J_TEST_URL")
+	if url == "" {
+		url = "http://localhost:7777/db/data"
+	}
+	return url
+}
 
 func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
 
-	contentRW := writeContent(assert, db, contentUUID)
-	organisationRW := writeOrganisations(assert, db)
-	annotationsRWV2 := writeV2Annotations(assert, db, contentUUID)
+	writeContent(assert, db, contentUUID)
+	writeOrganisations(assert, db)
+	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
 
-	defer deleteContent(contentRW, contentUUID)
-	defer deleteOrganisations(organisationRW)
-	defer deleteAnnotations(annotationsRWV2)
-	defer cleanUpBrandAndIdentifier(db, t, assert)
+	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
 	contentList, found, err := contentByConceptDriver.read(MSJConceptUUID, defaultLimit, 0, 0)
@@ -49,18 +74,13 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 
 func TestFindMatchingContentForV1Annotation(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
 
-	contentRW := writeContent(assert, db, contentUUID)
-	organisationRW := writeOrganisations(assert, db)
-	annotationsRWV1 := writeV1Annotations(assert, db)
-	subjectsRW := writeSubjects(assert, db)
+	writeContent(assert, db, contentUUID)
+	writeOrganisations(assert, db)
+	writeAnnotations(assert, db, contentUUID,"./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeConcept(assert, db, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
 
-	defer deleteContent(contentRW, contentUUID)
-	defer deleteOrganisations(organisationRW)
-	defer deleteSubjects(subjectsRW)
-	defer deleteAnnotations(annotationsRWV1)
-	defer cleanUpBrandAndIdentifier(db, t, assert)
+	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
 	contentList, found, err := contentByConceptDriver.read(MetalMickeyConceptUUID, defaultLimit, 0, 0)
@@ -72,20 +92,14 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 
 func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
 
-	contentRW := writeContent(assert, db, contentUUID)
-	contentRW2 := writeContent(assert, db, content2UUID)
-	organisationRW := writeOrganisations(assert, db)
-	annotationsRW1 := writeV2Annotations(assert, db, contentUUID)
-	annotationsRW2 := writeV2Annotations(assert, db, content2UUID)
+	writeContent(assert, db, contentUUID)
+	writeContent(assert, db, content2UUID)
+	writeOrganisations(assert, db)
+	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeAnnotations(assert, db, content2UUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
 
-	defer deleteContent(contentRW, contentUUID)
-	defer deleteContent(contentRW2, content2UUID)
-	defer deleteOrganisations(organisationRW)
-	defer deleteAnnotations(annotationsRW1)
-	defer deleteAnnotations(annotationsRW2)
-	defer cleanUpBrandAndIdentifier(db, t, assert)
+	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, content2UUID)
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
 	contentList, found, err := contentByConceptDriver.read(MSJConceptUUID, 1, 0, 0)
@@ -97,18 +111,13 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 
 func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
 
-	contentRW := writeContent(assert, db, contentUUID)
-	organisationRW := writeOrganisations(assert, db)
-	annotationsRWV1 := writeV1Annotations(assert, db)
-	subjectsRW := writeSubjects(assert, db)
+	writeContent(assert, db, contentUUID)
+	writeOrganisations(assert, db)
+	writeAnnotations(assert, db, contentUUID,"./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeConcept(assert, db, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
 
-	defer deleteContent(contentRW, contentUUID)
-	defer deleteOrganisations(organisationRW)
-	defer deleteSubjects(subjectsRW)
-	defer deleteAnnotations(annotationsRWV1)
-	defer cleanUpBrandAndIdentifier(db, t, assert)
+	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
 	fromDate, _ := time.Parse("2006-01-02", "2014-03-08")
@@ -121,14 +130,11 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 
 func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
 
-	contentRW := writeContent(assert, db, contentUUID)
-	organisationRW := writeOrganisations(assert, db)
+	writeContent(assert, db, contentUUID)
+	writeOrganisations(assert, db)
 
-	defer deleteContent(contentRW, contentUUID)
-	defer deleteOrganisations(organisationRW)
-	defer cleanUpBrandAndIdentifier(db, t, assert)
+	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
 	content, found, err := contentByConceptDriver.read(MSJConceptUUID, defaultLimit, 0, 0)
@@ -139,23 +145,12 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 
 func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 	assert := assert.New(t)
-	db := getDatabaseConnection(assert)
 
-	contentRW := writeContent(assert, db, contentUUID)
-	annotationsRWV1 := writeV1Annotations(assert, db)
-	annotationsRWV2 := writeV2Annotations(assert, db, contentUUID)
+	writeContent(assert, db, contentUUID)
+	writeAnnotations(assert, db,  contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
 
-	organisationRW := organisations.NewCypherOrganisationService(db)
-	assert.NoError(organisationRW.Initialise())
-	subjectsRW := concepts.NewConceptService(db)
-	assert.NoError(subjectsRW.Initialise())
-
-	defer deleteContent(contentRW, contentUUID)
-	defer deleteSubjects(subjectsRW)
-	defer deleteOrganisations(organisationRW)
-	defer deleteAnnotations(annotationsRWV2)
-	defer deleteAnnotations(annotationsRWV1)
-	defer cleanUpBrandAndIdentifier(db, t, assert)
+	defer cleanDB(t, content2UUID, MSJConceptUUID, contentUUID, MetalMickeyConceptUUID, FakebookConceptUUID)
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
 	contentList, found, err := contentByConceptDriver.read(MSJConceptUUID, defaultLimit, 0, 0)
@@ -164,83 +159,97 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 	assert.Equal(0, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
 }
 
-func writeContent(assert *assert.Assertions, db neoutils.NeoConnection, contentUUID string) baseftrwapp.Service {
+func TestNewConcordanceModelWithBrands(t *testing.T) {
+	assert := assert.New(t)
+	defer cleanDB(t, content2UUID, content3UUID, OnyxPikeBrandUUID2, OnyxPikeBrandUUID)
+
+	writeContent(assert, db, content3UUID)
+	writeContent(assert, db, content2UUID)
+	writeAnnotations(assert, db,  content3UUID, "./fixtures/Annotations-5a9c7429-e76b-4f37-b5d1-842d64a45167-V2.json")
+	writeAnnotations(assert, db, content2UUID, "./fixtures/Annotations-bfa97890-76ff-4a35-a775-b8768f7ea383-V2.json")
+	writeConcept(assert, db, "./fixtures/Brand-OnyxPike-4c4738cb-45df-43fe-ac7c-bab963b698ea.json")
+
+	contentByConceptDriver := newCypherDriver(db, "prod")
+	contentList, found, err := contentByConceptDriver.read(OnyxPikeBrandUUID, defaultLimit, 0, 0)
+	assert.NoError(err, "Unexpected error for concept %s", OnyxPikeBrandUUID)
+	assert.True(found, "Found annotations for concept %s", OnyxPikeBrandUUID)
+	assert.Equal(2, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
+
+}
+
+func TestNewConcordanceModelWithBrandsDoesntReturnParentContent(t *testing.T) {
+	assert := assert.New(t)
+	defer cleanDB(t, content2UUID, content3UUID, content4UUID, OnyxPikeBrandUUID2, OnyxPikeBrandUUID, OnyxPikeParentBrandUUID)
+
+	writeContent(assert, db, content2UUID)
+	writeContent(assert, db, content3UUID)
+	writeContent(assert, db, content4UUID)
+
+	writeAnnotations(assert, db, content2UUID, fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content2UUID))
+	writeAnnotations(assert, db,  content3UUID, fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content3UUID))
+	writeAnnotations(assert, db, content4UUID, fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content4UUID))
+
+	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
+	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPikeParent-%v.json", OnyxPikeParentBrandUUID))
+
+	contentByConceptDriver := newCypherDriver(db, "prod")
+	contentList, found, err := contentByConceptDriver.read(OnyxPikeBrandUUID, defaultLimit, 0, 0)
+	assert.NoError(err, "Unexpected error for concept %s", OnyxPikeBrandUUID)
+	assert.True(found, "Found annotations for concept %s", OnyxPikeBrandUUID)
+	assert.Equal(2, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
+
+}
+
+func writeContent(assert *assert.Assertions, db neoutils.NeoConnection, contentUUID string) {
 	contentRW := cnt.NewCypherContentService(db)
 	assert.NoError(contentRW.Initialise())
 	writeJSONToService(contentRW, "./fixtures/Content-"+contentUUID+".json", assert)
-	return contentRW
 }
 
-func deleteContent(contentRW baseftrwapp.Service, UUID string) {
-	contentRW.Delete(UUID)
-}
-
-func writeOrganisations(assert *assert.Assertions, db neoutils.NeoConnection) baseftrwapp.Service {
+func writeOrganisations(assert *assert.Assertions, db neoutils.NeoConnection) {
 	organisationRW := organisations.NewCypherOrganisationService(db)
 	assert.NoError(organisationRW.Initialise())
 	writeJSONToService(organisationRW, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json", assert)
 	writeJSONToService(organisationRW, "./fixtures/Organisation-Fakebook-eac853f5-3859-4c08-8540-55e043719400.json", assert)
-	return organisationRW
 }
 
-func deleteOrganisations(organisationRW baseftrwapp.Service) {
-	organisationRW.Delete(MSJConceptUUID)
-	organisationRW.Delete(FakebookConceptUUID)
-}
-
-func writeV1Annotations(assert *assert.Assertions, db neoutils.NeoConnection) annrw.Service {
+func writeAnnotations(assert *assert.Assertions, db neoutils.NeoConnection, contentUUID string, fixtures string) annrw.Service {
 	annotationsRW := annrw.NewCypherAnnotationsService(db, "v1", "annotations-v1")
 	assert.NoError(annotationsRW.Initialise())
-	writeJSONToAnnotationsService(annotationsRW, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json", assert)
+	writeJSONToAnnotationsService(annotationsRW, contentUUID, fixtures, assert)
 	return annotationsRW
 }
 
-func writeV2Annotations(assert *assert.Assertions, db neoutils.NeoConnection, id string) annrw.Service {
-	annotationsRW := annrw.NewCypherAnnotationsService(db, "v2", "annotations-v2")
-	assert.NoError(annotationsRW.Initialise())
-	writeJSONToAnnotationsService(annotationsRW, id, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json", assert)
-	return annotationsRW
+func writeConcept(assert *assert.Assertions, db neoutils.NeoConnection, fixture string) baseftrwapp.Service {
+	conceptsRW := concepts.NewConceptService(db)
+	assert.NoError(conceptsRW.Initialise())
+	log.Printf("Logging Concepts: %v", fixture)
+	writeJSONToService(conceptsRW, fixture, assert)
+	return conceptsRW
 }
 
-func writeSubjects(assert *assert.Assertions, db neoutils.NeoConnection) baseftrwapp.Service {
-	subjectsRW := concepts.NewConceptService(db)
-	assert.NoError(subjectsRW.Initialise())
-	writeJSONToService(subjectsRW, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json", assert)
-	return subjectsRW
-}
-
-func deleteSubjects(subjectsRW baseftrwapp.Service) {
-	subjectsRW.Delete(MetalMickeyConceptUUID)
-}
-
-func deleteAnnotations(annotationsRW annrw.Service) {
-	annotationsRW.Delete(contentUUID)
-	annotationsRW.Delete(content2UUID)
-}
-
-func cleanUpBrandAndIdentifier(db neoutils.NeoConnection, t *testing.T, assert *assert.Assertions) {
-	qs := []*neoism.CypherQuery{
-		{
-			//deletes 'brand' which only has type Thing
-			Statement: fmt.Sprintf("MATCH (j:Thing {uuid: '%v'}) DETACH DELETE j", "dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"),
-		},
-		{
-			//deletes upp identifier for the above parent 'org'
-			Statement: fmt.Sprintf("MATCH (k:Identifier {value: '%v'}) DETACH DELETE k", "dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"),
-		},
+func cleanDB(t *testing.T, uuids ...string) {
+	qs := make([]*neoism.CypherQuery, len(uuids))
+	for i, uuid := range uuids {
+		qs[i] = &neoism.CypherQuery{
+			Statement: fmt.Sprintf(`
+			MATCH (a:Thing {uuid: "%s"})
+			OPTIONAL MATCH (a)<-[ii:IDENTIFIES]-(i)
+			OPTIONAL MATCH (a)-[annotation]-(c:Content)
+			OPTIONAL MATCH (a)-[eq:EQUIVALENT_TO]-(canonical)
+			OPTIONAL MATCH (canonical)<-[eq2:EQUIVALENT_TO]-(concepts)
+			DETACH DELETE ii, i, annotation, eq, eq2, canonical, a`, uuid)}
 	}
-
 	err := db.CypherBatch(qs)
-	assert.NoError(err)
+	assert.NoError(t, err, fmt.Sprintf("Error executing clean up cypher. Error: %v", err))
 }
-
 func writeJSONToService(service baseftrwapp.Service, pathToJSONFile string, assert *assert.Assertions) {
 	f, err := os.Open(pathToJSONFile)
 	assert.NoError(err)
 	dec := json.NewDecoder(f)
 	inst, _, errr := service.DecodeJSON(dec)
 	assert.NoError(errr)
-	errrr := service.Write(inst)
+	errrr := service.Write(inst, "TEST_TRANS_ID")
 	assert.NoError(errrr)
 }
 
@@ -259,18 +268,6 @@ func assertListContainsAll(assert *assert.Assertions, list interface{}, items ..
 	for _, item := range items {
 		assert.Contains(list, item)
 	}
-}
-
-func getDatabaseConnection(assert *assert.Assertions) neoutils.NeoConnection {
-	url := os.Getenv("NEO4J_TEST_URL")
-	if url == "" {
-		url = "http://localhost:7474/db/data"
-	}
-	conf := neoutils.DefaultConnectionConfig()
-	conf.Transactional = false
-	db, err := neoutils.Connect(url, conf)
-	assert.NoError(err, "Failed to connect to Neo4j")
-	return db
 }
 
 func getExpectedContent() content {
