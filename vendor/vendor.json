@@ -26,6 +26,12 @@
 			"revisionTime": "2017-07-10T12:39:28Z"
 		},
 		{
+			"checksumSHA1": "Nv8WGvaFsT2HfwcjEJD+GNylqk4=",
+			"path": "github.com/Financial-Times/content-rw-neo4j/content",
+			"revision": "a8bb8bcedece53cd58dd248b0b6a34ba38034ba2",
+			"revisionTime": "2017-07-10T15:23:39Z"
+		},
+		{
 			"checksumSHA1": "6U1V2xI8bHaR95+gN+VfO9TqClE=",
 			"path": "github.com/Financial-Times/go-fthealth",
 			"revision": "e7ccca038327a0091303a52445ec1f0fb66cb97b",
