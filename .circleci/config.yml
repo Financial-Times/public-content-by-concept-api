@@ -11,19 +11,25 @@ jobs:
 
     working_directory: /go/src/github.com/Financial-Times/public-content-by-concept-api
     environment:
-      CIRCLE_TEST_REPORTS: /tmp/test-reports
-      CIRCLE_ARTIFACTS: /tmp/artifacts
-      NEO4J_TEST_URL: "http://localhost:7474/db/data/"
+          NEO4J_TEST_URL: "http://localhost:7474/db/data/"
+          CIRCLE_TEST_REPORTS: /tmp/test-reports
+          CIRCLE_ARTIFACTS: /tmp/artifacts
 
     steps:
       - checkout
+      - run:
+          name: Make go get work
+          command: sudo chown -R circleci:circleci /go/src
+      - run:
+          name: Create test folder
+          command: mkdir -p $CIRCLE_TEST_REPORTS
       - run: |
           go get -u github.com/kardianos/govendor
       - run: |
           govendor sync
       - run: |
           go build -v
-      - run: |
+      - run:
           wget --retry-connrefused --no-check-certificate -T 60 $NEO4J_TEST_URL; curl $NEO4J_TEST_URL
       - run: |
           go get -u github.com/jstemmer/go-junit-report
@@ -36,7 +42,6 @@ jobs:
           ./coverage.sh
       - run: |
           goveralls -coverprofile=$CIRCLE_ARTIFACTS/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
-
       - store_test_results:
           path: /tmp/test-reports
 
