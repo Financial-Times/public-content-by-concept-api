@@ -36,52 +36,50 @@ func (cd cypherDriver) read(conceptUUID string, limit int, fromDateEpoch int64, 
 	results := []neoReadStruct{}
 	var query *neoism.CypherQuery
 
-	if cd.isNewConcordanceModel(conceptUUID) {
-		var whereClause string
-		if fromDateEpoch > 0 && toDateEpoch > 0 {
-			whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate} "
-		}
+	var whereClause string
+	if fromDateEpoch > 0 && toDateEpoch > 0 {
+		whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate} "
+	}
 
-		query = &neoism.CypherQuery{
-			Statement: `
-				MATCH (cc:Concept{uuid:{conceptUUID}})-[r:EQUIVALENT_TO]->(canon:Concept)
-				MATCH (canon)<-[:EQUIVALENT_TO]-(leaves)<-[]-(c:Content)` +
-				whereClause +
-				`RETURN c.uuid as uuid, labels(c) as types
-				ORDER BY c.publishedDateEpoch DESC
-				LIMIT({maxContentItems})`,
-			Parameters: neoism.Props{
-				"conceptUUID":     conceptUUID,
-				"maxContentItems": limit,
-				"fromDate":        fromDateEpoch,
-				"toDate":          toDateEpoch,
-			},
-			Result: &results,
-		}
-	} else {
-		var whereClause string
-		if fromDateEpoch > 0 && toDateEpoch > 0 {
-			whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate} "
-		}
-		query = &neoism.CypherQuery{
-			Statement: `
-		MATCH (upp:UPPIdentifier{value:{conceptUUID}})-[:IDENTIFIES]->(cc:Concept)
-		MATCH (c:Content)-[rel]->(cc)` +
-				whereClause +
-				`RETURN c.uuid as uuid, labels(c) as types
+	parameters := neoism.Props{
+		"conceptUUID":     conceptUUID,
+		"maxContentItems": limit,
+		"fromDate":        fromDateEpoch,
+		"toDate":          toDateEpoch}
+
+	// New concordance model
+	query = &neoism.CypherQuery{
+		Statement: `
+			MATCH (cc:Concept{uuid:{conceptUUID}})-[r:EQUIVALENT_TO]->(canon:Concept)
+			MATCH (canon)<-[:EQUIVALENT_TO]-(leaves)<-[]-(c:Content)` +
+			whereClause +
+			`RETURN c.uuid as uuid, labels(c) as types
 			ORDER BY c.publishedDateEpoch DESC
 			LIMIT({maxContentItems})`,
-			Parameters: neoism.Props{
-				"conceptUUID":     conceptUUID,
-				"maxContentItems": limit,
-				"fromDate":        fromDateEpoch,
-				"toDate":          toDateEpoch,
-			},
+		Parameters: parameters,
+		Result: &results,
+	}
+	err := cd.conn.CypherBatch([]*neoism.CypherQuery{query})
+	if err != nil {
+		return contentList{}, false, err
+	}
+
+	// Next try the old concordance model
+	if len(results) == 0 {
+		query = &neoism.CypherQuery{
+			Statement: `
+			MATCH (upp:UPPIdentifier{value:{conceptUUID}})-[:IDENTIFIES]->(cc:Concept)
+			MATCH (c:Content)-[rel]->(cc)` +
+					whereClause +
+					`RETURN c.uuid as uuid, labels(c) as types
+			ORDER BY c.publishedDateEpoch DESC
+			LIMIT({maxContentItems})`,
+			Parameters: parameters,
 			Result: &results,
 		}
 	}
 
-	err := cd.conn.CypherBatch([]*neoism.CypherQuery{query})
+	err = cd.conn.CypherBatch([]*neoism.CypherQuery{query})
 
 	if err != nil || len(results) == 0 {
 		return contentList{}, false, err
@@ -91,29 +89,6 @@ func (cd cypherDriver) read(conceptUUID string, limit int, fromDateEpoch int64, 
 
 	cntList := neoReadStructToContentList(&results, cd.env)
 	return cntList, true, nil
-}
-
-func (cd cypherDriver) isNewConcordanceModel(conceptUUID string) bool {
-	results := []struct{
-		uuid string
-	}{}
-
-	query := &neoism.CypherQuery{
-		Statement: `
-		MATCH (upp:UPPIdentifier{value:{conceptUUID}})-[:IDENTIFIES]->(cc:Concept)
-		MATCH (cc)-[:EQUIVALENT_TO]->(canonical:Concept) RETURN cc.uuid as uuid`,
-		Parameters: neoism.Props{
-			"conceptUUID": conceptUUID,
-		},
-		Result: &results,
-	}
-
-	err := cd.conn.CypherBatch([]*neoism.CypherQuery{query})
-	if err != nil || len(results) == 0 {
-		return false
-	}
-
-	return true
 }
 
 func neoReadStructToContentList(neo *[]neoReadStruct, env string) []content {

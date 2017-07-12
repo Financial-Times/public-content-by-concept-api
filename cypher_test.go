@@ -243,6 +243,7 @@ func cleanDB(t *testing.T, uuids ...string) {
 	err := db.CypherBatch(qs)
 	assert.NoError(t, err, fmt.Sprintf("Error executing clean up cypher. Error: %v", err))
 }
+
 func writeJSONToService(service baseftrwapp.Service, pathToJSONFile string, assert *assert.Assertions) {
 	f, err := os.Open(pathToJSONFile)
 	assert.NoError(err)
