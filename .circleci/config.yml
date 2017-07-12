@@ -48,3 +48,22 @@ jobs:
       - store_artifacts:
           path: /tmp/artifacts
           destination: build
+  docker_build:
+    working_directory: /public-concordances-api
+    docker:
+      - image: docker:1.12.6-git
+    steps:
+      - checkout
+      - setup_docker_engine
+      - run:
+          name: Build Dockerfile
+          command: docker build .
+
+workflows:
+  version: 2
+  tests_and_docker:
+    jobs:
+      - build
+      - docker_build:
+          requires:
+            - build
