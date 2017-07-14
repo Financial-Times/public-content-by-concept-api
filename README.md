@@ -12,10 +12,12 @@ _Optional arguments are:
 --neo-url defaults to http://localhost:7474/db/data, which is the out of box url for a local neo4j instance.
 --port defaults to 8080.
 --cache-duration defaults to 1 hour._
-* `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54 `
 
-Or using [httpie](https://github.com/jkbrzt/httpie)
-* `http http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54`
+## Examples: 
+* `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54 `
+* `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54&fromDate=2016-01-02&toDate=2016-01-05&limit=200`
+
+*Note: Optional request params: limit (number of items to return), toDate, fromDate*
 
 ## API definition
 Based on the following [google doc](https://docs.google.com/a/ft.com/document/d/1YjqNYEXkc0Ip-6bGttwnPcAh2XKG6tgzmojTdq8gM2s)
