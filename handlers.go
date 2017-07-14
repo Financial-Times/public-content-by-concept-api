@@ -118,7 +118,7 @@ func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Reque
 	var fromDateEpoch, toDateEpoch int64
 
 	if fromDateParam == "" {
-		log.Infof("No fromDate supplied.")
+		log.Debug("No fromDate supplied.")
 	} else {
 		fromDateEpoch = convertStringToDateTimeEpoch(fromDateParam)
 	}
