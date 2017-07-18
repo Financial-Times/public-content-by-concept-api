@@ -1,13 +1,6 @@
 # Public API for Content By Concept (public-content-by-concept-api)
 __Provides a public API for Content retrieved via Concept that is mentioned stored in a Neo4J graph database__
 
-## Build & deployment etc:
-_NB You will need to tag a commit in order to build, since the UI asks for a tag to build / deploy_
-* [Jenkins view](http://ftjen10085-lvpr-uk-p:8181/view/JOBS-public-content-by-concept-api/)
-* [Build and publish to forge](http://ftjen10085-lvpr-uk-p:8181/job/public-content-by-concept-api-build)
-* [Deploy to Test](http://ftjen10085-lvpr-uk-p:8181/view/JOBS-public-content-by-concept-api/job/public-content-by-concept-api-deploy-test/)
-* [Deploy to Production](http://ftjen10085-lvpr-uk-p:8181/view/JOBS-public-content-by-concept-api/job/public-content-by-concept-api-deploy-to-prod/)
-
 
 ## Installation & running locally
 * `go get -u github.com/Financial-Times/public-content-by-concept-api`
@@ -19,10 +12,12 @@ _Optional arguments are:
 --neo-url defaults to http://localhost:7474/db/data, which is the out of box url for a local neo4j instance.
 --port defaults to 8080.
 --cache-duration defaults to 1 hour._
-* `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54 `
 
-Or using [httpie](https://github.com/jkbrzt/httpie)
-* `http http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54`
+## Examples: 
+* `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54 `
+* `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54&fromDate=2016-01-02&toDate=2016-01-05&limit=200`
+
+*Note: Optional request params: limit (number of items to return), toDate, fromDate*
 
 ## API definition
 Based on the following [google doc](https://docs.google.com/a/ft.com/document/d/1YjqNYEXkc0Ip-6bGttwnPcAh2XKG6tgzmojTdq8gM2s)

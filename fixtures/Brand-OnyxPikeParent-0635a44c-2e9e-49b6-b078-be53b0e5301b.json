@@ -1,0 +1,13 @@
+{
+  "prefUUID":"0635a44c-2e9e-49b6-b078-be53b0e5301b",
+  "prefLabel":"Onyx Pike Parent",
+  "type":"Brand",
+  "sourceRepresentations": [{
+      "uuid": "0635a44c-2e9e-49b6-b078-be53b0e5301b",
+      "prefLabel": "Onyx Pike Parent",
+      "authority": "Smartlogic",
+      "authorityValue": "0635a44c-2e9e-49b6-b078-be53b0e5301b",
+      "type": "Brand"
+    }
+  ]
+}

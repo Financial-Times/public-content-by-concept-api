@@ -1,0 +1,18 @@
+{
+  "uuid": "5a9c7429-e76b-4f37-b5d1-842d64a45167",
+  "title": "An article that prooves concordance part III can work",
+  "byline": "By Ace Unconcorder",
+  "identifiers": [
+    {
+      "authority": "http://api.ft.com/system/FTCOM-METHODE",
+      "identifierValue": "5a9c7429-e76b-4f37-b5d1-842d64a45167"
+    }
+  ],
+  "publishedDate": "2013-03-07T19:18:01.000Z",
+  "body": "<body>Semantic are attempting to do Concordance Part III</body>",
+  "brands": [
+    {
+      "id": "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
+    }
+  ]
+}

@@ -3,6 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
+			"path": "@26dc8ba8a2cda0913e10db3e1072f1d52ac8cefb",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "nV+iZwjtm4ncxB/+L/w5tNEIWQU=",
 			"path": "github.com/Financial-Times/annotations-rw-neo4j/annotations",
 			"revision": "aa64d7f26ed907b3cd8ad54b2744d3b6c2db32ae",
@@ -10,26 +14,36 @@
 			"versionExact": "0.2.0"
 		},
 		{
-			"checksumSHA1": "fg1dZ/MIpnMKoW0vJE2y5HpHXXc=",
+			"checksumSHA1": "5b1Y79xoNFuE/XXi5LDN3ys4OYA=",
 			"path": "github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp",
-			"revision": "01975d9da464dc2b864f1a5cf603827fdaa8e661",
-			"revisionTime": "2016-09-09T09:52:18Z"
+			"revision": "3cefe0d2386280234af7a3f6e9b9aa3b664df812",
+			"revisionTime": "2017-07-10T13:00:32Z"
 		},
 		{
-			"checksumSHA1": "ft2GrORzOZ/m/m39SyGJs41O2dQ=",
+			"checksumSHA1": "7YM7aq6cdSPBLUzrL8H2/yi81BY=",
+			"path": "github.com/Financial-Times/concepts-rw-neo4j",
+			"revision": "a5870df103bb1c6e5c274f7c72429714ed80943a",
+			"revisionTime": "2017-07-18T07:41:22Z",
+			"version": "1.1.0",
+			"versionExact": "1.1.0"
+		},
+		{
+			"checksumSHA1": "uYE44WXlte37YhuJK8ED05OD5OA=",
 			"path": "github.com/Financial-Times/concepts-rw-neo4j/concepts",
-			"revision": "1ddcf42a8f9824492b53ba1362cc9bc89046a481",
-			"revisionTime": "2017-04-28T09:06:27Z",
-			"version": "=1.0.1",
-			"versionExact": "1.0.1"
+			"revision": "26dc8ba8a2cda0913e10db3e1072f1d52ac8cefb",
+			"revisionTime": "2017-07-10T12:39:28Z"
 		},
 		{
-			"checksumSHA1": "ipuFRVLCW6vj908QdXx1eplUPX4=",
+			"checksumSHA1": "Nv8WGvaFsT2HfwcjEJD+GNylqk4=",
 			"path": "github.com/Financial-Times/content-rw-neo4j/content",
-			"revision": "1c1c7be59dc54c1214e2a64f32e55f951c6b5328",
-			"revisionTime": "2017-03-03T12:22:17Z",
-			"version": "=1.0.3",
-			"versionExact": "1.0.3"
+			"revision": "a8bb8bcedece53cd58dd248b0b6a34ba38034ba2",
+			"revisionTime": "2017-07-10T15:23:39Z"
+		},
+		{
+			"checksumSHA1": "6U1V2xI8bHaR95+gN+VfO9TqClE=",
+			"path": "github.com/Financial-Times/go-fthealth",
+			"revision": "e7ccca038327a0091303a52445ec1f0fb66cb97b",
+			"revisionTime": "2017-05-25T09:50:41Z"
 		},
 		{
 			"checksumSHA1": "FUhczVSvt/VQAlWfzATo1YLez2E=",
@@ -62,12 +76,10 @@
 			"revisionTime": "2017-01-04T12:16:44Z"
 		},
 		{
-			"checksumSHA1": "giHVzPN1yDGvUgvWS+kJtj7MWlg=",
+			"checksumSHA1": "OViPZtQxGJ8ECf9BBDvQ112tzP4=",
 			"path": "github.com/Financial-Times/organisations-rw-neo4j/organisations",
-			"revision": "433d517527b4834f0094ebfc4c92f59061a98f45",
-			"revisionTime": "2017-02-03T13:49:42Z",
-			"version": "=0.5.2",
-			"versionExact": "0.5.2"
+			"revision": "cb217caf77f1e60a4b8eed7e30416e02c350467f",
+			"revisionTime": "2017-07-10T14:00:21Z"
 		},
 		{
 			"checksumSHA1": "fqpohN7Qp2qj7TLMbUxh/cK4oH0=",
@@ -94,10 +106,10 @@
 			"revisionTime": "2017-03-28T16:39:54Z"
 		},
 		{
-			"checksumSHA1": "TC6pkBrqs0MYZEbikQcrloZw4Ec=",
+			"checksumSHA1": "diw1KueSVzsMHPCNDvj+xQiXSTE=",
 			"path": "github.com/Financial-Times/up-rw-app-api-go/rwapi",
-			"revision": "c7976a0b575e3cad95ec10ebca53798567b39845",
-			"revisionTime": "2016-08-24T12:50:00Z"
+			"revision": "d9d93a1f689538313d12fee6f5f10715cfe280e0",
+			"revisionTime": "2017-07-10T12:58:28Z"
 		},
 		{
 			"checksumSHA1": "cT6+XPBZiXsFbb7cXT6AYNrZyuM=",
@@ -155,6 +167,18 @@
 			"revisionTime": "2015-08-17T12:26:01Z"
 		},
 		{
+			"checksumSHA1": "0PYW8zyGI0iZzb5xxZw+veCjgFM=",
+			"path": "github.com/joho/godotenv",
+			"revision": "3ddb2792f3923947290c4932990136e17852a078",
+			"revisionTime": "2017-07-05T04:31:29Z"
+		},
+		{
+			"checksumSHA1": "UE4lhbPYYWEhqHXQk24OA73m5+8=",
+			"path": "github.com/joho/godotenv/autoload",
+			"revision": "3ddb2792f3923947290c4932990136e17852a078",
+			"revisionTime": "2017-07-05T04:31:29Z"
+		},
+		{
 			"checksumSHA1": "eOXF2PEvYLMeD8DSzLZJWbjYzco=",
 			"path": "github.com/kr/pretty",
 			"revision": "cfb55aafdaf3ec08f0db22699ab822c50091b1c4",
@@ -198,7 +222,7 @@
 			"revisionTime": "2017-05-02T17:39:58Z"
 		},
 		{
-			"checksumSHA1": "uTQtOqR0ePMMcvuvAIksiIZxhqU=",
+			"checksumSHA1": "Xhsm+TevJogC8U4sG6FO+czBMps=",
 			"path": "golang.org/x/sys/unix",
 			"revision": "7a6e5648d140666db5d920909e082ca00a87ba2c",
 			"revisionTime": "2017-02-01T04:15:14Z"
