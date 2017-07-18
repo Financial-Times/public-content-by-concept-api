@@ -167,7 +167,7 @@ func TestNewConcordanceModelWithBrands(t *testing.T) {
 	writeContent(assert, db, content2UUID)
 	writeAnnotations(assert, db,  content3UUID, "./fixtures/Annotations-5a9c7429-e76b-4f37-b5d1-842d64a45167-V2.json")
 	writeAnnotations(assert, db, content2UUID, "./fixtures/Annotations-bfa97890-76ff-4a35-a775-b8768f7ea383-V2.json")
-	writeConcept(assert, db, "./fixtures/Brand-OnyxPike-4c4738cb-45df-43fe-ac7c-bab963b698ea.json")
+	writeConcept(assert, db, "./fixtures/Brand-OnyxPike-9a07c16f-def0-457d-a04a-57ba68ba1e00.json")
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
 	contentList, found, err := contentByConceptDriver.read(OnyxPikeBrandUUID, defaultLimit, 0, 0)

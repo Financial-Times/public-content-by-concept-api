@@ -100,7 +100,7 @@ func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Reque
 	var err error
 
 	if limitParam == "" {
-		log.Infof("No limit provided. Using default: %v", defaultLimit)
+		log.Debugf("No limit provided. Using default: %v", defaultLimit)
 		limit = defaultLimit
 	} else {
 		limit, err = strconv.Atoi(limitParam)
@@ -124,7 +124,7 @@ func (hh *httpHandlers) getContentByConcept(w http.ResponseWriter, r *http.Reque
 	}
 
 	if toDateParam == "" {
-		log.Infof("No toDate supplied")
+		log.Debug("No toDate supplied")
 	} else {
 		toDateEpoch = convertStringToDateTimeEpoch(toDateParam)
 	}
