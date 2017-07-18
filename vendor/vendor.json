@@ -20,6 +20,14 @@
 			"revisionTime": "2017-07-10T13:00:32Z"
 		},
 		{
+			"checksumSHA1": "7YM7aq6cdSPBLUzrL8H2/yi81BY=",
+			"path": "github.com/Financial-Times/concepts-rw-neo4j",
+			"revision": "a5870df103bb1c6e5c274f7c72429714ed80943a",
+			"revisionTime": "2017-07-18T07:41:22Z",
+			"version": "1.1.0",
+			"versionExact": "1.1.0"
+		},
+		{
 			"checksumSHA1": "uYE44WXlte37YhuJK8ED05OD5OA=",
 			"path": "github.com/Financial-Times/concepts-rw-neo4j/concepts",
 			"revision": "26dc8ba8a2cda0913e10db3e1072f1d52ac8cefb",

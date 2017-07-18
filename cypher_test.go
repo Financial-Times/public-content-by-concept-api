@@ -15,6 +15,7 @@ import (
 	"github.com/Financial-Times/organisations-rw-neo4j/organisations"
 	"github.com/jmcvetta/neoism"
 	"github.com/stretchr/testify/assert"
+	_ "github.com/joho/godotenv/autoload"
 	"log"
 )
 
@@ -27,8 +28,7 @@ const (
 	MSJConceptUUID         = "5d1510f8-2779-4b74-adab-0a5eb138fca6"
 	FakebookConceptUUID    = "eac853f5-3859-4c08-8540-55e043719400"
 	MetalMickeyConceptUUID = "0483bef8-5797-40b8-9b25-b12e492f63c6"
-	OnyxPikeBrandUUID = "4c4738cb-45df-43fe-ac7c-bab963b698ea"
-	OnyxPikeBrandUUID2 = "9a07c16f-def0-457d-a04a-57ba68ba1e00"
+	OnyxPikeBrandUUID = "9a07c16f-def0-457d-a04a-57ba68ba1e00"
 	OnyxPikeParentBrandUUID = "0635a44c-2e9e-49b6-b078-be53b0e5301b"
 
 
@@ -50,7 +50,7 @@ func init() {
 func neoUrl() string {
 	url := os.Getenv("NEO4J_TEST_URL")
 	if url == "" {
-		url = "http://localhost:7777/db/data"
+		url = "http://localhost:7474/db/data"
 	}
 	return url
 }
@@ -161,13 +161,13 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 
 func TestNewConcordanceModelWithBrands(t *testing.T) {
 	assert := assert.New(t)
-	defer cleanDB(t, content2UUID, content3UUID, OnyxPikeBrandUUID2, OnyxPikeBrandUUID)
+	defer cleanDB(t, content2UUID, content3UUID, OnyxPikeBrandUUID)
 
 	writeContent(assert, db, content3UUID)
 	writeContent(assert, db, content2UUID)
 	writeAnnotations(assert, db,  content3UUID, "./fixtures/Annotations-5a9c7429-e76b-4f37-b5d1-842d64a45167-V2.json")
 	writeAnnotations(assert, db, content2UUID, "./fixtures/Annotations-bfa97890-76ff-4a35-a775-b8768f7ea383-V2.json")
-	writeConcept(assert, db, "./fixtures/Brand-OnyxPike-9a07c16f-def0-457d-a04a-57ba68ba1e00.json")
+	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
 
 	contentByConceptDriver := newCypherDriver(db, "prod")
 	contentList, found, err := contentByConceptDriver.read(OnyxPikeBrandUUID, defaultLimit, 0, 0)
@@ -179,7 +179,7 @@ func TestNewConcordanceModelWithBrands(t *testing.T) {
 
 func TestNewConcordanceModelWithBrandsDoesntReturnParentContent(t *testing.T) {
 	assert := assert.New(t)
-	defer cleanDB(t, content2UUID, content3UUID, content4UUID, OnyxPikeBrandUUID2, OnyxPikeBrandUUID, OnyxPikeParentBrandUUID)
+	defer cleanDB(t, content2UUID, content3UUID, content4UUID, OnyxPikeBrandUUID, OnyxPikeParentBrandUUID)
 
 	writeContent(assert, db, content2UUID)
 	writeContent(assert, db, content3UUID)

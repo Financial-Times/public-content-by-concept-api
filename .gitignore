@@ -1,3 +1,4 @@
 public-content-by-concept-api*
 .idea
 vendor/*/
+.env
