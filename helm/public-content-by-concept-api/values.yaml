@@ -7,7 +7,7 @@ service:
 replicaCount: 2
 image:
   repository: coco/public-content-by-concept-api
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 env: 
   app: 
     port: "8080" 
