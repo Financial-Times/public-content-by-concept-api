@@ -31,7 +31,7 @@ spec:
               name: global-config
               key: neo4j.read.only.url  
         - name: APP_PORT
-          value: {{ .Values.env.app.port }}
+          value: "{{ .Values.env.app.port }}"
         - name: CACHE_DURATION
           value: {{ .Values.env.cache.duration }}
         - name: GRAPHITE_ADDRESS
