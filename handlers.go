@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"github.com/Financial-Times/go-fthealth/v1a"
-	log "github.com/Sirupsen/logrus"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
+	"github.com/Financial-Times/service-status-go/gtg"
+	log "github.com/Sirupsen/logrus"
 )
 
 type httpHandlers struct {
@@ -18,15 +19,14 @@ type httpHandlers struct {
 	cacheControlHeader string
 }
 
-//var maxAge = 24 * time.Hour
-
-func (hh *httpHandlers) healthCheck() v1a.Check {
-	return v1a.Check{
+func (hh *httpHandlers) healthCheck() fthealth.Check {
+	return fthealth.Check{
+		ID:               "neo4j-check",
 		BusinessImpact:   "Unable to respond to Public Content By Concept api requests",
-		Name:             "Check connectivity to Neo4j - neoUrl is a parameter in hieradata for this service",
-		PanicGuide:       "https://sites.google.com/a/ft.com/ft-technology-service-transition/home/run-book-library/public-content-by-concept-api",
+		Name:             "Check connectivity to Neo4j",
+		PanicGuide:       "https://dewey.ft.com/content-by-concept-api.html",
 		Severity:         1,
-		TechnicalSummary: `Cannot connect to Neo4j. If this check fails, check that Neo4j instance is up and running. You can find the neoUrl as a parameter in hieradata for this service.`,
+		TechnicalSummary: `Cannot connect to Neo4j. If this check fails, check that Neo4j instance is up and running.`,
 		Checker:          hh.checker,
 	}
 }
@@ -43,12 +43,19 @@ func (hh *httpHandlers) ping(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "pong")
 }
 
-//goodToGo returns a 503 if the healthcheck fails - suitable for use from varnish to check availability of a node
-func (hh *httpHandlers) goodToGo(writer http.ResponseWriter, req *http.Request) {
-	if _, err := hh.checker(); err != nil {
-		writer.WriteHeader(http.StatusServiceUnavailable)
+//GTG returns a 503 if the healthcheck fails - suitable for use from varnish to check availability of a node
+func (hh *httpHandlers) GTG() gtg.Status {
+	statusCheck := func() gtg.Status {
+		return gtgCheck(hh.checker)
 	}
+	return gtg.FailFastParallelCheck([]gtg.StatusChecker{statusCheck})()
+}
 
+func gtgCheck(handler func() (string, error)) gtg.Status {
+	if _, err := handler(); err != nil {
+		return gtg.Status{GoodToGo: false, Message: err.Error()}
+	}
+	return gtg.Status{GoodToGo: true}
 }
 
 // buildInfoHandler - This is a stop gap and will be added to when we can define what we should display here

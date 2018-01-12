@@ -1,15 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
-
-	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
-	"github.com/Financial-Times/go-fthealth/v1a"
+	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
@@ -99,17 +98,27 @@ func runServer(neoURL string, port string, cacheDuration string, env string) {
 		log.Fatalf("Error connecting to neo4j %s", err)
 	}
 
-	httpHandlers := httpHandlers{newCypherDriver(db, env), cacheControlHeader}
+	handlers := httpHandlers{newCypherDriver(db, env), cacheControlHeader}
 
-	r := router(httpHandlers)
+	healthCheck := fthealth.TimedHealthCheck{
+		HealthCheck: fthealth.HealthCheck{
+			SystemCode:  "content-by-concept-api",
+			Name:        "Content-by-Concept Healthchecks",
+			Description: "Checks for accessing neo4j",
+			Checks:      []fthealth.Check{handlers.healthCheck()},
+		},
+		Timeout: 10 * time.Second,
+	}
+
+	r := router(handlers)
 
 	// Healthchecks and standards first
 	http.HandleFunc(status.PingPath, status.PingHandler)
 	http.HandleFunc(status.PingPathDW, status.PingHandler)
 	http.HandleFunc(status.BuildInfoPath, status.BuildInfoHandler)
 	http.HandleFunc(status.BuildInfoPathDW, status.BuildInfoHandler)
-	http.HandleFunc("/__health", v1a.Handler("Content-by-Concept Healthchecks", "Checks for accessing neo4j", httpHandlers.healthCheck()))
-	http.HandleFunc("/__gtg", httpHandlers.goodToGo)
+	http.HandleFunc("/__health", fthealth.Handler(healthCheck))
+	http.HandleFunc(status.GTGPath, status.NewGoodToGoHandler(handlers.GTG))
 
 	http.Handle("/", r)
 
