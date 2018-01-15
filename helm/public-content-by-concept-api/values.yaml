@@ -16,6 +16,8 @@ env:
   cache: 
     duration: "30s" 
 resources:
+  requests:
+    memory: 25Mi
   limits:
     memory: 256Mi
 
