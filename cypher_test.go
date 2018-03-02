@@ -30,6 +30,7 @@ const (
 	MetalMickeyConceptUUID  = "0483bef8-5797-40b8-9b25-b12e492f63c6"
 	OnyxPikeBrandUUID       = "9a07c16f-def0-457d-a04a-57ba68ba1e00"
 	OnyxPikeParentBrandUUID = "0635a44c-2e9e-49b6-b078-be53b0e5301b"
+	OnyPikeyRightBrandUUID  = "4c4738cb-45df-43fe-ac7c-bab963b698ea"
 )
 
 //Reusable Neo4J connection
@@ -158,7 +159,7 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 
 func TestNewConcordanceModelWithBrands(t *testing.T) {
 	assert := assert.New(t)
-	defer cleanDB(t, content2UUID, content3UUID, OnyxPikeBrandUUID)
+	defer cleanDB(t, content2UUID, content3UUID, OnyxPikeBrandUUID, OnyPikeyRightBrandUUID)
 
 	writeContent(assert, db, content3UUID)
 	writeContent(assert, db, content2UUID)
@@ -176,7 +177,7 @@ func TestNewConcordanceModelWithBrands(t *testing.T) {
 
 func TestNewConcordanceModelWithBrandsDoesntReturnParentContent(t *testing.T) {
 	assert := assert.New(t)
-	defer cleanDB(t, content2UUID, content3UUID, content4UUID, OnyxPikeBrandUUID, OnyxPikeParentBrandUUID)
+	defer cleanDB(t, content2UUID, content3UUID, content4UUID, OnyxPikeBrandUUID, OnyxPikeParentBrandUUID, OnyPikeyRightBrandUUID)
 
 	writeContent(assert, db, content2UUID)
 	writeContent(assert, db, content3UUID)
