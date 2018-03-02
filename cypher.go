@@ -57,7 +57,7 @@ func (cd cypherDriver) read(conceptUUID string, limit int, fromDateEpoch int64, 
 			ORDER BY c.publishedDateEpoch DESC
 			LIMIT({maxContentItems})`,
 		Parameters: parameters,
-		Result: &results,
+		Result:     &results,
 	}
 	err := cd.conn.CypherBatch([]*neoism.CypherQuery{query})
 	if err != nil {
@@ -70,12 +70,12 @@ func (cd cypherDriver) read(conceptUUID string, limit int, fromDateEpoch int64, 
 			Statement: `
 			MATCH (upp:UPPIdentifier{value:{conceptUUID}})-[:IDENTIFIES]->(cc:Concept)
 			MATCH (c:Content)-[rel]->(cc)` +
-					whereClause +
-					`RETURN c.uuid as uuid, labels(c) as types
+				whereClause +
+				`RETURN c.uuid as uuid, labels(c) as types
 			ORDER BY c.publishedDateEpoch DESC
 			LIMIT({maxContentItems})`,
 			Parameters: parameters,
-			Result: &results,
+			Result:     &results,
 		}
 	}
 
