@@ -14,25 +14,22 @@ import (
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/Financial-Times/organisations-rw-neo4j/organisations"
 	"github.com/jmcvetta/neoism"
-	"github.com/stretchr/testify/assert"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/stretchr/testify/assert"
 	"log"
 )
 
 const (
 	//Generate uuids so there's no clash with real data
-	contentUUID            = "3fc9fe3e-af8c-4f7f-961a-e5065392bb31"
-	content2UUID           = "bfa97890-76ff-4a35-a775-b8768f7ea383"
-	content3UUID = "5a9c7429-e76b-4f37-b5d1-842d64a45167"
-	content4UUID = "8e193b84-4697-41aa-a480-065831d1d964"
-	MSJConceptUUID         = "5d1510f8-2779-4b74-adab-0a5eb138fca6"
-	FakebookConceptUUID    = "eac853f5-3859-4c08-8540-55e043719400"
-	MetalMickeyConceptUUID = "0483bef8-5797-40b8-9b25-b12e492f63c6"
-	OnyxPikeBrandUUID = "9a07c16f-def0-457d-a04a-57ba68ba1e00"
+	contentUUID             = "3fc9fe3e-af8c-4f7f-961a-e5065392bb31"
+	content2UUID            = "bfa97890-76ff-4a35-a775-b8768f7ea383"
+	content3UUID            = "5a9c7429-e76b-4f37-b5d1-842d64a45167"
+	content4UUID            = "8e193b84-4697-41aa-a480-065831d1d964"
+	MSJConceptUUID          = "5d1510f8-2779-4b74-adab-0a5eb138fca6"
+	FakebookConceptUUID     = "eac853f5-3859-4c08-8540-55e043719400"
+	MetalMickeyConceptUUID  = "0483bef8-5797-40b8-9b25-b12e492f63c6"
+	OnyxPikeBrandUUID       = "9a07c16f-def0-457d-a04a-57ba68ba1e00"
 	OnyxPikeParentBrandUUID = "0635a44c-2e9e-49b6-b078-be53b0e5301b"
-
-
-
 )
 
 //Reusable Neo4J connection
@@ -77,7 +74,7 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 
 	writeContent(assert, db, contentUUID)
 	writeOrganisations(assert, db)
-	writeAnnotations(assert, db, contentUUID,"./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
 	writeConcept(assert, db, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
@@ -114,7 +111,7 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 
 	writeContent(assert, db, contentUUID)
 	writeOrganisations(assert, db)
-	writeAnnotations(assert, db, contentUUID,"./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
 	writeConcept(assert, db, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
@@ -147,7 +144,7 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	writeContent(assert, db, contentUUID)
-	writeAnnotations(assert, db,  contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
 	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
 
 	defer cleanDB(t, content2UUID, MSJConceptUUID, contentUUID, MetalMickeyConceptUUID, FakebookConceptUUID)
@@ -165,7 +162,7 @@ func TestNewConcordanceModelWithBrands(t *testing.T) {
 
 	writeContent(assert, db, content3UUID)
 	writeContent(assert, db, content2UUID)
-	writeAnnotations(assert, db,  content3UUID, "./fixtures/Annotations-5a9c7429-e76b-4f37-b5d1-842d64a45167-V2.json")
+	writeAnnotations(assert, db, content3UUID, "./fixtures/Annotations-5a9c7429-e76b-4f37-b5d1-842d64a45167-V2.json")
 	writeAnnotations(assert, db, content2UUID, "./fixtures/Annotations-bfa97890-76ff-4a35-a775-b8768f7ea383-V2.json")
 	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
 
@@ -186,7 +183,7 @@ func TestNewConcordanceModelWithBrandsDoesntReturnParentContent(t *testing.T) {
 	writeContent(assert, db, content4UUID)
 
 	writeAnnotations(assert, db, content2UUID, fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content2UUID))
-	writeAnnotations(assert, db,  content3UUID, fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content3UUID))
+	writeAnnotations(assert, db, content3UUID, fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content3UUID))
 	writeAnnotations(assert, db, content4UUID, fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content4UUID))
 
 	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))

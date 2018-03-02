@@ -25,7 +25,7 @@ func (hh *httpHandlers) healthCheck() fthealth.Check {
 		BusinessImpact:   "Unable to respond to Public Content By Concept api requests",
 		Name:             "Check connectivity to Neo4j",
 		PanicGuide:       "https://dewey.ft.com/content-by-concept-api.html",
-		Severity:         1,
+		Severity:         2,
 		TechnicalSummary: `Cannot connect to Neo4j. If this check fails, check that Neo4j instance is up and running.`,
 		Checker:          hh.checker,
 	}
