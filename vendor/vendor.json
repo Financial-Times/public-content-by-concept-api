@@ -56,12 +56,12 @@
 			"versionExact": "0.1.0"
 		},
 		{
-			"checksumSHA1": "ZmT6PPQSF7C4aHQ2HO8QsKtYStg=",
+			"checksumSHA1": "l8zNPmGcZ9G0++pr/v2wTlgrZ2E=",
 			"path": "github.com/Financial-Times/neo-model-utils-go/mapper",
-			"revision": "1a5407658c842183647f4799bb66ecac73af97a8",
-			"revisionTime": "2017-04-05T08:23:10Z",
-			"version": "=0.2.0",
-			"versionExact": "0.2.0"
+			"revision": "a4260e67ed65bb877cc74a8c71f2f1abc226a335",
+			"revisionTime": "2018-03-16T11:44:20Z",
+			"version": "0.3.3",
+			"versionExact": "0.3.3"
 		},
 		{
 			"checksumSHA1": "IDKJ/mqVeFl91y07EpjO6Kbnwnc=",
