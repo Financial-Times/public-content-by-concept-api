@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
-	log "github.com/Sirupsen/logrus"
 	"github.com/jmcvetta/neoism"
+	log "github.com/sirupsen/logrus"
 )
 
 // Driver interface
@@ -33,7 +33,7 @@ type neoReadStruct struct {
 }
 
 func (cd cypherDriver) read(conceptUUID string, limit int, fromDateEpoch int64, toDateEpoch int64) (contentList, bool, error) {
-	results := []neoReadStruct{}
+	var results []neoReadStruct
 	var query *neoism.CypherQuery
 
 	var whereClause string
@@ -53,8 +53,9 @@ func (cd cypherDriver) read(conceptUUID string, limit int, fromDateEpoch int64, 
 			MATCH (cc:Concept{uuid:{conceptUUID}})-[r:EQUIVALENT_TO]->(canon:Concept)
 			MATCH (canon)<-[:EQUIVALENT_TO]-(leaves)<-[]-(c:Content)` +
 			whereClause +
-			`RETURN c.uuid as uuid, labels(c) as types
+			`WITH DISTINCT c
 			ORDER BY c.publishedDateEpoch DESC
+			RETURN c.uuid as uuid, labels(c) as types
 			LIMIT({maxContentItems})`,
 		Parameters: parameters,
 		Result:     &results,
@@ -71,8 +72,9 @@ func (cd cypherDriver) read(conceptUUID string, limit int, fromDateEpoch int64, 
 			MATCH (upp:UPPIdentifier{value:{conceptUUID}})-[:IDENTIFIES]->(cc:Concept)
 			MATCH (c:Content)-[rel]->(cc)` +
 				whereClause +
-				`RETURN c.uuid as uuid, labels(c) as types
+				`WITH DISTINCT c
 			ORDER BY c.publishedDateEpoch DESC
+			RETURN c.uuid as uuid, labels(c) as types
 			LIMIT({maxContentItems})`,
 			Parameters: parameters,
 			Result:     &results,

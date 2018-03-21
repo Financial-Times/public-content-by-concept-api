@@ -11,7 +11,7 @@ import (
 
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/service-status-go/gtg"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 type httpHandlers struct {
@@ -43,7 +43,7 @@ func (hh *httpHandlers) ping(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "pong")
 }
 
-//GTG returns a 503 if the healthcheck fails - suitable for use from varnish to check availability of a node
+// GTG - returns a 503 if the healthcheck fails - suitable for use from varnish to check availability of a node
 func (hh *httpHandlers) GTG() gtg.Status {
 	statusCheck := func() gtg.Status {
 		return gtgCheck(hh.checker)
