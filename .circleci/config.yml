@@ -34,31 +34,11 @@ jobs:
       - run: |
           go get -u github.com/jstemmer/go-junit-report
           go get -u github.com/mattn/goveralls
-          wget https://raw.githubusercontent.com/Financial-Times/cookiecutter-upp-golang/master/coverage.sh && chmod +x coverage.sh
       - run: |
           mkdir -p $CIRCLE_TEST_REPORTS/golang
           mkdir -p $CIRCLE_ARTIFACTS
           go test -race -v | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
-
-          echo "mode: atomic" > $CIRCLE_ARTIFACTS/coverage.out # covermode is set to atomic when running tests using the -race flag
-
-          PACKAGES=`govendor list -no-status +local`
-          PACKAGES_LIST=`govendor list -no-status +local | paste -sd ',' -`
-          EXIT_CODE=0
-
-          for PKG in $PACKAGES; do
-            echo =-= $PKG
-          
-            go test -v -race -coverpkg=$PACKAGES_LIST -coverprofile=$CIRCLE_ARTIFACTS/profile.out $PKG; __EXIT_CODE__=$?
-
-            if [ "$__EXIT_CODE__" -ne "0" ]; then
-              EXIT_CODE=$__EXIT_CODE__
-            fi
-
-            if [ -f $CIRCLE_ARTIFACTS/profile.out ]; then
-              tail -n +2 $CIRCLE_ARTIFACTS/profile.out >> $CIRCLE_ARTIFACTS/coverage.out; rm $CIRCLE_ARTIFACTS/profile.out
-            fi
-          done
+          go test -race -cover -coverprofile=$CIRCLE_ARTIFACTS/coverage.out
       - run: |
           goveralls -coverprofile=$CIRCLE_ARTIFACTS/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
       - store_test_results:
