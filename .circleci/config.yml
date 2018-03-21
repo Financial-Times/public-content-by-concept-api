@@ -38,7 +38,7 @@ jobs:
       - run: |
           mkdir -p $CIRCLE_TEST_REPORTS/golang
           mkdir -p $CIRCLE_ARTIFACTS
-          govendor test -race -v +local | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
+          go test -race -v | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
           ./coverage.sh
       - run: |
           goveralls -coverprofile=$CIRCLE_ARTIFACTS/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
