@@ -39,7 +39,26 @@ jobs:
           mkdir -p $CIRCLE_TEST_REPORTS/golang
           mkdir -p $CIRCLE_ARTIFACTS
           go test -race -v | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
-          ./coverage.sh
+
+          echo "mode: atomic" > $CIRCLE_ARTIFACTS/coverage.out # covermode is set to atomic when running tests using the -race flag
+
+          PACKAGES=`govendor list -no-status +local`
+          PACKAGES_LIST=`govendor list -no-status +local | paste -sd ',' -`
+          EXIT_CODE=0
+
+          for PKG in $PACKAGES; do
+            echo =-= $PKG
+          
+            go test -v -race -coverpkg=$PACKAGES_LIST -coverprofile=$CIRCLE_ARTIFACTS/profile.out $PKG; __EXIT_CODE__=$?
+
+            if [ "$__EXIT_CODE__" -ne "0" ]; then
+              EXIT_CODE=$__EXIT_CODE__
+            fi
+
+            if [ -f $CIRCLE_ARTIFACTS/profile.out ]; then
+              tail -n +2 $CIRCLE_ARTIFACTS/profile.out >> $CIRCLE_ARTIFACTS/coverage.out; rm $CIRCLE_ARTIFACTS/profile.out
+            fi
+          done
       - run: |
           goveralls -coverprofile=$CIRCLE_ARTIFACTS/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
       - store_test_results:
