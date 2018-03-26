@@ -1,4 +1,4 @@
-FROM golang:1.8-alpine
+FROM golang:1.9-alpine
 
 ENV PROJECT=public-content-by-concept-api
 COPY . /${PROJECT}-sources/
