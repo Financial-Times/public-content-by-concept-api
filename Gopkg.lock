@@ -40,8 +40,8 @@
 [[projects]]
   name = "github.com/Financial-Times/go-logger"
   packages = ["."]
-  revision = "ec38b420999cfcbc86816afb47f365dad510450c"
-  version = "0.0.3"
+  revision = "febee6537e90971bab6f6fe60b71b4a0562dcab3"
+  version = "0.0.4"
 
 [[projects]]
   name = "github.com/Financial-Times/http-handlers-go"
@@ -123,7 +123,7 @@
   branch = "master"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
-  revision = "4fe82ae3040f80a03d04d2cccb5606a626b8e1ee"
+  revision = "23480c0665776210b5fbbac6eaaee40e3e6a96b7"
 
 [[projects]]
   name = "github.com/jawher/mow.cli"
@@ -198,19 +198,19 @@
   branch = "master"
   name = "go4.org"
   packages = ["osutil"]
-  revision = "fba789b7e39ba524b9e60c45c37a50fae63a2a09"
+  revision = "e6a7f04a962e05f288f348eec6de20fe93b6b292"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "c3a3ad6d03f7a915c0f7e194b7152974bb73d287"
+  revision = "88942b9c40a4c9d203b82b3731787b672d6e809b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "92b859f39abd2d91a854c9f9c4621b2f5054a92d"
+  revision = "6078986fec03a1dcc236c34816c71b0e05018fda"
 
 [[projects]]
   branch = "master"
@@ -219,7 +219,7 @@
     "unix",
     "windows"
   ]
-  revision = "d8e400bc7db4870d786864138af681469693d18c"
+  revision = "13d03a9a82fba647c21a0ef8fba44a795d0f0835"
 
 [[projects]]
   name = "gopkg.in/jmcvetta/napping.v3"
@@ -230,12 +230,12 @@
 [[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "7f97868eec74b32b0982dd158a51a446d1da7eb5"
-  version = "v2.1.1"
+  revision = "86f5ed62f8a0ee96bd888d2efdfd6d4fb100a4eb"
+  version = "v2.2.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fb4158c71290c805d54c5ff32cdcf7da80906f85998a6cb9b071a53b9c183c91"
+  inputs-digest = "ddb5e3d9f53585077c3b298165376fd571203c216e39c4c3a74388bde88db833"
   solver-name = "gps-cdcl"
   solver-version = 1
