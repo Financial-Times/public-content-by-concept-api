@@ -10,8 +10,8 @@ import (
 	"time"
 
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
+	log "github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/service-status-go/gtg"
-	log "github.com/sirupsen/logrus"
 )
 
 type httpHandlers struct {

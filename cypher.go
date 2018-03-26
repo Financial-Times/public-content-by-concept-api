@@ -1,10 +1,10 @@
 package main
 
 import (
+	log "github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/jmcvetta/neoism"
-	log "github.com/sirupsen/logrus"
 )
 
 // Driver interface
