@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"testing"
 	"time"
@@ -16,11 +17,10 @@ import (
 	"github.com/jmcvetta/neoism"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/stretchr/testify/assert"
-	"log"
 )
 
 const (
-	//Generate uuids so there's no clash with real data
+	// Generate uuids so there's no clash with real data
 	contentUUID             = "3fc9fe3e-af8c-4f7f-961a-e5065392bb31"
 	content2UUID            = "bfa97890-76ff-4a35-a775-b8768f7ea383"
 	content3UUID            = "5a9c7429-e76b-4f37-b5d1-842d64a45167"
@@ -33,7 +33,7 @@ const (
 	OnyPikeyRightBrandUUID  = "4c4738cb-45df-43fe-ac7c-bab963b698ea"
 )
 
-//Reusable Neo4J connection
+// Reusable Neo4J connection
 var db neoutils.NeoConnection
 
 func init() {
@@ -212,17 +212,17 @@ func writeOrganisations(assert *assert.Assertions, db neoutils.NeoConnection) {
 }
 
 func writeAnnotations(assert *assert.Assertions, db neoutils.NeoConnection, contentUUID string, fixtures string) annrw.Service {
-	annotationsRW := annrw.NewCypherAnnotationsService(db, "v1", "annotations-v1")
+	annotationsRW := annrw.NewCypherAnnotationsService(db)
 	assert.NoError(annotationsRW.Initialise())
 	writeJSONToAnnotationsService(annotationsRW, contentUUID, fixtures, assert)
 	return annotationsRW
 }
 
-func writeConcept(assert *assert.Assertions, db neoutils.NeoConnection, fixture string) baseftrwapp.Service {
+func writeConcept(assert *assert.Assertions, db neoutils.NeoConnection, fixture string) concepts.ConceptService {
 	conceptsRW := concepts.NewConceptService(db)
 	assert.NoError(conceptsRW.Initialise())
 	log.Printf("Logging Concepts: %v", fixture)
-	writeJSONToService(conceptsRW, fixture, assert)
+	writeJSONToConceptRW(conceptsRW, fixture, assert)
 	return conceptsRW
 }
 
@@ -252,13 +252,23 @@ func writeJSONToService(service baseftrwapp.Service, pathToJSONFile string, asse
 	assert.NoError(errrr)
 }
 
+func writeJSONToConceptRW(service concepts.ConceptService, pathToJSONFile string, assert *assert.Assertions) {
+	f, err := os.Open(pathToJSONFile)
+	assert.NoError(err)
+	dec := json.NewDecoder(f)
+	inst, _, errr := service.DecodeJSON(dec)
+	assert.NoError(errr)
+	_, errrr := service.Write(inst, "TEST_TRANS_ID")
+	assert.NoError(errrr)
+}
+
 func writeJSONToAnnotationsService(service annrw.Service, contentUUID string, pathToJSONFile string, assert *assert.Assertions) {
 	f, err := os.Open(pathToJSONFile)
 	assert.NoError(err)
 	dec := json.NewDecoder(f)
 	inst, errr := service.DecodeJSON(dec)
 	assert.NoError(errr, "Error parsing file %s", pathToJSONFile)
-	errrr := service.Write(contentUUID, inst)
+	errrr := service.Write(contentUUID, "v1", "annotations-v1", "tid_test", inst)
 	assert.NoError(errrr)
 }
 

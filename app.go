@@ -9,12 +9,13 @@ import (
 
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
+	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/rcrowley/go-metrics"
 )
 
@@ -61,14 +62,21 @@ func main() {
 		Desc:   "Duration Get requests should be cached for. e.g. 2h45m would set the max-age value to '7440' seconds",
 		EnvVar: "CACHE_DURATION",
 	})
+	logLevel := app.String(cli.StringOpt{
+		Name:   "logLevel",
+		Value:  "INFO",
+		Desc:   "Level of logging in the service",
+		EnvVar: "LOG_LEVEL",
+	})
 
 	app.Action = func() {
 		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)
 		runServer(*neoURL, *port, *cacheDuration, *env)
-		log.Infof("public-content-by-concept-api will listen on port: %s, connecting to: %s", *port, *neoURL)
+		logger.Infof("public-content-by-concept-api will listen on port: %s, connecting to: %s", *port, *neoURL)
 	}
-	log.SetLevel(log.InfoLevel)
-	log.Infof("Application started with args %s", os.Args)
+
+	logger.InitLogger("public-content-by-concept-api", *logLevel)
+	logger.Infof("Application started with args %s", os.Args)
 	app.Run(os.Args)
 }
 
@@ -76,7 +84,7 @@ func runServer(neoURL string, port string, cacheDuration string, env string) {
 	var cacheControlHeader string
 
 	if duration, durationErr := time.ParseDuration(cacheDuration); durationErr != nil {
-		log.Fatalf("Failed to parse cache duration string, %v", durationErr)
+		logger.Fatalf("Failed to parse cache duration string, %v", durationErr)
 	} else {
 		cacheControlHeader = fmt.Sprintf("max-age=%s, public", strconv.FormatFloat(duration.Seconds(), 'f', 0, 64))
 	}
@@ -95,7 +103,7 @@ func runServer(neoURL string, port string, cacheDuration string, env string) {
 	db, err := neoutils.Connect(neoURL, &conf)
 
 	if err != nil {
-		log.Fatalf("Error connecting to neo4j %s", err)
+		logger.Fatalf("Error connecting to neo4j %s", err)
 	}
 
 	handlers := httpHandlers{newCypherDriver(db, env), cacheControlHeader}
@@ -123,7 +131,7 @@ func runServer(neoURL string, port string, cacheDuration string, env string) {
 	http.Handle("/", r)
 
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatalf("Unable to start server: %v", err)
+		logger.Fatalf("Unable to start server: %v", err)
 	}
 }
 
@@ -136,7 +144,7 @@ func router(hh httpHandlers) http.Handler {
 
 	// Then monitoring
 	var monitoringRouter http.Handler = servicesRouter
-	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
+	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(logger.Logger(), monitoringRouter)
 	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
 
 	return monitoringRouter
