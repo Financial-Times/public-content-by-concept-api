@@ -35,9 +35,9 @@ func (h *ContentByConceptHandler) RegisterAdminHandlers(router *mux.Router, appC
 		Timeout: 10 * time.Second,
 	}
 
-	apiEndpoint, err := api.NewAPIEndpointForFile("../api.yml")
+	apiEndpoint, err := api.NewAPIEndpointForFile("./api.yml")
 	if err != nil {
-		log.WithError(err).WithField("file", "../api.yml").Warn("Failed to serve the API Endpoint for this service. Please validate the Swagger YML and the file location.")
+		log.WithError(err).WithField("file", "./api.yml").Warn("Failed to serve the API Endpoint for this service. Please validate the Swagger YML and the file location.")
 	}
 
 	router.HandleFunc("/__health", fthealth.Handler(hc))
