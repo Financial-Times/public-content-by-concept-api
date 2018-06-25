@@ -1,0 +1,53 @@
+{
+  "prefUUID": "d46c09ce-7861-11e8-b45a-da24cd01f044",
+  "prefLabel": "John Smith",
+  "type": "Person",
+  "aliases": [
+    "Lord John Smith",
+    "John Smith",
+    "Johnny Boy",
+    "Smithy"
+  ],
+  "sourceRepresentations": [
+    {
+      "uuid": "bf3c4c55-4ff6-4439-a36c-3a513f563374",
+      "prefLabel": "John Smith",
+      "type": "Person",
+      "authority": "FACTSET",
+      "authorityValue": "0ABCD-E",
+      "aliases": [
+        "Lord John Smith",
+        "John Smith"
+      ]
+    },
+    {
+      "uuid": "d46c09ce-7861-11e8-b45a-da24cd01f044",
+      "prefLabel": "John Smith",
+      "type": "Person",
+      "authority": "Smartlogic",
+      "authorityValue": "d46c09ce-7861-11e8-b45a-da24cd01f044",
+      "aliases": [
+        "Smithy",
+        "John Smith"
+      ]
+    },
+    {
+      "uuid": "3af8b4e4-7862-11e8-b45a-da24cd01f044",
+      "prefLabel": "John Smith",
+      "type": "Person",
+      "authority": "TME",
+      "authorityValue": "N11dGE8juUH-T04="
+    },
+    {
+      "uuid": "521a2338-2cc7-47dd-8da2-e757b4ceb7ef",
+      "prefLabel": "Lord John Smith",
+      "type": "Person",
+      "authority": "TME",
+      "authorityValue": "MwNGJhM2Vi-T04=",
+      "aliases": [
+        "Johnny Boy",
+        "John Smith"
+      ]
+    }
+  ]
+}

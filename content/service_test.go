@@ -1,9 +1,8 @@
-package main
+package content
 
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"testing"
 	"time"
@@ -12,8 +11,8 @@ import (
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	"github.com/Financial-Times/concepts-rw-neo4j/concepts"
 	cnt "github.com/Financial-Times/content-rw-neo4j/content"
+	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
-	"github.com/Financial-Times/organisations-rw-neo4j/organisations"
 	"github.com/jmcvetta/neoism"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/stretchr/testify/assert"
@@ -31,21 +30,26 @@ const (
 	OnyxPikeBrandUUID       = "9a07c16f-def0-457d-a04a-57ba68ba1e00"
 	OnyxPikeParentBrandUUID = "0635a44c-2e9e-49b6-b078-be53b0e5301b"
 	OnyPikeyRightBrandUUID  = "4c4738cb-45df-43fe-ac7c-bab963b698ea"
+	JohnSmithFSUUID         = "bf3c4c55-4ff6-4439-a36c-3a513f563374"
+	JohnSmithSmartlogicUUID = "d46c09ce-7861-11e8-b45a-da24cd01f044"
+	JohnSmithTMEUUID        = "3af8b4e4-7862-11e8-b45a-da24cd01f044"
+	JohnSmithOtherTMEUUID   = "521a2338-2cc7-47dd-8da2-e757b4ceb7ef"
 )
 
 // Reusable Neo4J connection
 var db neoutils.NeoConnection
 
 func init() {
+	logger.InitLogger("test-service", "debug")
 	conf := neoutils.DefaultConnectionConfig()
 	conf.Transactional = false
-	db, _ = neoutils.Connect(neoUrl(), conf)
+	db, _ = neoutils.Connect(neoURL(), conf)
 	if db == nil {
-		panic("Cannot connect to Neo4J")
+		logger.Fatal("Cannot connect to Neo4J")
 	}
 }
 
-func neoUrl() string {
+func neoURL() string {
 	url := os.Getenv("NEO4J_TEST_URL")
 	if url == "" {
 		url = "http://localhost:7474/db/data"
@@ -57,13 +61,13 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	assert := assert.New(t)
 
 	writeContent(assert, db, contentUUID)
-	writeOrganisations(assert, db)
-	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeAnnotations(assert, db, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeConcept(assert, db, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := newCypherDriver(db, "prod")
-	contentList, found, err := contentByConceptDriver.read(MSJConceptUUID, defaultLimit, 0, 0)
+	contentByConceptDriver := NewContentByConceptService(db)
+	contentList, found, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.True(found, "Found no matching content for concept %s", MSJConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
@@ -74,14 +78,13 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 	assert := assert.New(t)
 
 	writeContent(assert, db, contentUUID)
-	writeOrganisations(assert, db)
-	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
 	writeConcept(assert, db, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
-	contentByConceptDriver := newCypherDriver(db, "prod")
-	contentList, found, err := contentByConceptDriver.read(MetalMickeyConceptUUID, defaultLimit, 0, 0)
+	contentByConceptDriver := NewContentByConceptService(db)
+	contentList, found, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MetalMickeyConceptUUID)
 	assert.True(found, "Found no matching content for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
@@ -93,14 +96,13 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 
 	writeContent(assert, db, contentUUID)
 	writeContent(assert, db, content2UUID)
-	writeOrganisations(assert, db)
-	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
-	writeAnnotations(assert, db, content2UUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeAnnotations(assert, db, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeConcept(assert, db, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, content2UUID)
 
-	contentByConceptDriver := newCypherDriver(db, "prod")
-	contentList, found, err := contentByConceptDriver.read(MSJConceptUUID, 1, 0, 0)
+	contentByConceptDriver := NewContentByConceptService(db)
+	contentList, found, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{1, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.True(found, "Found no matching content for concept %s", MSJConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
@@ -111,16 +113,15 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 	assert := assert.New(t)
 
 	writeContent(assert, db, contentUUID)
-	writeOrganisations(assert, db)
-	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
 	writeConcept(assert, db, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
-	contentByConceptDriver := newCypherDriver(db, "prod")
+	contentByConceptDriver := NewContentByConceptService(db)
 	fromDate, _ := time.Parse("2006-01-02", "2014-03-08")
 	toDate, _ := time.Parse("2006-01-02", "2014-03-09")
-	contentList, found, err := contentByConceptDriver.read(MetalMickeyConceptUUID, defaultLimit, fromDate.Unix(), toDate.Unix())
+	contentList, found, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{defaultLimit, fromDate.Unix(), toDate.Unix()})
 	assert.NoError(err, "Unexpected error for concept %s", MetalMickeyConceptUUID)
 	assert.False(found, "Found matching content for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(0, len(contentList), "Should not get any content items")
@@ -130,12 +131,11 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 	assert := assert.New(t)
 
 	writeContent(assert, db, contentUUID)
-	writeOrganisations(assert, db)
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := newCypherDriver(db, "prod")
-	content, found, err := contentByConceptDriver.read(MSJConceptUUID, defaultLimit, 0, 0)
+	contentByConceptDriver := NewContentByConceptService(db)
+	content, found, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.False(found, "Found annotations for concept %s", MSJConceptUUID)
 	assert.Equal(0, len(content), "Should not get any content items")
@@ -145,37 +145,19 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 	assert := assert.New(t)
 
 	writeContent(assert, db, contentUUID)
-	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
-	writeAnnotations(assert, db, contentUUID, "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeAnnotations(assert, db, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
 
 	defer cleanDB(t, content2UUID, MSJConceptUUID, contentUUID, MetalMickeyConceptUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := newCypherDriver(db, "prod")
-	contentList, found, err := contentByConceptDriver.read(MSJConceptUUID, defaultLimit, 0, 0)
+	contentByConceptDriver := NewContentByConceptService(db)
+	contentList, found, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.False(found, "Found annotations for concept %s", MSJConceptUUID)
 	assert.Equal(0, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
 }
 
-func TestNewConcordanceModelWithBrands(t *testing.T) {
-	assert := assert.New(t)
-	defer cleanDB(t, content2UUID, content3UUID, OnyxPikeBrandUUID, OnyPikeyRightBrandUUID)
-
-	writeContent(assert, db, content3UUID)
-	writeContent(assert, db, content2UUID)
-	writeAnnotations(assert, db, content3UUID, "./fixtures/Annotations-5a9c7429-e76b-4f37-b5d1-842d64a45167-V2.json")
-	writeAnnotations(assert, db, content2UUID, "./fixtures/Annotations-bfa97890-76ff-4a35-a775-b8768f7ea383-V2.json")
-	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
-
-	contentByConceptDriver := newCypherDriver(db, "prod")
-	contentList, found, err := contentByConceptDriver.read(OnyxPikeBrandUUID, defaultLimit, 0, 0)
-	assert.NoError(err, "Unexpected error for concept %s", OnyxPikeBrandUUID)
-	assert.True(found, "Found annotations for concept %s", OnyxPikeBrandUUID)
-	assert.Equal(2, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
-
-}
-
-func TestNewConcordanceModelWithBrandsDoesntReturnParentContent(t *testing.T) {
+func TestBrandsDontReturnParentContent(t *testing.T) {
 	assert := assert.New(t)
 	defer cleanDB(t, content2UUID, content3UUID, content4UUID, OnyxPikeBrandUUID, OnyxPikeParentBrandUUID, OnyPikeyRightBrandUUID)
 
@@ -183,19 +165,53 @@ func TestNewConcordanceModelWithBrandsDoesntReturnParentContent(t *testing.T) {
 	writeContent(assert, db, content3UUID)
 	writeContent(assert, db, content4UUID)
 
-	writeAnnotations(assert, db, content2UUID, fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content2UUID))
-	writeAnnotations(assert, db, content3UUID, fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content3UUID))
-	writeAnnotations(assert, db, content4UUID, fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content4UUID))
+	writeAnnotations(assert, db, content2UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content2UUID))
+	writeAnnotations(assert, db, content3UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content3UUID))
+	writeAnnotations(assert, db, content4UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content4UUID))
 
 	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
 	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPikeParent-%v.json", OnyxPikeParentBrandUUID))
 
-	contentByConceptDriver := newCypherDriver(db, "prod")
-	contentList, found, err := contentByConceptDriver.read(OnyxPikeBrandUUID, defaultLimit, 0, 0)
+	contentByConceptDriver := NewContentByConceptService(db)
+	contentList, found, err := contentByConceptDriver.GetContentForConcept(OnyxPikeBrandUUID, RequestParams{defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", OnyxPikeBrandUUID)
 	assert.True(found, "Found annotations for concept %s", OnyxPikeBrandUUID)
 	assert.Equal(2, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
+}
 
+func TestContentIsReturnedFromAllLeafNodesOfConcordance(t *testing.T) {
+	assert := assert.New(t)
+
+	defer cleanDB(t, contentUUID, content2UUID, content3UUID, content4UUID, JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID)
+
+	writeContent(assert, db, contentUUID)
+	writeContent(assert, db, content2UUID)
+	writeContent(assert, db, content3UUID)
+	writeContent(assert, db, content4UUID)
+
+	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
+	writeAnnotations(assert, db, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
+	writeAnnotations(assert, db, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
+	writeAnnotations(assert, db, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
+
+	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
+
+	contentByConceptDriver := NewContentByConceptService(db)
+
+	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
+
+	for _, uuid := range idsToCheck {
+		contentList, found, err := contentByConceptDriver.GetContentForConcept(uuid, RequestParams{defaultLimit, 0, 0})
+		assert.NoError(err, "Unexpected error for concept %s", uuid)
+		assert.True(found, "Found annotations for concept %s", uuid)
+		assert.Equal(4, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
+	}
+}
+
+func TestConceptService_Check(t *testing.T) {
+	assert := assert.New(t)
+	contentByConceptDriver := NewContentByConceptService(db)
+	assert.NoError(contentByConceptDriver.Check(), "Test should always pass when connected to db")
 }
 
 func writeContent(assert *assert.Assertions, db neoutils.NeoConnection, contentUUID string) {
@@ -204,25 +220,27 @@ func writeContent(assert *assert.Assertions, db neoutils.NeoConnection, contentU
 	writeJSONToService(contentRW, "./fixtures/Content-"+contentUUID+".json", assert)
 }
 
-func writeOrganisations(assert *assert.Assertions, db neoutils.NeoConnection) {
-	organisationRW := organisations.NewCypherOrganisationService(db)
-	assert.NoError(organisationRW.Initialise())
-	writeJSONToService(organisationRW, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json", assert)
-	writeJSONToService(organisationRW, "./fixtures/Organisation-Fakebook-eac853f5-3859-4c08-8540-55e043719400.json", assert)
-}
-
-func writeAnnotations(assert *assert.Assertions, db neoutils.NeoConnection, contentUUID string, fixtures string) annrw.Service {
+func writeAnnotations(assert *assert.Assertions, db neoutils.NeoConnection, contentUUID string, lifecycle string, fixtureFile string) {
 	annotationsRW := annrw.NewCypherAnnotationsService(db)
 	assert.NoError(annotationsRW.Initialise())
-	writeJSONToAnnotationsService(annotationsRW, contentUUID, fixtures, assert)
-	return annotationsRW
+	f, err := os.Open(fixtureFile)
+	assert.NoError(err)
+	dec := json.NewDecoder(f)
+	json, errr := annotationsRW.DecodeJSON(dec)
+	assert.NoError(errr, "Error parsing file %s", fixtureFile)
+	assert.NoError(annotationsRW.Write(contentUUID, lifecycle, "", "", json))
 }
 
 func writeConcept(assert *assert.Assertions, db neoutils.NeoConnection, fixture string) concepts.ConceptService {
 	conceptsRW := concepts.NewConceptService(db)
 	assert.NoError(conceptsRW.Initialise())
-	log.Printf("Logging Concepts: %v", fixture)
-	writeJSONToConceptRW(conceptsRW, fixture, assert)
+	f, err := os.Open(fixture)
+	assert.NoError(err)
+	dec := json.NewDecoder(f)
+	inst, _, errr := conceptsRW.DecodeJSON(dec)
+	assert.NoError(errr)
+	_, err = conceptsRW.Write(inst, "TEST_TRANS_ID")
+	assert.NoError(err)
 	return conceptsRW
 }
 
@@ -249,26 +267,6 @@ func writeJSONToService(service baseftrwapp.Service, pathToJSONFile string, asse
 	inst, _, errr := service.DecodeJSON(dec)
 	assert.NoError(errr)
 	errrr := service.Write(inst, "TEST_TRANS_ID")
-	assert.NoError(errrr)
-}
-
-func writeJSONToConceptRW(service concepts.ConceptService, pathToJSONFile string, assert *assert.Assertions) {
-	f, err := os.Open(pathToJSONFile)
-	assert.NoError(err)
-	dec := json.NewDecoder(f)
-	inst, _, errr := service.DecodeJSON(dec)
-	assert.NoError(errr)
-	_, errrr := service.Write(inst, "TEST_TRANS_ID")
-	assert.NoError(errrr)
-}
-
-func writeJSONToAnnotationsService(service annrw.Service, contentUUID string, pathToJSONFile string, assert *assert.Assertions) {
-	f, err := os.Open(pathToJSONFile)
-	assert.NoError(err)
-	dec := json.NewDecoder(f)
-	inst, errr := service.DecodeJSON(dec)
-	assert.NoError(errr, "Error parsing file %s", pathToJSONFile)
-	errrr := service.Write(contentUUID, "v1", "annotations-v1", "tid_test", inst)
 	assert.NoError(errrr)
 }
 
