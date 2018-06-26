@@ -20,6 +20,7 @@ type HealthConfig struct {
 	AppName               string
 	AppDescription        string
 	RequestLoggingEnabled bool
+	ApiEndpoint			 api.Endpoint
 }
 
 func (h *ContentByConceptHandler) RegisterAdminHandlers(router *mux.Router, appConf HealthConfig) http.Handler {
@@ -35,14 +36,9 @@ func (h *ContentByConceptHandler) RegisterAdminHandlers(router *mux.Router, appC
 		Timeout: 10 * time.Second,
 	}
 
-	apiEndpoint, err := api.NewAPIEndpointForFile("./api.yml")
-	if err != nil {
-		log.WithError(err).WithField("file", "./api.yml").Warn("Failed to serve the API Endpoint for this service. Please validate the Swagger YML and the file location.")
-	}
-
 	router.HandleFunc("/__health", fthealth.Handler(hc))
 	router.HandleFunc(st.BuildInfoPath, st.BuildInfoHandler)
-	router.HandleFunc(api.DefaultPath, apiEndpoint.ServeHTTP)
+	router.HandleFunc(api.DefaultPath, appConf.ApiEndpoint.ServeHTTP)
 	router.HandleFunc(st.GTGPath, st.NewGoodToGoHandler(h.gtg))
 
 	var monitoringRouter http.Handler = router

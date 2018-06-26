@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"regexp"
 	"syscall"
+	"github.com/Financial-Times/api-endpoint"
 )
 
 const (
@@ -67,6 +68,12 @@ func main() {
 		Desc:   "Level of logging in the service",
 		EnvVar: "LOG_LEVEL",
 	})
+	apiYml := app.String(cli.StringOpt{
+		Name:   "api-yml",
+		Value:  "./api/api.yml",
+		Desc:   "Location of the API Swagger YML file.",
+		EnvVar: "API_YML",
+	})
 
 	logger.InitLogger(*appName, *logLevel)
 	app.Action = func() {
@@ -92,6 +99,11 @@ func main() {
 			logger.WithError(err).Fatal("Failed to parse cache duration value")
 		}
 
+		apiEndpoint, err := api.NewAPIEndpointForFile(*apiYml)
+		if err != nil {
+			logger.WithError(err).WithField("file", *apiYml).Warn("Failed to serve the API Endpoint for this service. Please validate the Swagger YML and the file location.")
+		}
+
 		cbcService := content.NewContentByConceptService(db)
 
 		handler := content.ContentByConceptHandler{
@@ -107,6 +119,7 @@ func main() {
 			AppName:               *appName,
 			AppDescription:        appDescription,
 			RequestLoggingEnabled: *requestLoggingEnabled,
+			ApiEndpoint: 		  apiEndpoint,
 		}
 
 		monitoringRouter := handler.RegisterAdminHandlers(router, appConf)
