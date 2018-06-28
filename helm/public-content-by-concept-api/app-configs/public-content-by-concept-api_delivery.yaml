@@ -2,3 +2,6 @@
 replicaCount: 2
 service:
   name: public-content-by-concept-api
+env:
+  LOG_LEVEL: info
+  REQUEST_LOGGING_ON: false

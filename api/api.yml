@@ -1,0 +1,151 @@
+openapi: 3.0.0
+# Added by API Auto Mocking Plugin
+servers:
+# Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/FinancialTimes/Public-Content-by-Concept-API/1.0.0
+  - description: Access via the API gateway
+    url: https://api.ft.com
+info:
+  description: This is a simple API
+  version: "1.0.0"
+  title: Public Content-by-Concept API
+  contact:
+    email: Universal.Publishing.Platform@ft.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+paths:
+  /content?isAnnotatedBy={conceptURI/conceptUUID}&fromDate={fromDate}&toDate={toDate}&limit={limit}:
+    get:
+      summary: searches concept store for annotations between given concept, and its concordances, and any content
+      description: |
+        By passing in the UUID/URI, you can search for any relationships to content in the concept store
+      parameters:
+        - in: path
+          name: conceptURI/conceptUUID
+          description: URI/UUID of the concept
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: fromDate
+          description: Date from which to start looking for relevant content
+          required: false
+          schema:
+            type: string
+        - in: path
+          name: toDate
+          description: Date from which to stop looking for relevant content
+          required: false
+          schema:
+            type: string
+        - in: path
+          name: limit
+          description: Amount of relevant content items requested, default is 50
+          required: false
+          schema:
+            type: int
+      responses:
+        '200':
+          description: there are relationships between the concept and at least one piece of content
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/Content'
+                  discriminator:
+                    propertyName: directType
+                    mapping:
+                      'http://www.ft.com/ontology/Concept': '#/components/schemas/Content'
+        '400':
+          description: Bad request if the isAnnotatedBy, fromDate, toDate or limit params are missing or invalid.
+        '404':
+          description: Not Found if there is no concept record for the uuid path parameter is found
+        '405':
+          description: Method not allowed
+        '500':
+          description: Internal Server Error if there was an issue processing the neo4j response
+        '503':
+          description: Service Unavailable if it cannot connect to concept store.
+
+    /__health:
+      get:
+        summary: Healthchecks
+        description: Runs application healthchecks and returns FT Healthcheck style json.
+        produces:
+          - application/json
+        responses:
+          200:
+            description: Should always return 200 along with the output of the healthchecks - regardless of whether the healthchecks failed or not. Please inspect the overall `ok` property to see whether or not the application is healthy.
+            examples:
+              application/json:
+                checks:
+                  - businessImpact: "Cannot respond to API requests"
+                    checkOutput: "OK"
+                    lastUpdated: "2018-01-01T00:00:00.00000000Z"
+                    name: "Check connectivity to Neo4j - neoUrl is a parameter in hieradata for this service"
+                    ok: true
+                    panicGuide: "https://dewey.ft.com/content-by-concept-api.html"
+                    severity: 2
+                    technicalSummary: "Cannot connect to Neo4j instance with at least one concept loaded in it"
+                name: "public-content-by-concept-api"
+                ok: true
+                schemaVersion: 1
+
+    /__build-info:
+      get:
+        summary: Build Information
+        description: Returns application build info, such as the git repository and revision, the golang version it was built with, and the app release version.
+        produces:
+         - application/json; charset=UTF-8
+        responses:
+          200:
+            description: Outputs build information as described in the summary.
+            examples:
+              application/json; charset=UTF-8:
+                version: "1.0.0"
+                repository: "https://github.com/Financial-Times/public-content-by-concept-api.git"
+                revision: "7cdbdb18b4a518eef3ebb1b545fc124612f9d7cd"
+                builder: "go version go1.10.1 linux/amd64"
+                dateTime: "20161123122615"
+    /__gtg:
+      get:
+        summary: Good To Go
+        description: Lightly healthchecks the application, and returns a 200 if it's Good-To-Go.
+        responses:
+          200:
+             description: The application is healthy enough to perform all its functions correctly - i.e. good to go.
+          503:
+             description: One or more of the applications healthchecks have failed, so please do not use the app. See the /__health endpoint for more detailed information.
+components:
+  schemas:
+    Content:
+      properties:
+        id:
+          type: string
+          description: URI of the content
+          example: "http://www.ft.com/things/fa3271cc-72d3-11e8-bab2-43bd4ae655dd"
+        apiUrl:
+          type: string
+          description: API URL of the content
+          example: "https://api.ft.com/concepts/0e450ff5-2319-4329-99a4-3d7a537b5caa"
+
+    BusinessEvent:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Concept'
+        - $ref: '#/components/schemas/ExtendedBusinessEventProperties'
+
+    ExtendedBusinessEventProperties:
+      properties:
+        scheduledStartTime:
+          type: string
+          description: "Scheduled start time"
+          example: "10th June 10:45"
+        scheduledStartTimeEpoch:
+          type: integer
+          description: "Scheduled start time Epoch"
+          example: 1528627500

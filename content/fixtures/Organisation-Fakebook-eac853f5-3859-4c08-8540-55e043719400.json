@@ -1,0 +1,25 @@
+{
+  "prefUUID": "eac853f5-3859-4c08-8540-55e043719400",
+  "prefLabel": "Fakebook, Inc.",
+  "type": "Organisation",
+  "leiCode": "BQ4BKCS1HXDV9TTTTTTTT",
+  "aliases": [
+    "Fakebook, Inc.",
+    "Fakebook"
+  ],
+  "sourceRepresentations": [
+    {
+      "uuid": "eac853f5-3859-4c08-8540-55e043719400",
+      "prefLabel": "Fakebook, Inc.",
+      "type": "Organisation",
+      "properName": "Fakebook, Inc.",
+      "leiCode": "BQ4BKCS1HXDV9TTTTTTTT",
+      "authority": "FACTSET",
+      "authorityValue": "00AAA-E",
+      "aliases": [
+        "Fakebook, Inc.",
+        "Fakebook"
+      ]
+    }
+  ]
+}

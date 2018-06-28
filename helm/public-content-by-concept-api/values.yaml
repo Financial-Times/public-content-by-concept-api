@@ -10,9 +10,7 @@ image:
   pullPolicy: Always
 env: 
   app: 
-    port: "8080" 
-  graphite: 
-    prefix: "coco.services.k8s.public-content-by-concept-api"
+    port: "8080"
   cache: 
     duration: "30s" 
 resources:
