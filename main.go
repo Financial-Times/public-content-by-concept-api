@@ -60,7 +60,7 @@ func main() {
 		Name:   "requestLoggingOn",
 		Value:  false,
 		Desc:   "Whether to log requests or not",
-		EnvVar: "REQUEST_LOGGING_ON",
+		EnvVar: "REQUEST_LOGGING_ENABLED",
 	})
 	logLevel := app.String(cli.StringOpt{
 		Name:   "logLevel",

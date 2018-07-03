@@ -46,6 +46,8 @@ func (cd ConceptService) GetContentForConcept(conceptUUID string, params Request
 	var results []neoReadStruct
 	var query *neoism.CypherQuery
 
+	log.Debugf("Query params are %v", params)
+
 	var whereClause string
 	if params.fromDateEpoch > 0 && params.toDateEpoch > 0 {
 		whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate}"
