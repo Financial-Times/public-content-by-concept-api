@@ -208,6 +208,36 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordance(t *testing.T) {
 	}
 }
 
+func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithDateRestrictions(t *testing.T) {
+	assert := assert.New(t)
+
+	defer cleanDB(t, contentUUID, content2UUID, content3UUID, content4UUID, JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID)
+
+	writeContent(assert, db, contentUUID)
+	writeContent(assert, db, content2UUID)
+	writeContent(assert, db, content3UUID)
+	writeContent(assert, db, content4UUID)
+
+	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
+	writeAnnotations(assert, db, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
+	writeAnnotations(assert, db, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
+	writeAnnotations(assert, db, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
+
+	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
+
+	contentByConceptDriver := NewContentByConceptService(db)
+
+	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
+
+	for _, uuid := range idsToCheck {
+		contentList, found, err := contentByConceptDriver.GetContentForConcept(uuid, RequestParams{defaultLimit, 1372550400, 1388448000})
+		//From July 1st 2013 - January 1st 2014
+		assert.NoError(err, "Unexpected error for concept %s", uuid)
+		assert.True(found, "Found annotations for concept %s", uuid)
+		assert.Equal(1, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
+	}
+}
+
 func TestConceptService_Check(t *testing.T) {
 	assert := assert.New(t)
 	contentByConceptDriver := NewContentByConceptService(db)

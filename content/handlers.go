@@ -107,7 +107,7 @@ func (ch *ContentByConceptHandler) GetContentByConcept(w http.ResponseWriter, r 
 			w.Write([]byte(`{"message": ` + msg + `}`))
 			return
 		}
-		fromDateEpoch = toDateTime.Unix()
+		toDateEpoch = toDateTime.Unix()
 	}
 
 	requestParams := RequestParams{
