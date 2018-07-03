@@ -79,9 +79,7 @@ func (ch *ContentByConceptHandler) GetContentByConcept(w http.ResponseWriter, r 
 	}
 
 	fromDateParam := m.Get("fromDate")
-	logger.Debugf("From date is %s", fromDateParam)
 	toDateParam := m.Get("toDate")
-	logger.Debugf("From date is %s", toDateParam)
 	var fromDateEpoch, toDateEpoch int64
 
 	if fromDateParam == "" {
@@ -98,8 +96,6 @@ func (ch *ContentByConceptHandler) GetContentByConcept(w http.ResponseWriter, r 
 		fromDateEpoch = fromDateTime.Unix()
 	}
 
-	logger.Debugf("From date epoch is %d", fromDateEpoch)
-
 	if toDateParam == "" {
 		logger.WithTransactionID(transID).WithUUID(conceptUUID).Debug("no toDate url param supplied")
 	} else {
@@ -111,11 +107,8 @@ func (ch *ContentByConceptHandler) GetContentByConcept(w http.ResponseWriter, r 
 			w.Write([]byte(`{"message": ` + msg + `}`))
 			return
 		}
-		fromDateEpoch = toDateTime.Unix()
+		toDateEpoch = toDateTime.Unix()
 	}
-
-
-	logger.Debugf("To date epoch is %d", toDateEpoch)
 
 	requestParams := RequestParams{
 		contentLimit:  contentLimit,
