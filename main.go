@@ -6,16 +6,17 @@ import (
 	"strconv"
 	"time"
 
+	"os/signal"
+	"regexp"
+	"syscall"
+
+	"github.com/Financial-Times/api-endpoint"
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/Financial-Times/public-content-by-concept-api/content"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
 	_ "github.com/joho/godotenv/autoload"
-	"os/signal"
-	"regexp"
-	"syscall"
-	"github.com/Financial-Times/api-endpoint"
 )
 
 const (
@@ -70,7 +71,7 @@ func main() {
 	})
 	apiYml := app.String(cli.StringOpt{
 		Name:   "api-yml",
-		Value:  "./api.yml",
+		Value:  "./api/api.yml",
 		Desc:   "Location of the API Swagger YML file.",
 		EnvVar: "API_YML",
 	})
@@ -119,7 +120,7 @@ func main() {
 			AppName:               *appName,
 			AppDescription:        appDescription,
 			RequestLoggingEnabled: *requestLoggingEnabled,
-			ApiEndpoint: 		  apiEndpoint,
+			ApiEndpoint:           apiEndpoint,
 		}
 
 		monitoringRouter := handler.RegisterAdminHandlers(router, appConf)

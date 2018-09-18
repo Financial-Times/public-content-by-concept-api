@@ -48,28 +48,38 @@ func (cd ConceptService) GetContentForConcept(conceptUUID string, params Request
 
 	var whereClause string
 	if params.fromDateEpoch > 0 && params.toDateEpoch > 0 {
-		whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate}"
+		whereClause = " WHERE content.publishedDateEpoch > {fromDate} AND content.publishedDateEpoch < {toDate}"
 	}
+
+	maxDepth := "10"
 
 	parameters := neoism.Props{
 		"conceptUUID":     conceptUUID,
 		"maxContentItems": params.contentLimit,
 		"fromDate":        params.fromDateEpoch,
-		"toDate":          params.toDateEpoch}
+		"toDate":          params.toDateEpoch,
+	}
 
-	// New concordance model
 	query = &neoism.CypherQuery{
 		Statement: `
-			MATCH (:Concept{uuid:{conceptUUID}})-[:EQUIVALENT_TO]->(canon:Concept)
-			MATCH (canon)<-[:EQUIVALENT_TO]-(leaves)<-[]-(c:Content)` +
+			MATCH (c:Thing{uuid:{conceptUUID}})-[:EQUIVALENT_TO]->(canonicalConcept:Concept)
+			MATCH (canonicalConcept)<-[:EQUIVALENT_TO]-(leaf)
+			MATCH (leaf)<-[:HAS_BROADER*0..` +
+			maxDepth +
+			`]-(narrowerLeaf)
+			MATCH (narrowerLeaf)-[:EQUIVALENT_TO]->(narrowerCanonical)
+			WITH DISTINCT narrowerCanonical
+			MATCH (narrowerCanonical)<-[:EQUIVALENT_TO]-(conceptLeaves)
+			MATCH (conceptLeaves)-[]-(content:Content)` +
 			whereClause +
-			` WITH DISTINCT c
-			ORDER BY c.publishedDateEpoch DESC
-			RETURN c.uuid as uuid, labels(c) as types
+			` WITH DISTINCT content
+			ORDER BY content.publishedDateEpoch DESC
+			RETURN content.uuid as uuid, labels(content) as types
 			LIMIT({maxContentItems})`,
 		Parameters: parameters,
 		Result:     &results,
 	}
+
 	err := cd.conn.CypherBatch([]*neoism.CypherQuery{query})
 	if err != nil || len(results) == 0 {
 		return contentList{}, false, err
