@@ -84,7 +84,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			conceptID:          "NullURI",
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 400,
-			expectedBody:       `{"message": "Missing concept URI."}`,
+			expectedBody:       `{"message": "Missing or empty query parameter isAnnotatedBy. Expecting valid absolute concept URI."}`,
 			backendError:       nil,
 		},
 		{
