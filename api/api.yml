@@ -36,7 +36,13 @@ paths:
         - in: query
           name: limit
           type: string
-          description: The maximum number of related content, defaults to 50 if not given
+          default: 50
+          description: The maximum number of related content.
+        - in: query
+          name: showImplicit
+          type: string
+          default: false
+          description: Whether or not to include implicit annotations in the search.
       responses:
         200:
           description: Success body if at least 1 piece of content is found.

@@ -27,7 +27,7 @@ _Optional arguments are:
 *Note: Optional request params: limit (number of items to return), toDate, fromDate. isAnnotatedBy param accepts both full concept URI or just the UUID*
 
 ## API definition
-Based on the following [google doc](https://docs.google.com/a/ft.com/document/d/1YjqNYEXkc0Ip-6bGttwnPcAh2XKG6tgzmojTdq8gM2s)
+[Swagger definition](./api/api.yml)
 
 ## Admin Enpoints
 Healthcheck: [http://localhost:8080/__health](http://localhost:8080/__health)
