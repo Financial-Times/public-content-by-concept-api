@@ -20,10 +20,10 @@ type HealthConfig struct {
 	AppName               string
 	AppDescription        string
 	RequestLoggingEnabled bool
-	ApiEndpoint			 api.Endpoint
+	ApiEndpoint           api.Endpoint
 }
 
-func (h *ContentByConceptHandler) RegisterAdminHandlers(router *mux.Router, appConf HealthConfig) http.Handler {
+func (h *Handler) RegisterAdminHandlers(router *mux.Router, appConf HealthConfig) http.Handler {
 	logger.Info("Registering healthcheck handlers")
 
 	hc := fthealth.TimedHealthCheck{
@@ -49,7 +49,7 @@ func (h *ContentByConceptHandler) RegisterAdminHandlers(router *mux.Router, appC
 	return monitoringRouter
 }
 
-func (h *ContentByConceptHandler) gtg() gtg.Status {
+func (h *Handler) gtg() gtg.Status {
 	var statusChecker []gtg.StatusChecker
 	for _, c := range h.checks() {
 		checkFunc := func() gtg.Status {
@@ -60,11 +60,11 @@ func (h *ContentByConceptHandler) gtg() gtg.Status {
 	return gtg.FailFastParallelCheck(statusChecker)()
 }
 
-func (h *ContentByConceptHandler) checks() []fthealth.Check {
+func (h *Handler) checks() []fthealth.Check {
 	return []fthealth.Check{h.makeNeo4jAvailabilityCheck()}
 }
 
-func (h *ContentByConceptHandler) makeNeo4jAvailabilityCheck() fthealth.Check {
+func (h *Handler) makeNeo4jAvailabilityCheck() fthealth.Check {
 	return fthealth.Check{
 		BusinessImpact:   "Cannot respond to API requests",
 		Name:             "Check connectivity to Neo4j - neoURL is a parameter in hieradata for this service",
@@ -75,7 +75,7 @@ func (h *ContentByConceptHandler) makeNeo4jAvailabilityCheck() fthealth.Check {
 	}
 }
 
-func (h *ContentByConceptHandler) checkNeo4jAvailability() (string, error) {
+func (h *Handler) checkNeo4jAvailability() (string, error) {
 	err := h.ContentService.Check()
 	if err != nil {
 		return "Could not connect to database!", err

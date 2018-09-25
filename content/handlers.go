@@ -4,82 +4,80 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"regexp"
 
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/transactionid-utils-go"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"regexp"
 )
 
 const thingURIPrefix = "http://api.ft.com/things/"
 
-type ContentByConceptHandler struct {
+type Handler struct {
 	ContentService     ContentByConceptServicer
 	CacheControlHeader string
 	UUIDMatcher        *regexp.Regexp
 }
 
-func (ch *ContentByConceptHandler) RegisterHandlers(router *mux.Router) {
+func (h *Handler) RegisterHandlers(router *mux.Router) {
 	logger.Info("registering handlers")
 	gh := handlers.MethodHandler{
-		"GET": http.HandlerFunc(ch.GetContentByConcept),
+		"GET": http.HandlerFunc(h.GetContentByConcept),
 	}
 	router.Handle("/content", gh)
 }
 
-func (ch *ContentByConceptHandler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
+
 	transID := transactionidutils.GetTransactionIDFromRequest(r)
-	m, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		logger.WithError(err).WithTransactionID(transID).Error("Could not parse request url")
-		return
-	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Header().Set("X-Request-Id", transID)
-	logger.WithTransactionID(transID).Infof("request url is %s", r.URL.RawQuery)
+	logger.WithTransactionID(transID).Debugf("request url is %s", r.URL.RawQuery)
 
-	_, isAnnotatedByPresent := m["isAnnotatedBy"]
-	if !isAnnotatedByPresent {
+	q := r.URL.Query()
+
+	conceptURI := q.Get("isAnnotatedBy")
+	if conceptURI == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"message": "Missing or empty query parameter isAnnotatedBy. Expecting valid absolute concept URI."}`))
 		return
 	}
 
-	conceptURI := m["isAnnotatedBy"][0]
-	if conceptURI == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"message": "Missing concept URI."}`))
-		return
-	}
-
 	conceptUUID := strings.TrimPrefix(conceptURI, thingURIPrefix)
-	if !ch.UUIDMatcher.MatchString(conceptUUID) {
+	if !h.UUIDMatcher.MatchString(conceptUUID) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"message": "ID extracted from request URL was not valid uuid"}`))
 		return
 	}
 
-	limitParam := m.Get("limit")
+	var showImplicit bool
+	showImplicitParam := q.Get("showImplicit")
+	if showImplicitParam != "" {
+		if b, err := strconv.ParseBool(showImplicitParam); err == nil {
+			showImplicit = b
+		}
+	}
+
+	limitParam := q.Get("limit")
 	var contentLimit int
 
 	if limitParam == "" {
 		logger.WithTransactionID(transID).WithUUID(conceptUUID).Debugf("No contentLimit provided. Using default: %v", defaultLimit)
 		contentLimit = defaultLimit
 	} else {
-		contentLimit, err = strconv.Atoi(limitParam)
-		if err != nil {
+		if _, err := strconv.Atoi(limitParam); err != nil {
 			logger.Debugf("provided value for contentLimit, %s, could not be parsed. Using default: %d", limitParam, defaultLimit)
 			contentLimit = defaultLimit
 		}
 	}
 
-	fromDateParam := m.Get("fromDate")
-	toDateParam := m.Get("toDate")
+	fromDateParam := q.Get("fromDate")
+	toDateParam := q.Get("toDate")
 	var fromDateEpoch, toDateEpoch int64
 
 	if fromDateParam == "" {
@@ -114,9 +112,10 @@ func (ch *ContentByConceptHandler) GetContentByConcept(w http.ResponseWriter, r 
 		contentLimit:  contentLimit,
 		fromDateEpoch: fromDateEpoch,
 		toDateEpoch:   toDateEpoch,
+		showImplicit:  showImplicit,
 	}
 
-	contentList, found, err := ch.ContentService.GetContentForConcept(conceptUUID, requestParams)
+	contentList, found, err := h.ContentService.GetContentForConcept(conceptUUID, requestParams)
 	if err != nil {
 		msg := fmt.Sprintf("Backend error returning content for concept with uuid %s", conceptUUID)
 		logger.WithError(err).WithTransactionID(transID).WithUUID(conceptUUID).Error(msg)
@@ -132,7 +131,7 @@ func (ch *ContentByConceptHandler) GetContentByConcept(w http.ResponseWriter, r 
 		return
 	}
 
-	w.Header().Set("Cache-Control", ch.CacheControlHeader)
+	w.Header().Set("Cache-Control", h.CacheControlHeader)
 	w.WriteHeader(http.StatusOK)
 
 	if err = json.NewEncoder(w).Encode(contentList); err != nil {

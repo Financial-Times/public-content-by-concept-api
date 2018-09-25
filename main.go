@@ -107,7 +107,7 @@ func main() {
 
 		cbcService := content.NewContentByConceptService(db)
 
-		handler := content.ContentByConceptHandler{
+		handler := content.Handler{
 			ContentService:     cbcService,
 			CacheControlHeader: strconv.FormatFloat(duration.Seconds(), 'f', 0, 64),
 			UUIDMatcher:        regexp.MustCompile(uuidRegex),

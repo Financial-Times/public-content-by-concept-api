@@ -27,6 +27,7 @@ type RequestParams struct {
 	contentLimit  int
 	fromDateEpoch int64
 	toDateEpoch   int64
+	showImplicit  bool
 }
 
 func NewContentByConceptService(conn neoutils.NeoConnection) ContentByConceptServicer {
@@ -51,7 +52,10 @@ func (cd ConceptService) GetContentForConcept(conceptUUID string, params Request
 		whereClause = " WHERE content.publishedDateEpoch > {fromDate} AND content.publishedDateEpoch < {toDate}"
 	}
 
-	maxDepth := "10"
+	maxDepth := "0"
+	if params.showImplicit {
+		maxDepth = "10"
+	}
 
 	parameters := neoism.Props{
 		"conceptUUID":     conceptUUID,

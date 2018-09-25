@@ -2,14 +2,15 @@ package content
 
 import (
 	"fmt"
-	"github.com/Financial-Times/neo-model-utils-go/mapper"
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"testing"
+
+	"github.com/Financial-Times/neo-model-utils-go/mapper"
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -141,7 +142,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 	for _, test := range tests {
 		var reqURL string
 		ds := dummyService{test.contentList, test.backendError}
-		handler := ContentByConceptHandler{&ds, "10", regexp.MustCompile(uuidRegex)}
+		handler := Handler{&ds, "10", regexp.MustCompile(uuidRegex)}
 		router := mux.NewRouter()
 		handler.RegisterHandlers(router)
 		rec := httptest.NewRecorder()
