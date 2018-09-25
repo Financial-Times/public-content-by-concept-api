@@ -8,6 +8,8 @@ ENV SRC_FOLDER="${GOPATH}/src/${ORG_PATH}/${PROJECT}"
 COPY . ${SRC_FOLDER}
 WORKDIR ${SRC_FOLDER}
 
+COPY api /artifacts/api
+
 # Set up our extra bits in the image
 RUN apk --no-cache add git curl
 RUN  curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
