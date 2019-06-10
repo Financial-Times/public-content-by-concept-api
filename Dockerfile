@@ -1,4 +1,4 @@
-FROM golang:1.10.1-alpine
+FROM golang:1.12-alpine
 
 ENV PROJECT="public-content-by-concept-api"
 
