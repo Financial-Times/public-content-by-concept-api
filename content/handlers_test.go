@@ -1,15 +1,17 @@
 package content
 
 import (
+	"errors"
 	"fmt"
-	"github.com/Financial-Times/neo-model-utils-go/mapper"
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"testing"
+
+	"github.com/Financial-Times/go-logger"
+	"github.com/Financial-Times/neo-model-utils-go/mapper"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -20,6 +22,7 @@ const (
 )
 
 func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
+	logger.InitDefaultLogger("test-handlers")
 	assert := assert.New(t)
 
 	tests := []struct {
@@ -28,6 +31,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 		contentList        []string
 		fromDate           string
 		toDate             string
+		page               string
 		contentLimit       string
 		expectedStatusCode int
 		expectedBody       string
@@ -39,10 +43,18 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			fromDate:           "2018-01-01",
 			toDate:             "2018-06-20",
+			page:               "5",
 			contentLimit:       "10",
 			expectedStatusCode: 200,
-			expectedBody:       "",
-			backendError:       nil,
+		},
+		{
+			testName:           "Success for request with no page",
+			conceptID:          testConceptID,
+			contentList:        []string{testContentUUID},
+			fromDate:           "2018-01-01",
+			toDate:             "2018-06-20",
+			contentLimit:       "10",
+			expectedStatusCode: 200,
 		},
 		{
 			testName:           "Success for request with no content limit",
@@ -51,16 +63,12 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			fromDate:           "2018-01-01",
 			toDate:             "2018-06-20",
 			expectedStatusCode: 200,
-			expectedBody:       "",
-			backendError:       nil,
 		},
 		{
-			testName:           "Success for request with no content limit, fromDate or toDate",
+			testName:           "Success for request with no content limit, page, fromDate or toDate",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 200,
-			expectedBody:       "",
-			backendError:       nil,
 		},
 		{
 			testName:           "Bad Request: no isAnnotatedBy parameter",
@@ -68,7 +76,6 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 400,
 			expectedBody:       `{"message": "Missing or empty query parameter isAnnotatedBy. Expecting valid absolute concept URI."}`,
-			backendError:       nil,
 		},
 		{
 			testName:           "Success: isAnnotatedBy has valid UUID",
@@ -76,7 +83,6 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 200,
 			expectedBody:       "",
-			backendError:       nil,
 		},
 		{
 			testName:           "Bad Request: isAnnotatedBy param has no URI/UUID",
@@ -84,7 +90,6 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 400,
 			expectedBody:       `{"message": "Missing concept URI."}`,
-			backendError:       nil,
 		},
 		{
 			testName:           "Bad Request: isAnnotatedBy URI has invalid UUID",
@@ -92,7 +97,14 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 400,
 			expectedBody:       `{"message": "ID extracted from request URL was not valid uuid"}`,
-			backendError:       nil,
+		},
+		{
+			testName:           "Bad Request: query param 'page' is invalid",
+			conceptID:          testConceptID,
+			contentList:        []string{testContentUUID},
+			page:               "null",
+			expectedStatusCode: 400,
+			expectedBody:       "{\"message\": provided value for page, null, could not be parsed.}",
 		},
 		{
 			testName:           "Bad Request: query param 'limit' is invalid",
@@ -101,7 +113,6 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentLimit:       "null",
 			expectedStatusCode: 200,
 			expectedBody:       "",
-			backendError:       nil,
 		},
 		{
 			testName:           "Bad Request: query param 'fromDate' is invalid",
@@ -110,7 +121,6 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			fromDate:           "null",
 			expectedStatusCode: 400,
 			expectedBody:       "{\"message\": From date value null could not be parsed}",
-			backendError:       nil,
 		},
 		{
 			testName:           "Bad Request: query param 'toDate' is invalid",
@@ -119,7 +129,6 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			toDate:             "null",
 			expectedStatusCode: 400,
 			expectedBody:       "{\"message\": To date value null could not be parsed}",
-			backendError:       nil,
 		},
 		{
 			testName:           "Backend Error returns 503",
@@ -127,14 +136,13 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 503,
 			expectedBody:       "{\"message\": Backend error returning content for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044}",
-			backendError:       errors.New("There was a problem"),
+			backendError:       errors.New("there was a problem"),
 		},
 		{
 			testName:           "No content for concept returns 404",
 			conceptID:          testConceptID,
 			expectedStatusCode: 404,
 			expectedBody:       "{\"message\": No content found for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044}",
-			backendError:       nil,
 		},
 	}
 
@@ -152,17 +160,17 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 		} else if test.conceptID == anotherConceptID {
 			reqURL = "/content?isAnnotatedBy=" + anotherConceptID
 		} else {
-			reqURL = buildURL(test.conceptID, test.fromDate, test.toDate, test.contentLimit)
+			reqURL = buildURL(test.conceptID, test.fromDate, test.toDate, test.page, test.contentLimit)
 		}
 		router.ServeHTTP(rec, newRequest("GET", reqURL))
-		assert.Equal(test.expectedStatusCode, rec.Code, "THere was an error returning the correct status code")
+		assert.Equal(test.expectedStatusCode, rec.Code, "There was an error returning the correct status code")
 		if test.expectedBody != "" {
 			assert.Equal(test.expectedBody, rec.Body.String(), "Wrong body")
 		}
 	}
 }
 
-func buildURL(conceptID, fromDate, toDate, contentLimit string) string {
+func buildURL(conceptID, fromDate, toDate, page, contentLimit string) string {
 	var URL = fmt.Sprintf("/content?isAnnotatedBy=http://api.ft.com/things/%s", conceptID)
 	if fromDate != "" {
 		URL = URL + fmt.Sprintf("&fromDate=%s", fromDate)
@@ -172,6 +180,9 @@ func buildURL(conceptID, fromDate, toDate, contentLimit string) string {
 	}
 	if contentLimit != "" {
 		URL = URL + fmt.Sprintf("&limit=%s", contentLimit)
+	}
+	if page != "" {
+		URL = URL + fmt.Sprintf("&page=%s", page)
 	}
 	return URL
 }

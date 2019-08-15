@@ -32,8 +32,9 @@ _Optional arguments are:
 ## Examples: 
 * `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54 `
 * `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54&fromDate=2016-01-02&toDate=2016-01-05&limit=200`
+* `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54&fromDate=2016-01-02&toDate=2016-01-05&page=3&limit=200`
 
-*Note: Optional request params: limit (number of items to return), toDate, fromDate. isAnnotatedBy param accepts both full concept URI or just the UUID*
+*Note: Optional request params: limit (number of items to return), page, toDate, fromDate. isAnnotatedBy param accepts both full concept URI or just the UUID*
 
 ## API definition
 Based on the following [google doc](https://docs.google.com/a/ft.com/document/d/1YjqNYEXkc0Ip-6bGttwnPcAh2XKG6tgzmojTdq8gM2s)
