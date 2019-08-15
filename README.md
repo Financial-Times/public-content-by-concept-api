@@ -21,7 +21,13 @@ _Optional arguments are:
 
 ## Testing
 * Unit tests only: `go test -race ./...`
-* Unit and integration tests: `go test -race -tags=integration ./...`
+* Unit and integration tests:
+
+    ```
+    docker-compose -f docker-compose-tests.yml up -d --build && \
+    docker logs -f test-runner && \
+    docker-compose -f docker-compose-tests.yml down
+    ```
 
 ## Examples: 
 * `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54 `

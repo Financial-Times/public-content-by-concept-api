@@ -1,0 +1,19 @@
+version: '3'
+services:
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.tests
+    container_name: test-runner
+    environment:
+      - NEO4J_TEST_URL=http://neo4j:7474/db/data
+    command: ["go", "test", "-v", "-race", "-tags=integration", "./..."]
+    depends_on:
+      - neo4j
+  neo4j:
+    image: neo4j:3.2.7-enterprise
+    environment:
+          NEO4J_AUTH: none
+    ports:
+      - "7474:7474"
+      - "7687:7687"
