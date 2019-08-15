@@ -1,4 +1,4 @@
-FROM golang:1.10.1-alpine
+FROM golang:1.12-alpine
 
 ENV PROJECT="public-content-by-concept-api"
 
@@ -12,7 +12,7 @@ WORKDIR ${SRC_FOLDER}
 RUN apk --no-cache add git curl
 RUN  curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
-# Install dependancies and build app
+# Install dependencies and build app
 RUN $GOPATH/bin/dep ensure -vendor-only
 RUN BUILDINFO_PACKAGE="${ORG_PATH}/${PROJECT}/vendor/${ORG_PATH}/service-status-go/buildinfo." \
     && VERSION="version=$(git describe --tag --always 2> /dev/null)" \

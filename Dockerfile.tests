@@ -1,4 +1,4 @@
-FROM golang:1.10.1
+FROM golang:1.12
 
 ENV PROJECT="public-content-by-concept-api"
 ENV REPO_PATH="github.com/Financial-Times/${PROJECT}"
