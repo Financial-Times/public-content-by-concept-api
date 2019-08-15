@@ -9,14 +9,18 @@ import (
 	"strings"
 	"time"
 
+	"regexp"
+
 	"github.com/Financial-Times/go-logger"
-	"github.com/Financial-Times/transactionid-utils-go"
+	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"regexp"
 )
 
-const thingURIPrefix = "http://api.ft.com/things/"
+const (
+	defaultPage    = 1
+	thingURIPrefix = "http://api.ft.com/things/"
+)
 
 type ContentByConceptHandler struct {
 	ContentService     ContentByConceptServicer
@@ -62,6 +66,27 @@ func (ch *ContentByConceptHandler) GetContentByConcept(w http.ResponseWriter, r 
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"message": "ID extracted from request URL was not valid uuid"}`))
 		return
+	}
+
+	page := defaultPage
+	pageParam := m.Get("page")
+	if pageParam != "" {
+		page, err = strconv.Atoi(pageParam)
+		if err != nil {
+			msg := fmt.Sprintf("provided value for page, %s, could not be parsed.", pageParam)
+			logger.WithError(err).WithTransactionID(transID).WithUUID(conceptUUID).Error(msg)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"message": ` + msg + `}`))
+			return
+		}
+
+		if page < defaultPage {
+			msg := fmt.Sprintf("provided value for page should be greater than: %v", defaultPage)
+			logger.WithTransactionID(transID).WithUUID(conceptUUID).Debugf(msg)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"message": ` + msg + `}`))
+			return
+		}
 	}
 
 	limitParam := m.Get("limit")
@@ -111,6 +136,7 @@ func (ch *ContentByConceptHandler) GetContentByConcept(w http.ResponseWriter, r 
 	}
 
 	requestParams := RequestParams{
+		page:          page,
 		contentLimit:  contentLimit,
 		fromDateEpoch: fromDateEpoch,
 		toDateEpoch:   toDateEpoch,

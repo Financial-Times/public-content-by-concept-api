@@ -37,6 +37,10 @@ paths:
           name: limit
           type: string
           description: The maximum number of related content, defaults to 50 if not given
+        - in: query
+          name: page
+          type: string
+          description: The page number, defaults to 1 if not given
       responses:
         200:
           description: Success body if at least 1 piece of content is found.
