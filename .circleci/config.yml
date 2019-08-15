@@ -3,15 +3,16 @@ jobs:
   build:
     working_directory: /go/src/github.com/Financial-Times/public-content-by-concept-api
     docker:
-      - image: circleci/golang:1.10.1
+      - image: circleci/golang:1
         environment:
           CIRCLE_TEST_REPORTS: /tmp/test-reports
           CIRCLE_ARTIFACTS: /tmp/artifacts
-      - image: neo4j:3.2.7-enterprise
+      - image: neo4j:3.4.10-enterprise
         environment:
           NEO4J_AUTH: none
           NEO4J_HEAP_MEMORY: 256
           NEO4J_CACHE_MEMORY: 256M
+          NEO4J_ACCEPT_LICENSE_AGREEMENT: "yes"
     steps:
       - checkout
       - run:
@@ -20,13 +21,13 @@ jobs:
             mkdir -p $CIRCLE_TEST_REPORTS/golang
             mkdir -p $CIRCLE_ARTIFACTS
       - run:
-          name: Download dependancies
+          name: Download dependencies
           command: |
             go get -u github.com/jstemmer/go-junit-report
             go get -u github.com/mattn/goveralls
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
       - run:
-          name: Download vendored dependancies
+          name: Download vendored dependencies
           command: |
             dep ensure -v -vendor-only
       - run:
