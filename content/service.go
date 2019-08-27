@@ -24,6 +24,7 @@ type ConceptService struct {
 }
 
 type RequestParams struct {
+	page          int
 	contentLimit  int
 	fromDateEpoch int64
 	toDateEpoch   int64
@@ -51,8 +52,12 @@ func (cd ConceptService) GetContentForConcept(conceptUUID string, params Request
 		whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate}"
 	}
 
+	// skipCount determines how many rows to skip before returning the results
+	skipCount := (params.page - 1) * params.contentLimit
+
 	parameters := neoism.Props{
 		"conceptUUID":     conceptUUID,
+		"skipCount":       skipCount,
 		"maxContentItems": params.contentLimit,
 		"fromDate":        params.fromDateEpoch,
 		"toDate":          params.toDateEpoch}
@@ -65,6 +70,7 @@ func (cd ConceptService) GetContentForConcept(conceptUUID string, params Request
 			whereClause +
 			` WITH DISTINCT c
 			ORDER BY c.publishedDateEpoch DESC
+			SKIP ({skipCount})
 			RETURN c.uuid as uuid, labels(c) as types
 			LIMIT({maxContentItems})`,
 		Parameters: parameters,

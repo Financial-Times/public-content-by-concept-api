@@ -10,7 +10,6 @@ __A public API which returns an ordered list of the most recently annotated cont
 ## Installation & running locally
 * `go get -u github.com/Financial-Times/public-content-by-concept-api`
 * `cd $GOPATH/src/github.com/Financial-Times/public-content-by-concept-api`
-* `go test ./...`
 * `go install`
 * `$GOPATH/bin/public-content-by-concept-api --neo-url={neo4jUrl} --port={port} --log-level={DEBUG|INFO|WARN|ERROR}--cache-duration{e.g. 22h10m3s} --requestLoggingEnabled=false`
 _Optional arguments are:
@@ -20,11 +19,22 @@ _Optional arguments are:
 --logLevel set level of app logging, request critical logs are info level with more helpful logs found at debug
 --requestLoggingEnabled when true will toggle logging of both admin endpoints(health/gtg) as well as http endpoints_
 
+## Testing
+* Unit tests only: `go test -race ./...`
+* Unit and integration tests:
+
+    ```
+    docker-compose -f docker-compose-tests.yml up -d --build && \
+    docker logs -f test-runner && \
+    docker-compose -f docker-compose-tests.yml down
+    ```
+
 ## Examples: 
 * `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54 `
 * `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54&fromDate=2016-01-02&toDate=2016-01-05&limit=200`
+* `curl http://localhost:8080/content?isAnnotatedBy=http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54&fromDate=2016-01-02&toDate=2016-01-05&page=3&limit=200`
 
-*Note: Optional request params: limit (number of items to return), toDate, fromDate. isAnnotatedBy param accepts both full concept URI or just the UUID*
+*Note: Optional request params: limit (number of items to return), page, toDate, fromDate. isAnnotatedBy param accepts both full concept URI or just the UUID*
 
 ## API definition
 Based on the following [google doc](https://docs.google.com/a/ft.com/document/d/1YjqNYEXkc0Ip-6bGttwnPcAh2XKG6tgzmojTdq8gM2s)
