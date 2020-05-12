@@ -1,18 +1,9 @@
 package content
 
 import (
-	"net/http"
-	"time"
-
 	"github.com/Financial-Times/api-endpoint"
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
-	"github.com/Financial-Times/go-logger"
-	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	"github.com/Financial-Times/service-status-go/gtg"
-	st "github.com/Financial-Times/service-status-go/httphandlers"
-	"github.com/gorilla/mux"
-	"github.com/rcrowley/go-metrics"
-	log "github.com/sirupsen/logrus"
 )
 
 type HealthConfig struct {
@@ -20,33 +11,7 @@ type HealthConfig struct {
 	AppName               string
 	AppDescription        string
 	RequestLoggingEnabled bool
-	ApiEndpoint			 api.Endpoint
-}
-
-func (h *ContentByConceptHandler) RegisterAdminHandlers(router *mux.Router, appConf HealthConfig) http.Handler {
-	logger.Info("Registering healthcheck handlers")
-
-	hc := fthealth.TimedHealthCheck{
-		HealthCheck: fthealth.HealthCheck{
-			SystemCode:  appConf.AppSystemCode,
-			Name:        appConf.AppName,
-			Description: appConf.AppDescription,
-			Checks:      h.checks(),
-		},
-		Timeout: 10 * time.Second,
-	}
-
-	router.HandleFunc("/__health", fthealth.Handler(hc))
-	router.HandleFunc(st.BuildInfoPath, st.BuildInfoHandler)
-	router.HandleFunc(api.DefaultPath, appConf.ApiEndpoint.ServeHTTP)
-	router.HandleFunc(st.GTGPath, st.NewGoodToGoHandler(h.gtg))
-
-	var monitoringRouter http.Handler = router
-	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
-	if appConf.RequestLoggingEnabled {
-		monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
-	}
-	return monitoringRouter
+	ApiEndpoint           api.Endpoint
 }
 
 func (h *ContentByConceptHandler) gtg() gtg.Status {

@@ -10,7 +10,6 @@ import (
 
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +17,6 @@ const (
 	testConceptID    = "44129750-7616-11e8-b45a-da24cd01f044"
 	testContentUUID  = "e89db5e2-760d-11e8-b45a-da24cd01f044"
 	anotherConceptID = "347e2eca-7860-11e8-b45a-da24cd01f044"
-	uuidRegex        = "([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
 )
 
 func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
@@ -157,8 +155,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 		var reqURL string
 		ds := dummyService{test.contentList, test.backendError}
 		handler := ContentByConceptHandler{&ds, "10", regexp.MustCompile(uuidRegex)}
-		router := mux.NewRouter()
-		handler.RegisterHandlers(router)
+
 		rec := httptest.NewRecorder()
 		if test.conceptID == "" {
 			reqURL = "/content"
@@ -169,7 +166,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 		} else {
 			reqURL = buildURL(test.conceptID, test.fromDate, test.toDate, test.page, test.contentLimit)
 		}
-		router.ServeHTTP(rec, newRequest("GET", reqURL))
+		handler.GetContentByConcept(rec, newRequest("GET", reqURL))
 		assert.Equal(test.expectedStatusCode, rec.Code, "There was an error returning the correct status code")
 		if test.expectedBody != "" {
 			assert.Equal(test.expectedBody, rec.Body.String(), "Wrong body")
