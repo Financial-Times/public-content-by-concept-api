@@ -1,22 +1,40 @@
 package content
 
 import (
-	"github.com/Financial-Times/api-endpoint"
+	"net/http"
+	"time"
+
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/service-status-go/gtg"
 )
 
-type HealthConfig struct {
-	AppSystemCode         string
-	AppName               string
-	AppDescription        string
-	RequestLoggingEnabled bool
-	ApiEndpoint           api.Endpoint
+type dbConnection interface {
+	CheckConnection() (string, error)
 }
 
-func (h *ContentByConceptHandler) gtg() gtg.Status {
+type HealthcheckService struct {
+	AppSystemCode  string
+	AppName        string
+	AppDescription string
+	neoService     dbConnection
+}
+
+func (h *HealthcheckService) HealthHandler() func(w http.ResponseWriter, r *http.Request) {
+	hc := fthealth.TimedHealthCheck{
+		HealthCheck: fthealth.HealthCheck{
+			SystemCode:  h.AppSystemCode,
+			Name:        h.AppName,
+			Description: h.AppDescription,
+			Checks:      h.Checks(),
+		},
+		Timeout: 10 * time.Second,
+	}
+	return fthealth.Handler(hc)
+}
+
+func (h *HealthcheckService) GTG() gtg.Status {
 	var statusChecker []gtg.StatusChecker
-	for _, c := range h.checks() {
+	for _, c := range h.Checks() {
 		checkFunc := func() gtg.Status {
 			return gtgCheck(c.Checker)
 		}
@@ -25,7 +43,7 @@ func (h *ContentByConceptHandler) gtg() gtg.Status {
 	return gtg.FailFastParallelCheck(statusChecker)()
 }
 
-func (h *ContentByConceptHandler) checks() []fthealth.Check {
+func (h *HealthcheckService) Checks() []fthealth.Check {
 	return []fthealth.Check{
 		{
 			BusinessImpact:   "Cannot respond to API requests",
@@ -33,7 +51,7 @@ func (h *ContentByConceptHandler) checks() []fthealth.Check {
 			PanicGuide:       "https://runbooks.ftops.tech/content-by-concept-api",
 			Severity:         2,
 			TechnicalSummary: "Cannot connect to Neo4j instance with at least one concept loaded in it",
-			Checker:          h.ContentService.CheckConnection,
+			Checker:          h.neoService.CheckConnection,
 		},
 	}
 }

@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Financial-Times/api-endpoint"
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
@@ -52,12 +51,6 @@ func main() {
 		Desc:   "Duration Get requests should be cached for. e.g. 2h45m would set the max-age value to '7440' seconds",
 		EnvVar: "CACHE_DURATION",
 	})
-	requestLoggingEnabled := app.Bool(cli.BoolOpt{
-		Name:   "requestLoggingOn",
-		Value:  false,
-		Desc:   "Whether to log requests or not",
-		EnvVar: "REQUEST_LOGGING_ENABLED",
-	})
 	logLevel := app.String(cli.StringOpt{
 		Name:   "logLevel",
 		Value:  "INFO",
@@ -73,37 +66,34 @@ func main() {
 
 	logger.InitLogger(*appName, *logLevel)
 	app.Action = func() {
-		conf := neoutils.ConnectionConfig{
-			BatchSize:     1024,
-			Transactional: false,
-			HTTPClient: &http.Client{
-				Transport: &http.Transport{
-					MaxIdleConnsPerHost: 100,
-				},
-				Timeout: 1 * time.Minute,
-			},
-			BackgroundConnect: true,
-		}
 
 		duration, err := time.ParseDuration(*cacheDuration)
 		if err != nil {
 			logger.WithError(err).Fatal("Failed to parse cache duration value")
 		}
 
-		apiEndpoint, err := api.NewAPIEndpointForFile(*apiYml)
-		if err != nil {
-			logger.WithError(err).WithField("file", *apiYml).Warn("Failed to serve the API Endpoint for this service. Please validate the Swagger YML and the file location.")
+		config := content.ServerConfig{
+			Port:           *port,
+			AppSystemCode:  *appSystemCode,
+			AppName:        *appName,
+			AppDescription: appDescription,
+			NeoURL:         *neoURL,
+			APIYMLPath:     *apiYml,
+			CacheTime:      duration,
+			NeoConfig: neoutils.ConnectionConfig{
+				BatchSize:     1024,
+				Transactional: false,
+				HTTPClient: &http.Client{
+					Transport: &http.Transport{
+						MaxIdleConnsPerHost: 100,
+					},
+					Timeout: 1 * time.Minute,
+				},
+				BackgroundConnect: true,
+			},
 		}
 
-		appConf := content.HealthConfig{
-			AppSystemCode:         *appSystemCode,
-			AppName:               *appName,
-			AppDescription:        appDescription,
-			RequestLoggingEnabled: *requestLoggingEnabled,
-			ApiEndpoint:           apiEndpoint,
-		}
-
-		stopSrv, err := content.StartServer(":"+*port, appConf, *neoURL, conf, duration)
+		stopSrv, err := content.StartServer(config)
 		if err != nil {
 			logger.WithError(err).Fatal("could not start the server")
 		}
