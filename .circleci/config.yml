@@ -1,64 +1,20 @@
-version: 2
-jobs:
-  build:
-    working_directory: /go/src/github.com/Financial-Times/public-content-by-concept-api
-    docker:
-      - image: golang:1
-        environment:
-          CIRCLE_TEST_REPORTS: /tmp/test-reports
-          CIRCLE_ARTIFACTS: /tmp/artifacts
-      - image: neo4j:3.4.10-enterprise
-        environment:
-          NEO4J_AUTH: none
-          NEO4J_HEAP_MEMORY: 256
-          NEO4J_CACHE_MEMORY: 256M
-          NEO4J_ACCEPT_LICENSE_AGREEMENT: "yes"
-    steps:
-      - checkout
-      - run:
-          name: Create folders
-          command: |
-            mkdir -p $CIRCLE_TEST_REPORTS/golang
-            mkdir -p $CIRCLE_ARTIFACTS
-      - run:
-          name: Download dependencies
-          command: |
-            go get -u github.com/jstemmer/go-junit-report
-            go get -u github.com/mattn/goveralls
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-      - run:
-          name: Download vendored dependencies
-          command: |
-            dep ensure -v -vendor-only
-      - run:
-          name: Build app
-          command: |
-            go build -v
-      - run:
-          name: Run tests and create coverage report
-          command: |
-            go test ./... -tags=integration -race -cover -coverprofile=$CIRCLE_TEST_REPORTS/coverage.out | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
-      - run:
-          name: Upload coverage report
-          command: |
-            /go/bin/goveralls -coverprofile=$CIRCLE_TEST_REPORTS/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
-      - store_test_results:
-          path: /tmp/test-reports
-  docker_build:
-    working_directory: /public-content-by-concept-api
-    docker:
-      - image: docker:18.03
-    steps:
-      - checkout
-      - setup_docker_engine
-      - run:
-          name: Build Dockerfile
-          command: docker build .
+version: 2.1
+
+orbs:
+  ft-golang-ci: financial-times/golang-ci@1
+
 workflows:
-  version: 2
   tests_and_docker:
     jobs:
-      - build
-      - docker_build:
+      - ft-golang-ci/build-and-test:
+          name: build-and-test-project
+          executor-name: ft-golang-ci/default-with-neo4j
+      - ft-golang-ci/docker-build:
+          name: build-docker-image
           requires:
-            - build
+            - build-and-test-project
+  snyk-scanning:
+    jobs:
+      - ft-golang-ci/scan:
+          name: scan-dependencies
+          context: cm-team-snyk
