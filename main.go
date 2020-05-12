@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -89,11 +91,6 @@ func main() {
 			BackgroundConnect: true,
 		}
 
-		db, err := neoutils.Connect(*neoURL, &conf)
-		if err != nil {
-			logger.WithError(err).Fatal("Could not connect to Neo4j")
-		}
-
 		duration, err := time.ParseDuration(*cacheDuration)
 		if err != nil {
 			logger.WithError(err).Fatal("Failed to parse cache duration value")
@@ -104,16 +101,6 @@ func main() {
 			logger.WithError(err).WithField("file", *apiYml).Warn("Failed to serve the API Endpoint for this service. Please validate the Swagger YML and the file location.")
 		}
 
-		cbcService := content.NewContentByConceptService(db)
-
-		handler := content.ContentByConceptHandler{
-			ContentService:     cbcService,
-			CacheControlHeader: strconv.FormatFloat(duration.Seconds(), 'f', 0, 64),
-			UUIDMatcher:        regexp.MustCompile(uuidRegex),
-		}
-
-		router := mux.NewRouter()
-		handler.RegisterHandlers(router)
 		appConf := content.HealthConfig{
 			AppSystemCode:         *appSystemCode,
 			AppName:               *appName,
@@ -122,20 +109,57 @@ func main() {
 			ApiEndpoint:           apiEndpoint,
 		}
 
-		monitoringRouter := handler.RegisterAdminHandlers(router, appConf)
-		http.Handle("/", monitoringRouter)
-
-		logger.Infof("Application started on port %s with args %s", *port, os.Args)
-		if err := http.ListenAndServe(":"+*port, monitoringRouter); err != nil {
-			logger.Fatalf("Unable to start server: %v", err)
+		stopSrv, err := startServer(":"+*port, appConf, *neoURL, conf, duration)
+		if err != nil {
+			logger.WithError(err).Fatal("could not start the server")
 		}
 		waitForSignal()
+		stopSrv()
 	}
 	app.Run(os.Args)
 }
 
+func startServer(addr string, heathConfig content.HealthConfig, neoURL string, neoConf neoutils.ConnectionConfig, cacheTime time.Duration) (func(), error) {
+
+	db, err := neoutils.Connect(neoURL, &neoConf)
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to Neo4j: %w", err)
+	}
+	cbcService := content.NewContentByConceptService(db)
+
+	handler := content.ContentByConceptHandler{
+		ContentService:     cbcService,
+		CacheControlHeader: strconv.FormatFloat(cacheTime.Seconds(), 'f', 0, 64),
+		UUIDMatcher:        regexp.MustCompile(uuidRegex),
+	}
+
+	router := mux.NewRouter()
+	handler.RegisterHandlers(router)
+
+	monitoringRouter := handler.RegisterAdminHandlers(router, heathConfig)
+
+	srv := http.Server{
+		Addr:    addr,
+		Handler: monitoringRouter,
+	}
+
+	logger.Infof("Application started on address %s with args %s", addr, os.Args)
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		logger.WithError(err).Error("server closed with unexpected error")
+	}
+	return func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			logger.WithError(err).Error("server shutdown with unexpected error")
+		}
+	}, nil
+}
+
 func waitForSignal() {
-	ch := make(chan os.Signal)
+	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
 }
