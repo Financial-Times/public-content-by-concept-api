@@ -67,7 +67,7 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := NewContentByConceptService(db)
+	contentByConceptDriver := &ConceptService{conn: db}
 	contentList, found, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.True(found, "Found no matching content for concept %s", MSJConceptUUID)
@@ -84,7 +84,7 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
-	contentByConceptDriver := NewContentByConceptService(db)
+	contentByConceptDriver := &ConceptService{conn: db}
 	contentList, found, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MetalMickeyConceptUUID)
 	assert.True(found, "Found no matching content for concept %s", MetalMickeyConceptUUID)
@@ -102,7 +102,7 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, content2UUID)
 
-	contentByConceptDriver := NewContentByConceptService(db)
+	contentByConceptDriver := &ConceptService{conn: db}
 	contentList, found, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, 1, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.True(found, "Found no matching content for concept %s", MSJConceptUUID)
@@ -119,7 +119,7 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
-	contentByConceptDriver := NewContentByConceptService(db)
+	contentByConceptDriver := &ConceptService{conn: db}
 	fromDate, _ := time.Parse("2006-01-02", "2014-03-08")
 	toDate, _ := time.Parse("2006-01-02", "2014-03-09")
 	contentList, found, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, fromDate.Unix(), toDate.Unix()})
@@ -135,7 +135,7 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := NewContentByConceptService(db)
+	contentByConceptDriver := &ConceptService{conn: db}
 	content, found, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.False(found, "Found annotations for concept %s", MSJConceptUUID)
@@ -151,7 +151,7 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 
 	defer cleanDB(t, content2UUID, MSJConceptUUID, contentUUID, MetalMickeyConceptUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := NewContentByConceptService(db)
+	contentByConceptDriver := &ConceptService{conn: db}
 	contentList, found, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.False(found, "Found annotations for concept %s", MSJConceptUUID)
@@ -173,7 +173,7 @@ func TestBrandsDontReturnParentContent(t *testing.T) {
 	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
 	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPikeParent-%v.json", OnyxPikeParentBrandUUID))
 
-	contentByConceptDriver := NewContentByConceptService(db)
+	contentByConceptDriver := &ConceptService{conn: db}
 	contentList, found, err := contentByConceptDriver.GetContentForConcept(OnyxPikeBrandUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", OnyxPikeBrandUUID)
 	assert.True(found, "Found annotations for concept %s", OnyxPikeBrandUUID)
@@ -197,7 +197,7 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordance(t *testing.T) {
 
 	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
-	contentByConceptDriver := NewContentByConceptService(db)
+	contentByConceptDriver := &ConceptService{conn: db}
 
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
@@ -226,7 +226,7 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithDateRestrictions(t *t
 
 	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
-	contentByConceptDriver := NewContentByConceptService(db)
+	contentByConceptDriver := &ConceptService{conn: db}
 
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
@@ -256,7 +256,7 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithPagination(t *testing
 
 	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
-	contentByConceptDriver := NewContentByConceptService(db)
+	contentByConceptDriver := &ConceptService{conn: db}
 
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
@@ -288,8 +288,9 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithPagination(t *testing
 
 func TestConceptService_Check(t *testing.T) {
 	assert := assert.New(t)
-	contentByConceptDriver := NewContentByConceptService(db)
-	assert.NoError(contentByConceptDriver.Check(), "Test should always pass when connected to db")
+	contentByConceptDriver := &ConceptService{conn: db}
+	_, err := contentByConceptDriver.CheckConnection()
+	assert.NoError(err, "Test should always pass when connected to db")
 }
 
 func writeContent(assert *assert.Assertions, db neoutils.NeoConnection, contentUUID string) {
