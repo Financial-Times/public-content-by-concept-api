@@ -8,7 +8,7 @@ import (
 
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
-	"github.com/Financial-Times/public-content-by-concept-api/content"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
 	_ "github.com/joho/godotenv/autoload"
