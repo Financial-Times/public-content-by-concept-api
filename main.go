@@ -6,16 +6,16 @@ import (
 	"strconv"
 	"time"
 
+	"os/signal"
+	"regexp"
+	"syscall"
+
+	"github.com/Financial-Times/api-endpoint"
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	"github.com/gorilla/mux"
-	"github.com/jawher/mow.cli"
-	_ "github.com/joho/godotenv/autoload"
-	"os/signal"
-	"regexp"
-	"syscall"
-	"github.com/Financial-Times/api-endpoint"
+	cli "github.com/jawher/mow.cli"
 )
 
 const (
@@ -119,7 +119,7 @@ func main() {
 			AppName:               *appName,
 			AppDescription:        appDescription,
 			RequestLoggingEnabled: *requestLoggingEnabled,
-			ApiEndpoint: 		  apiEndpoint,
+			ApiEndpoint:           apiEndpoint,
 		}
 
 		monitoringRouter := handler.RegisterAdminHandlers(router, appConf)

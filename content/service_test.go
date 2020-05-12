@@ -9,14 +9,13 @@ import (
 	"testing"
 	"time"
 
-	annrw "github.com/Financial-Times/annotations-rw-neo4j/annotations"
+	annrw "github.com/Financial-Times/annotations-rw-neo4j/v4/annotations"
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	"github.com/Financial-Times/concepts-rw-neo4j/concepts"
-	cnt "github.com/Financial-Times/content-rw-neo4j/content"
+	cnt "github.com/Financial-Times/content-rw-neo4j/v3/content"
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/jmcvetta/neoism"
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/stretchr/testify/assert"
 )
 
