@@ -1,6 +1,8 @@
 package content
 
 import (
+	"fmt"
+
 	log "github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
@@ -11,12 +13,6 @@ const (
 	defaultLimit    = 50
 	wwwThingsPrefix = "http://www.ft.com/things/"
 )
-
-// Driver interface
-type ContentByConceptServicer interface {
-	Check() error
-	GetContentForConcept(conceptUUID string, params RequestParams) (contentList, bool, error)
-}
 
 // CypherDriver struct
 type ConceptService struct {
@@ -30,20 +26,28 @@ type RequestParams struct {
 	toDateEpoch   int64
 }
 
-func NewContentByConceptService(conn neoutils.NeoConnection) ContentByConceptServicer {
-	return ConceptService{conn}
-}
-
-func (cd ConceptService) Check() error {
-	return neoutils.Check(cd.conn)
-}
-
 type neoReadStruct struct {
 	UUID  string   `json:"uuid"`
 	Types []string `json:"types"`
 }
 
-func (cd ConceptService) GetContentForConcept(conceptUUID string, params RequestParams) (contentList, bool, error) {
+func NewContentByConceptService(neoURL string, neoConf neoutils.ConnectionConfig) (*ConceptService, error) {
+	conn, err := neoutils.Connect(neoURL, &neoConf)
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to Neo4j: %w", err)
+	}
+	return &ConceptService{conn}, nil
+}
+
+func (cd *ConceptService) CheckConnection() (string, error) {
+	err := neoutils.Check(cd.conn)
+	if err != nil {
+		return "Could not connect to database!", err
+	}
+	return "Database connection is OK", nil
+}
+
+func (cd *ConceptService) GetContentForConcept(conceptUUID string, params RequestParams) (contentList, bool, error) {
 	var results []neoReadStruct
 	var query *neoism.CypherQuery
 

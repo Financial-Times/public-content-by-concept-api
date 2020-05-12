@@ -25,11 +25,10 @@ const uuidRegex = "([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-
 
 func StartServer(addr string, heathConfig HealthConfig, neoURL string, neoConf neoutils.ConnectionConfig, cacheTime time.Duration) (func(), error) {
 
-	db, err := neoutils.Connect(neoURL, &neoConf)
+	cbcService, err := NewContentByConceptService(neoURL, neoConf)
 	if err != nil {
-		return nil, fmt.Errorf("could not connect to Neo4j: %w", err)
+		return nil, fmt.Errorf("could not create concept service: %w", err)
 	}
-	cbcService := NewContentByConceptService(db)
 
 	handler := ContentByConceptHandler{
 		ContentService:     cbcService,

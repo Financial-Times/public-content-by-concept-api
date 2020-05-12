@@ -20,8 +20,12 @@ const (
 	thingURIPrefix = "http://api.ft.com/things/"
 )
 
+type dbService interface {
+	CheckConnection() (string, error)
+	GetContentForConcept(conceptUUID string, params RequestParams) (contentList, bool, error)
+}
 type ContentByConceptHandler struct {
-	ContentService     ContentByConceptServicer
+	ContentService     dbService
 	CacheControlHeader string
 	UUIDMatcher        *regexp.Regexp
 }

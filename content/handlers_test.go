@@ -219,6 +219,6 @@ func (dS dummyService) GetContentForConcept(conceptUUID string, params RequestPa
 	return cntList, false, dS.backendErr
 }
 
-func (dS dummyService) Check() error {
-	return nil
+func (dS dummyService) CheckConnection() (string, error) {
+	return "", nil
 }
