@@ -13,8 +13,6 @@ import (
 
 	"github.com/Financial-Times/go-logger"
 	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 )
 
 const (
@@ -26,14 +24,6 @@ type ContentByConceptHandler struct {
 	ContentService     ContentByConceptServicer
 	CacheControlHeader string
 	UUIDMatcher        *regexp.Regexp
-}
-
-func (ch *ContentByConceptHandler) RegisterHandlers(router *mux.Router) {
-	logger.Info("registering handlers")
-	gh := handlers.MethodHandler{
-		"GET": http.HandlerFunc(ch.GetContentByConcept),
-	}
-	router.Handle("/content", gh)
 }
 
 func (ch *ContentByConceptHandler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {

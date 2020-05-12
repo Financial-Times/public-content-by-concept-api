@@ -1,29 +1,23 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"os/signal"
-	"regexp"
 	"syscall"
 
 	"github.com/Financial-Times/api-endpoint"
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
-	"github.com/gorilla/mux"
 	cli "github.com/jawher/mow.cli"
 )
 
 const (
 	appDescription = "An API for returning content related to a given concept"
 	serviceName    = "public-content-by-concept-api"
-	uuidRegex      = "([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
 )
 
 func main() {
@@ -109,7 +103,7 @@ func main() {
 			ApiEndpoint:           apiEndpoint,
 		}
 
-		stopSrv, err := startServer(":"+*port, appConf, *neoURL, conf, duration)
+		stopSrv, err := content.StartServer(":"+*port, appConf, *neoURL, conf, duration)
 		if err != nil {
 			logger.WithError(err).Fatal("could not start the server")
 		}
@@ -117,45 +111,6 @@ func main() {
 		stopSrv()
 	}
 	app.Run(os.Args)
-}
-
-func startServer(addr string, heathConfig content.HealthConfig, neoURL string, neoConf neoutils.ConnectionConfig, cacheTime time.Duration) (func(), error) {
-
-	db, err := neoutils.Connect(neoURL, &neoConf)
-	if err != nil {
-		return nil, fmt.Errorf("could not connect to Neo4j: %w", err)
-	}
-	cbcService := content.NewContentByConceptService(db)
-
-	handler := content.ContentByConceptHandler{
-		ContentService:     cbcService,
-		CacheControlHeader: strconv.FormatFloat(cacheTime.Seconds(), 'f', 0, 64),
-		UUIDMatcher:        regexp.MustCompile(uuidRegex),
-	}
-
-	router := mux.NewRouter()
-	handler.RegisterHandlers(router)
-
-	monitoringRouter := handler.RegisterAdminHandlers(router, heathConfig)
-
-	srv := http.Server{
-		Addr:    addr,
-		Handler: monitoringRouter,
-	}
-
-	logger.Infof("Application started on address %s with args %s", addr, os.Args)
-	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		logger.WithError(err).Error("server closed with unexpected error")
-	}
-	return func() {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		defer cancel()
-
-		err := srv.Shutdown(ctx)
-		if err != nil {
-			logger.WithError(err).Error("server shutdown with unexpected error")
-		}
-	}, nil
 }
 
 func waitForSignal() {
