@@ -1,4 +1,4 @@
-module github.com/Financial-Times/public-content-by-concept-api
+module github.com/Financial-Times/public-content-by-concept-api/v2
 
 go 1.14
 
