@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 
 	"github.com/Financial-Times/go-logger"
@@ -87,14 +86,14 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			conceptID:          "NullURI",
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 400,
-			expectedBody:       `{"message": "Missing concept URI."}`,
+			expectedBody:       `{"message": "Missing or empty query parameter isAnnotatedBy. Expecting valid absolute concept URI."}`,
 		},
 		{
 			testName:           "Bad Request: isAnnotatedBy URI has invalid UUID",
 			conceptID:          "123456",
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 400,
-			expectedBody:       `{"message": "ID extracted from request URL was not valid uuid"}`,
+			expectedBody:       `{"message": "123456 extracted from request URL was not valid uuid"}`,
 		},
 		{
 			testName:           "Bad Request: query param 'page' is invalid",
@@ -102,7 +101,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			page:               "null",
 			expectedStatusCode: 400,
-			expectedBody:       "{\"message\": provided value for page, null, could not be parsed.}",
+			expectedBody:       `{"message": "provided value for page, null, could not be parsed."}`,
 		},
 		{
 			testName:           "Bad Request: query param 'page' is less than defaultPage value",
@@ -125,7 +124,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			fromDate:           "null",
 			expectedStatusCode: 400,
-			expectedBody:       "{\"message\": From date value null could not be parsed}",
+			expectedBody:       `{"message": "From date value null could not be parsed"}`,
 		},
 		{
 			testName:           "Bad Request: query param 'toDate' is invalid",
@@ -133,28 +132,28 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			toDate:             "null",
 			expectedStatusCode: 400,
-			expectedBody:       "{\"message\": To date value null could not be parsed}",
+			expectedBody:       `{"message": "To date value null could not be parsed"}`,
 		},
 		{
 			testName:           "Backend Error returns 503",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 503,
-			expectedBody:       "{\"message\": Backend error returning content for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044}",
+			expectedBody:       `{"message": "Backend error returning content for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
 			backendError:       errors.New("there was a problem"),
 		},
 		{
 			testName:           "No content for concept returns 404",
 			conceptID:          testConceptID,
 			expectedStatusCode: 404,
-			expectedBody:       "{\"message\": No content found for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044}",
+			expectedBody:       `{"message": "No content found for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
 		},
 	}
 
 	for _, test := range tests {
 		var reqURL string
 		ds := dummyService{test.contentList, test.backendError}
-		handler := ContentByConceptHandler{&ds, "10", regexp.MustCompile(uuidRegex)}
+		handler := Handler{&ds, "10"}
 
 		rec := httptest.NewRecorder()
 		if test.conceptID == "" {

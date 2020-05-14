@@ -20,7 +20,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const uuidRegex = "([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+var UUIDRegex = regexp.MustCompile(`([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$`)
 
 type ServerConfig struct {
 	Port           string
@@ -44,10 +44,9 @@ func StartServer(config ServerConfig) (func(), error) {
 		return nil, fmt.Errorf("could not create concept service: %w", err)
 	}
 
-	handler := ContentByConceptHandler{
+	handler := Handler{
 		ContentService:     cbcService,
 		CacheControlHeader: strconv.FormatFloat(config.CacheTime.Seconds(), 'f', 0, 64),
-		UUIDMatcher:        regexp.MustCompile(uuidRegex),
 	}
 
 	hs := &HealthcheckService{
@@ -63,9 +62,9 @@ func StartServer(config ServerConfig) (func(), error) {
 
 	logger.Info("Registering healthcheck handlers")
 	router.HandleFunc("/__health", hs.HealthHandler()).Methods(http.MethodGet)
+	router.HandleFunc(st.GTGPath, st.NewGoodToGoHandler(hs.GTG)).Methods(http.MethodGet)
 	router.HandleFunc(st.BuildInfoPath, st.BuildInfoHandler).Methods(http.MethodGet)
 	router.HandleFunc(api.DefaultPath, apiEndpoint.ServeHTTP).Methods(http.MethodGet)
-	router.HandleFunc(st.GTGPath, st.NewGoodToGoHandler(hs.GTG)).Methods(http.MethodGet)
 
 	var monitoringRouter http.Handler = router
 	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
