@@ -20,7 +20,7 @@ const (
 )
 
 type dbService interface {
-	GetContentForConcept(conceptUUID string, params RequestParams) (contentList, bool, error)
+	GetContentForConcept(conceptUUID string, params RequestParams) ([]Content, error)
 }
 
 type Handler struct {
@@ -122,17 +122,19 @@ func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 		toDateEpoch:   toDateEpoch,
 	}
 
-	contentList, found, err := h.ContentService.GetContentForConcept(conceptUUID, requestParams)
+	contentList, err := h.ContentService.GetContentForConcept(conceptUUID, requestParams)
 	if err != nil {
+
+		if err == ErrContentNotFound {
+			msg := fmt.Sprintf("No content found for concept with uuid %s", conceptUUID)
+			logger.WithTransactionID(transID).WithUUID(conceptUUID).Info(msg)
+			writeJSONMessage(w, http.StatusNotFound, msg)
+			return
+		}
+
 		msg := fmt.Sprintf("Backend error returning content for concept with uuid %s", conceptUUID)
 		logger.WithError(err).WithTransactionID(transID).WithUUID(conceptUUID).Error(msg)
 		writeJSONMessage(w, http.StatusServiceUnavailable, msg)
-		return
-	}
-	if !found {
-		msg := fmt.Sprintf("No content found for concept with uuid %s", conceptUUID)
-		logger.WithTransactionID(transID).WithUUID(conceptUUID).Info(msg)
-		writeJSONMessage(w, http.StatusNotFound, msg)
 		return
 	}
 
