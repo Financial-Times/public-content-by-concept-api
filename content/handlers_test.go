@@ -203,19 +203,23 @@ type dummyService struct {
 	backendErr    error
 }
 
-func (dS dummyService) GetContentForConcept(conceptUUID string, params RequestParams) (contentList, bool, error) {
-	cntList := contentList{}
+func (dS dummyService) GetContentForConcept(conceptUUID string, params RequestParams) ([]Content, error) {
+	if dS.backendErr != nil {
+		return nil, dS.backendErr
+	}
+	if len(dS.contentIDList) == 0 && dS.backendErr == nil {
+		return nil, ErrContentNotFound
+	}
+
+	cntList := make([]Content, 0)
 	for _, contentID := range dS.contentIDList {
-		var con = content{}
+		var con = Content{}
 		con.APIURL = mapper.APIURL(contentID, []string{"Content", "Thing"}, "")
 		con.ID = wwwThingsPrefix + contentID
 		cntList = append(cntList, con)
 	}
 
-	if len(cntList) > 0 {
-		return cntList, true, dS.backendErr
-	}
-	return cntList, false, dS.backendErr
+	return cntList, nil
 }
 
 func (dS dummyService) CheckConnection() (string, error) {

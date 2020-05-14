@@ -1,8 +1,6 @@
 package content
 
-type contentList []content
-
-type content struct {
+type Content struct {
 	ID     string `json:"id"`
 	APIURL string `json:"apiUrl"`
 }

@@ -1,9 +1,9 @@
 package content
 
 import (
+	"errors"
 	"fmt"
 
-	log "github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/jmcvetta/neoism"
@@ -13,6 +13,8 @@ const (
 	defaultLimit    = 50
 	wwwThingsPrefix = "http://www.ft.com/things/"
 )
+
+var ErrContentNotFound = errors.New("content not found")
 
 // CypherDriver struct
 type ConceptService struct {
@@ -24,11 +26,6 @@ type RequestParams struct {
 	contentLimit  int
 	fromDateEpoch int64
 	toDateEpoch   int64
-}
-
-type neoReadStruct struct {
-	UUID  string   `json:"uuid"`
-	Types []string `json:"types"`
 }
 
 func NewContentByConceptService(neoURL string, neoConf neoutils.ConnectionConfig) (*ConceptService, error) {
@@ -47,8 +44,11 @@ func (cd *ConceptService) CheckConnection() (string, error) {
 	return "Database connection is OK", nil
 }
 
-func (cd *ConceptService) GetContentForConcept(conceptUUID string, params RequestParams) (contentList, bool, error) {
-	var results []neoReadStruct
+func (cd *ConceptService) GetContentForConcept(conceptUUID string, params RequestParams) ([]Content, error) {
+	var results []struct {
+		UUID  string   `json:"uuid"`
+		Types []string `json:"types"`
+	}
 	var query *neoism.CypherQuery
 
 	var whereClause string
@@ -81,21 +81,21 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 		Result:     &results,
 	}
 	err := cd.conn.CypherBatch([]*neoism.CypherQuery{query})
-	if err != nil || len(results) == 0 {
-		return contentList{}, false, err
+	if err != nil {
+		return nil, err
 	}
-	log.Debugf("Found the following content for uuid %s: %v", conceptUUID, results)
 
-	return neoReadStructToContentList(&results), true, nil
-}
-
-func neoReadStructToContentList(results *[]neoReadStruct) []content {
-	cntList := contentList{}
-	for _, result := range *results {
-		var con = content{}
-		con.APIURL = mapper.APIURL(result.UUID, result.Types, "")
-		con.ID = wwwThingsPrefix + result.UUID //Not using mapper as this has a different prefix (www.ft.com not api.ft.com)
-		cntList = append(cntList, con)
+	if len(results) == 0 {
+		return nil, ErrContentNotFound
 	}
-	return cntList
+
+	cntList := make([]Content, 0)
+	for _, result := range results {
+		cntList = append(cntList, Content{
+			ID:     wwwThingsPrefix + result.UUID, //Not using mapper as this has a different prefix (www.ft.com not api.ft.com)
+			APIURL: mapper.APIURL(result.UUID, result.Types, ""),
+		})
+	}
+
+	return cntList, nil
 }
