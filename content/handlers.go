@@ -2,6 +2,7 @@ package content
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -52,74 +53,10 @@ func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page := defaultPage
-	pageParam := m.Get("page")
-	if pageParam != "" {
-		page, err = strconv.Atoi(pageParam)
-		if err != nil {
-			msg := fmt.Sprintf("provided value for page, %s, could not be parsed.", pageParam)
-			logger.WithError(err).WithTransactionID(transID).WithUUID(conceptUUID).Error(msg)
-			writeJSONMessage(w, http.StatusBadRequest, msg)
-			return
-		}
-
-		if page < defaultPage {
-			msg := fmt.Sprintf("provided value for page should be greater than: %v", defaultPage)
-			logger.WithTransactionID(transID).WithUUID(conceptUUID).Debugf(msg)
-			writeJSONMessage(w, http.StatusBadRequest, msg)
-			return
-		}
-	}
-
-	limitParam := m.Get("limit")
-	var contentLimit int
-
-	if limitParam == "" {
-		logger.WithTransactionID(transID).WithUUID(conceptUUID).Debugf("No contentLimit provided. Using default: %d", defaultLimit)
-		contentLimit = defaultLimit
-	} else {
-		contentLimit, err = strconv.Atoi(limitParam)
-		if err != nil {
-			logger.Debugf("provided value for contentLimit, %s, could not be parsed. Using default: %d", limitParam, defaultLimit)
-			contentLimit = defaultLimit
-		}
-	}
-
-	fromDateParam := m.Get("fromDate")
-	toDateParam := m.Get("toDate")
-	var fromDateEpoch, toDateEpoch int64
-
-	if fromDateParam == "" {
-		logger.WithTransactionID(transID).WithUUID(conceptUUID).Debug("no fromDate url param supplied")
-	} else {
-		fromDateTime, err := time.Parse(dateTimeLayout, fromDateParam)
-		if err != nil {
-			msg := fmt.Sprintf("From date value %s could not be parsed", fromDateParam)
-			logger.WithError(err).WithTransactionID(transID).WithUUID(conceptUUID).Error(msg)
-			writeJSONMessage(w, http.StatusBadRequest, msg)
-			return
-		}
-		fromDateEpoch = fromDateTime.Unix()
-	}
-
-	if toDateParam == "" {
-		logger.WithTransactionID(transID).WithUUID(conceptUUID).Debug("no toDate url param supplied")
-	} else {
-		toDateTime, err := time.Parse(dateTimeLayout, toDateParam)
-		if err != nil {
-			msg := fmt.Sprintf("To date value %s could not be parsed", toDateParam)
-			logger.WithError(err).WithTransactionID(transID).WithUUID(conceptUUID).Error(msg)
-			writeJSONMessage(w, http.StatusBadRequest, msg)
-			return
-		}
-		toDateEpoch = toDateTime.Unix()
-	}
-
-	requestParams := RequestParams{
-		page:          page,
-		contentLimit:  contentLimit,
-		fromDateEpoch: fromDateEpoch,
-		toDateEpoch:   toDateEpoch,
+	requestParams, err := extractRequestParams(m, logger.WithTransactionID(transID).WithUUID(conceptUUID))
+	if err != nil {
+		writeJSONMessage(w, http.StatusBadRequest, err.Error())
+		return
 	}
 
 	contentList, err := h.ContentService.GetContentForConcept(conceptUUID, requestParams)
@@ -147,6 +84,80 @@ func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 		writeJSONMessage(w, http.StatusInternalServerError, msg)
 		return
 	}
+}
+
+func extractRequestParams(val url.Values, log logger.LogEntry) (RequestParams, error) {
+
+	var (
+		page          = defaultPage
+		contentLimit  = defaultLimit
+		fromDateEpoch = int64(0)
+		toDateEpoch   = int64(0)
+		err           error
+	)
+
+	pageParam := val.Get("page")
+	if pageParam != "" {
+		page, err = strconv.Atoi(pageParam)
+		if err != nil {
+			msg := fmt.Sprintf("provided value for page, %s, could not be parsed.", pageParam)
+			log.WithError(err).Error(msg)
+			return RequestParams{}, errors.New(msg)
+		}
+
+		if page < defaultPage {
+			msg := fmt.Sprintf("provided value for page should be greater than: %v", defaultPage)
+			log.Debugf(msg)
+			return RequestParams{}, errors.New(msg)
+		}
+	}
+
+	limitParam := val.Get("limit")
+
+	if limitParam == "" {
+		log.Debugf("No contentLimit provided. Using default: %d", defaultLimit)
+	} else {
+		limit, err := strconv.Atoi(limitParam)
+		if err != nil {
+			log.Debugf("provided value for contentLimit, %s, could not be parsed. Using default: %d", limitParam, defaultLimit)
+		} else {
+			contentLimit = limit
+		}
+	}
+
+	fromDateParam := val.Get("fromDate")
+	toDateParam := val.Get("toDate")
+
+	if fromDateParam == "" {
+		log.Debug("no fromDate url param supplied")
+	} else {
+		fromDateTime, err := time.Parse(dateTimeLayout, fromDateParam)
+		if err != nil {
+			msg := fmt.Sprintf("From date value %s could not be parsed", fromDateParam)
+			log.WithError(err).Error(msg)
+			return RequestParams{}, errors.New(msg)
+		}
+		fromDateEpoch = fromDateTime.Unix()
+	}
+
+	if toDateParam == "" {
+		log.Debug("no toDate url param supplied")
+	} else {
+		toDateTime, err := time.Parse(dateTimeLayout, toDateParam)
+		if err != nil {
+			msg := fmt.Sprintf("To date value %s could not be parsed", toDateParam)
+			log.WithError(err).Error(msg)
+			return RequestParams{}, errors.New(msg)
+		}
+		toDateEpoch = toDateTime.Unix()
+	}
+
+	return RequestParams{
+		page:          page,
+		contentLimit:  contentLimit,
+		fromDateEpoch: fromDateEpoch,
+		toDateEpoch:   toDateEpoch,
+	}, nil
 }
 
 func writeJSONMessage(w http.ResponseWriter, status int, msg string) {
