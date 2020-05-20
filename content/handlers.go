@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,8 @@ const (
 	thingURIPrefix = "http://api.ft.com/things/"
 	dateTimeLayout = "2006-01-02"
 )
+
+var UUIDRegex = regexp.MustCompile(`([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$`)
 
 type dbService interface {
 	GetContentForConcept(conceptUUID string, params RequestParams) ([]Content, error)
