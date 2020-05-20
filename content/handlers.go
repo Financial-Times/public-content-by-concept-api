@@ -23,12 +23,12 @@ const (
 
 var UUIDRegex = regexp.MustCompile(`([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$`)
 
-type dbService interface {
+type dbContentForConceptGetter interface {
 	GetContentForConcept(conceptUUID string, params RequestParams) ([]Content, error)
 }
 
 type Handler struct {
-	ContentService     dbService
+	ContentService     dbContentForConceptGetter
 	CacheControlHeader string
 }
 
