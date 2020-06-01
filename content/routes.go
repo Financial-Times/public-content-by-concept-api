@@ -20,14 +20,17 @@ import (
 )
 
 type ServerConfig struct {
-	Port           string
+	Port          string
+	APIYMLPath    string
+	CacheTime     time.Duration
+	RecordMetrics bool
+
 	AppSystemCode  string
 	AppName        string
 	AppDescription string
-	NeoURL         string
-	APIYMLPath     string
-	CacheTime      time.Duration
-	NeoConfig      neoutils.ConnectionConfig
+
+	NeoURL    string
+	NeoConfig neoutils.ConnectionConfig
 }
 
 func StartServer(config ServerConfig) (func(), error) {
@@ -65,7 +68,9 @@ func StartServer(config ServerConfig) (func(), error) {
 
 	var monitoringRouter http.Handler = router
 	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
-	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
+	if config.RecordMetrics {
+		monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
+	}
 
 	srv := http.Server{
 		Addr:    ":" + config.Port,

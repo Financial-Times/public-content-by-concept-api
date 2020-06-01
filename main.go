@@ -51,6 +51,12 @@ func main() {
 		Desc:   "Duration Get requests should be cached for. e.g. 2h45m would set the max-age value to '7440' seconds",
 		EnvVar: "CACHE_DURATION",
 	})
+	recordMetrics := app.Bool(cli.BoolOpt{
+		Name:   "record-http-metrics",
+		Desc:   "enable recording of http handler metrics",
+		EnvVar: "RECORD_HTTP_METRICS",
+		Value:  false,
+	})
 	logLevel := app.String(cli.StringOpt{
 		Name:   "logLevel",
 		Value:  "INFO",
@@ -74,12 +80,13 @@ func main() {
 
 		config := content.ServerConfig{
 			Port:           *port,
+			APIYMLPath:     *apiYml,
+			CacheTime:      duration,
+			RecordMetrics:  *recordMetrics,
 			AppSystemCode:  *appSystemCode,
 			AppName:        *appName,
 			AppDescription: appDescription,
 			NeoURL:         *neoURL,
-			APIYMLPath:     *apiYml,
-			CacheTime:      duration,
 			NeoConfig: neoutils.ConnectionConfig{
 				BatchSize:     1024,
 				Transactional: false,
@@ -95,12 +102,15 @@ func main() {
 
 		stopSrv, err := content.StartServer(config)
 		if err != nil {
-			logger.WithError(err).Fatal("could not start the server")
+			logger.WithError(err).Fatal("Could not start the server")
 		}
 		waitForSignal()
 		stopSrv()
 	}
-	app.Run(os.Args)
+	err := app.Run(os.Args)
+	if err != nil {
+		logger.Fatal(err)
+	}
 }
 
 func waitForSignal() {
