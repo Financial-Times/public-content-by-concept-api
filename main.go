@@ -84,6 +84,7 @@ func main() {
 			APIYMLPath:     *apiYml,
 			CacheTime:      duration,
 			RecordMetrics:  *recordMetrics,
+			Log:            log,
 			AppSystemCode:  *appSystemCode,
 			AppName:        *appName,
 			AppDescription: appDescription,

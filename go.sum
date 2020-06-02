@@ -21,6 +21,7 @@ github.com/Financial-Times/go-logger/v2 v2.0.1/go.mod h1:Jpky5JYSX7xjGUClfA9hEMD
 github.com/Financial-Times/http-handlers-go v0.0.0-20170809121007-229ac16f1d9e/go.mod h1:sAkXv1oPYgNTYBYsYs83HwpYp7R50mvgBGGcsOlJtOw=
 github.com/Financial-Times/http-handlers-go v0.0.0-20180517120644-2c20324ab887 h1:4qEj6CB6jF9eloZIV/SCS7mQ/9iyx+3Ru/w7m10c69w=
 github.com/Financial-Times/http-handlers-go v0.0.0-20180517120644-2c20324ab887/go.mod h1:sAkXv1oPYgNTYBYsYs83HwpYp7R50mvgBGGcsOlJtOw=
+github.com/Financial-Times/http-handlers-go/v2 v2.1.0 h1:kBj41WrDXUGUiLHEjWI1zQUbRTNEw0JxSaaXQwZkib8=
 github.com/Financial-Times/http-handlers-go/v2 v2.1.0/go.mod h1:Tgkc7TqJXl/NFxB8eP8CX7YU5X01gbrL55LqNzo4YVY=
 github.com/Financial-Times/kafka v0.0.0-20181214115819-fddecb2b8f89/go.mod h1:9iEKOqzCx6y18PdEhz4FrHLTMoMXQeN4I9vRCszREdc=
 github.com/Financial-Times/kafka-client-go v0.0.0-20181214120216-c3a1941e42a4/go.mod h1:IRxo6zPqM44uCWpM7YBkm5o9lOxwPgR0/WvCX0KcV/Y=

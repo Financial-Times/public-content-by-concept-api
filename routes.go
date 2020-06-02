@@ -9,14 +9,13 @@ import (
 	"time"
 
 	"github.com/Financial-Times/api-endpoint"
-	"github.com/Financial-Times/go-logger"
-	"github.com/Financial-Times/http-handlers-go/httphandlers"
+	"github.com/Financial-Times/go-logger/v2"
+	"github.com/Financial-Times/http-handlers-go/v2/httphandlers"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	st "github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/gorilla/mux"
 	"github.com/rcrowley/go-metrics"
-	log "github.com/sirupsen/logrus"
 )
 
 type ServerConfig struct {
@@ -24,6 +23,7 @@ type ServerConfig struct {
 	APIYMLPath    string
 	CacheTime     time.Duration
 	RecordMetrics bool
+	Log           *logger.UPPLogger
 
 	AppSystemCode  string
 	AppName        string
@@ -57,17 +57,18 @@ func StartServer(config ServerConfig) (func(), error) {
 	}
 
 	router := mux.NewRouter()
-	logger.Info("Registering handlers")
+	config.Log.Debug("Registering handlers")
 	router.HandleFunc("/content", handler.GetContentByConcept).Methods(http.MethodGet)
 
-	logger.Info("Registering healthcheck handlers")
+	config.Log.Debug("Registering healthcheck handlers")
 	router.HandleFunc("/__health", hs.HealthHandler()).Methods(http.MethodGet)
 	router.HandleFunc(st.GTGPath, st.NewGoodToGoHandler(hs.GTG)).Methods(http.MethodGet)
 	router.HandleFunc(st.BuildInfoPath, st.BuildInfoHandler).Methods(http.MethodGet)
 	router.HandleFunc(api.DefaultPath, apiEndpoint.ServeHTTP).Methods(http.MethodGet)
 
+	config.Log.Debug("Registering monitoring middleware")
 	var monitoringRouter http.Handler = router
-	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
+	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(config.Log, monitoringRouter)
 	if config.RecordMetrics {
 		monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
 	}
@@ -77,17 +78,21 @@ func StartServer(config ServerConfig) (func(), error) {
 		Handler: monitoringRouter,
 	}
 
-	logger.Infof("Application started on port %s with args %s", config.Port, os.Args)
-	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		logger.WithError(err).Error("Server closed with unexpected error")
-	}
+	go func() {
+		config.Log.Debugf("Application started on port %s with args %s", config.Port, os.Args)
+		config.Log.Info("Start listening")
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			config.Log.WithError(err).Error("Server closed with unexpected error")
+		}
+	}()
+
 	return func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 
 		err := srv.Shutdown(ctx)
 		if err != nil {
-			logger.WithError(err).Error("Server shutdown with unexpected error")
+			config.Log.WithError(err).Error("Server shutdown with unexpected error")
 		}
 	}, nil
 }
