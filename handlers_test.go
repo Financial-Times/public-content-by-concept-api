@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Financial-Times/go-logger"
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,8 @@ const (
 )
 
 func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
-	logger.InitDefaultLogger("test-handlers")
+	log := logger.NewUPPLogger("test-service", "info")
+
 	assert := assert.New(t)
 
 	tests := []struct {
@@ -154,7 +155,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 	for _, test := range tests {
 		var reqURL string
 		ds := dummyService{test.contentList, test.backendError}
-		handler := Handler{&ds, "10"}
+		handler := Handler{ContentService: &ds, CacheControlHeader: "10", Log: log}
 
 		rec := httptest.NewRecorder()
 		if test.conceptID == "" {

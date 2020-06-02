@@ -47,6 +47,7 @@ func StartServer(config ServerConfig) (func(), error) {
 	handler := Handler{
 		ContentService:     cbcService,
 		CacheControlHeader: strconv.FormatFloat(config.CacheTime.Seconds(), 'f', 0, 64),
+		Log:                config.Log,
 	}
 
 	hs := &HealthcheckService{
