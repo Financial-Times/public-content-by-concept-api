@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Financial-Times/go-logger"
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
 )
@@ -32,19 +32,22 @@ type dbContentForConceptGetter interface {
 type Handler struct {
 	ContentService     dbContentForConceptGetter
 	CacheControlHeader string
+	Log                *logger.UPPLogger
 }
 
 func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 	transID := transactionidutils.GetTransactionIDFromRequest(r)
 
+	logEntry := h.Log.WithTransactionID(transID)
+
 	m, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		logger.WithError(err).WithTransactionID(transID).Error("Could not parse request url")
+		logEntry.WithError(err).Error("Could not parse request url")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Header().Set(transactionidutils.TransactionIDHeader, transID)
-	logger.WithTransactionID(transID).Infof("Request url is %s", r.URL.RawQuery)
+	logEntry.Debugf("Request url is %s", r.URL.RawQuery)
 
 	conceptURI := m.Get("isAnnotatedBy")
 	if conceptURI == "" {
@@ -57,8 +60,9 @@ func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 		writeJSONMessage(w, http.StatusBadRequest, fmt.Sprintf("%s extracted from request URL was not valid uuid", conceptUUID))
 		return
 	}
+	logEntry = logEntry.WithUUID(conceptUUID)
 
-	requestParams, err := extractRequestParams(m, logger.WithTransactionID(transID).WithUUID(conceptUUID))
+	requestParams, err := extractRequestParams(m, logEntry)
 	if err != nil {
 		writeJSONMessage(w, http.StatusBadRequest, err.Error())
 		return
@@ -69,13 +73,13 @@ func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 
 		if err == content.ErrContentNotFound {
 			msg := fmt.Sprintf("No content found for concept with uuid %s", conceptUUID)
-			logger.WithTransactionID(transID).WithUUID(conceptUUID).Info(msg)
+			logEntry.Debugf(msg)
 			writeJSONMessage(w, http.StatusNotFound, msg)
 			return
 		}
 
 		msg := fmt.Sprintf("Backend error returning content for concept with uuid %s", conceptUUID)
-		logger.WithError(err).WithTransactionID(transID).WithUUID(conceptUUID).Error(msg)
+		logEntry.Error(msg)
 		writeJSONMessage(w, http.StatusServiceUnavailable, msg)
 		return
 	}
@@ -85,14 +89,13 @@ func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 
 	if err = json.NewEncoder(w).Encode(contentList); err != nil {
 		msg := fmt.Sprintf("Error parsing returned content list for concept with uuid %s", conceptUUID)
-		logger.WithError(err).WithTransactionID(transID).WithUUID(conceptUUID).Error(msg)
+		logEntry.Error(msg)
 		writeJSONMessage(w, http.StatusInternalServerError, msg)
 		return
 	}
 }
 
-func extractRequestParams(val url.Values, log logger.LogEntry) (content.RequestParams, error) {
-
+func extractRequestParams(val url.Values, log *logger.LogEntry) (content.RequestParams, error) {
 	var (
 		page          = defaultPage
 		contentLimit  = defaultLimit
