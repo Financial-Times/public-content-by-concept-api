@@ -37,6 +37,9 @@ const (
 	JohnSmithOtherTMEUUID   = "521a2338-2cc7-47dd-8da2-e757b4ceb7ef"
 )
 
+const defaultLimit = 10
+const defaultPage = 1
+
 // Reusable Neo4J connection
 var db neoutils.NeoConnection
 
@@ -257,8 +260,8 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithPagination(t *testing
 		allContent := make([]Content, 0)
 		for {
 			requestParams := RequestParams{
-				page:         page,
-				contentLimit: pageSize,
+				Page:         page,
+				ContentLimit: pageSize,
 			}
 
 			pageContents, err := contentByConceptDriver.GetContentForConcept(uuid, requestParams)

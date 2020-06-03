@@ -1,4 +1,4 @@
-package content
+package main
 
 import (
 	"context"
@@ -9,14 +9,14 @@ import (
 	"time"
 
 	"github.com/Financial-Times/api-endpoint"
+	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
+	"github.com/Financial-Times/neo-utils-go/neoutils"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	st "github.com/Financial-Times/service-status-go/httphandlers"
+	"github.com/gorilla/mux"
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/Financial-Times/go-logger"
-	"github.com/Financial-Times/neo-utils-go/neoutils"
-	"github.com/gorilla/mux"
 )
 
 type ServerConfig struct {
@@ -39,7 +39,7 @@ func StartServer(config ServerConfig) (func(), error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to serve the API Endpoint for this service from file %s: %w", config.APIYMLPath, err)
 	}
-	cbcService, err := NewContentByConceptService(config.NeoURL, config.NeoConfig)
+	cbcService, err := content.NewContentByConceptService(config.NeoURL, config.NeoConfig)
 	if err != nil {
 		return nil, fmt.Errorf("could not create concept service: %w", err)
 	}
@@ -57,7 +57,7 @@ func StartServer(config ServerConfig) (func(), error) {
 	}
 
 	router := mux.NewRouter()
-	logger.Info("registering handlers")
+	logger.Info("Registering handlers")
 	router.HandleFunc("/content", handler.GetContentByConcept).Methods(http.MethodGet)
 
 	logger.Info("Registering healthcheck handlers")
@@ -79,7 +79,7 @@ func StartServer(config ServerConfig) (func(), error) {
 
 	logger.Infof("Application started on port %s with args %s", config.Port, os.Args)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		logger.WithError(err).Error("server closed with unexpected error")
+		logger.WithError(err).Error("Server closed with unexpected error")
 	}
 	return func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -87,7 +87,7 @@ func StartServer(config ServerConfig) (func(), error) {
 
 		err := srv.Shutdown(ctx)
 		if err != nil {
-			logger.WithError(err).Error("server shutdown with unexpected error")
+			logger.WithError(err).Error("Server shutdown with unexpected error")
 		}
 	}, nil
 }

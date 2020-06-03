@@ -1,4 +1,4 @@
-package content
+package main
 
 import (
 	"errors"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -203,19 +204,19 @@ type dummyService struct {
 	backendErr    error
 }
 
-func (dS dummyService) GetContentForConcept(conceptUUID string, params RequestParams) ([]Content, error) {
+func (dS dummyService) GetContentForConcept(conceptUUID string, params content.RequestParams) ([]content.Content, error) {
 	if dS.backendErr != nil {
 		return nil, dS.backendErr
 	}
 	if len(dS.contentIDList) == 0 && dS.backendErr == nil {
-		return nil, ErrContentNotFound
+		return nil, content.ErrContentNotFound
 	}
 
-	cntList := make([]Content, 0)
+	cntList := make([]content.Content, 0)
 	for _, contentID := range dS.contentIDList {
-		var con = Content{}
+		var con = content.Content{}
 		con.APIURL = mapper.APIURL(contentID, []string{"Content", "Thing"}, "")
-		con.ID = wwwThingsPrefix + contentID
+		con.ID = content.ThingsPrefix + contentID
 		cntList = append(cntList, con)
 	}
 

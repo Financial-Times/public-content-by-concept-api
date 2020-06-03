@@ -3,14 +3,12 @@ package main
 import (
 	"net/http"
 	"os"
-	"time"
-
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
-	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	cli "github.com/jawher/mow.cli"
 )
 
@@ -78,7 +76,7 @@ func main() {
 			logger.WithError(err).Fatal("Failed to parse cache duration value")
 		}
 
-		config := content.ServerConfig{
+		config := ServerConfig{
 			Port:           *port,
 			APIYMLPath:     *apiYml,
 			CacheTime:      duration,
@@ -100,7 +98,7 @@ func main() {
 			},
 		}
 
-		stopSrv, err := content.StartServer(config)
+		stopSrv, err := StartServer(config)
 		if err != nil {
 			logger.WithError(err).Fatal("Could not start the server")
 		}

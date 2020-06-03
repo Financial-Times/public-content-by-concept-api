@@ -1,4 +1,4 @@
-package content
+package main
 
 import (
 	"encoding/json"
@@ -12,11 +12,13 @@ import (
 	"time"
 
 	"github.com/Financial-Times/go-logger"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
 )
 
 const (
 	defaultPage    = 1
+	defaultLimit   = 50
 	thingURIPrefix = "http://api.ft.com/things/"
 	dateTimeLayout = "2006-01-02"
 )
@@ -24,7 +26,7 @@ const (
 var UUIDRegex = regexp.MustCompile(`([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$`)
 
 type dbContentForConceptGetter interface {
-	GetContentForConcept(conceptUUID string, params RequestParams) ([]Content, error)
+	GetContentForConcept(conceptUUID string, params content.RequestParams) ([]content.Content, error)
 }
 
 type Handler struct {
@@ -42,7 +44,7 @@ func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Header().Set(transactionidutils.TransactionIDHeader, transID)
-	logger.WithTransactionID(transID).Infof("request url is %s", r.URL.RawQuery)
+	logger.WithTransactionID(transID).Infof("Request url is %s", r.URL.RawQuery)
 
 	conceptURI := m.Get("isAnnotatedBy")
 	if conceptURI == "" {
@@ -65,7 +67,7 @@ func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 	contentList, err := h.ContentService.GetContentForConcept(conceptUUID, requestParams)
 	if err != nil {
 
-		if err == ErrContentNotFound {
+		if err == content.ErrContentNotFound {
 			msg := fmt.Sprintf("No content found for concept with uuid %s", conceptUUID)
 			logger.WithTransactionID(transID).WithUUID(conceptUUID).Info(msg)
 			writeJSONMessage(w, http.StatusNotFound, msg)
@@ -89,7 +91,7 @@ func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func extractRequestParams(val url.Values, log logger.LogEntry) (RequestParams, error) {
+func extractRequestParams(val url.Values, log logger.LogEntry) (content.RequestParams, error) {
 
 	var (
 		page          = defaultPage
@@ -105,13 +107,13 @@ func extractRequestParams(val url.Values, log logger.LogEntry) (RequestParams, e
 		if err != nil {
 			msg := fmt.Sprintf("provided value for page, %s, could not be parsed.", pageParam)
 			log.WithError(err).Error(msg)
-			return RequestParams{}, errors.New(msg)
+			return content.RequestParams{}, errors.New(msg)
 		}
 
 		if page < defaultPage {
 			msg := fmt.Sprintf("provided value for page should be greater than: %v", defaultPage)
 			log.Debugf(msg)
-			return RequestParams{}, errors.New(msg)
+			return content.RequestParams{}, errors.New(msg)
 		}
 	}
 
@@ -138,7 +140,7 @@ func extractRequestParams(val url.Values, log logger.LogEntry) (RequestParams, e
 		if err != nil {
 			msg := fmt.Sprintf("From date value %s could not be parsed", fromDateParam)
 			log.WithError(err).Error(msg)
-			return RequestParams{}, errors.New(msg)
+			return content.RequestParams{}, errors.New(msg)
 		}
 		fromDateEpoch = fromDateTime.Unix()
 	}
@@ -150,16 +152,16 @@ func extractRequestParams(val url.Values, log logger.LogEntry) (RequestParams, e
 		if err != nil {
 			msg := fmt.Sprintf("To date value %s could not be parsed", toDateParam)
 			log.WithError(err).Error(msg)
-			return RequestParams{}, errors.New(msg)
+			return content.RequestParams{}, errors.New(msg)
 		}
 		toDateEpoch = toDateTime.Unix()
 	}
 
-	return RequestParams{
-		page:          page,
-		contentLimit:  contentLimit,
-		fromDateEpoch: fromDateEpoch,
-		toDateEpoch:   toDateEpoch,
+	return content.RequestParams{
+		Page:          page,
+		ContentLimit:  contentLimit,
+		FromDateEpoch: fromDateEpoch,
+		ToDateEpoch:   toDateEpoch,
 	}, nil
 }
 

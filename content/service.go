@@ -9,11 +9,6 @@ import (
 	"github.com/jmcvetta/neoism"
 )
 
-const (
-	defaultLimit    = 50
-	wwwThingsPrefix = "http://www.ft.com/things/"
-)
-
 var ErrContentNotFound = errors.New("content not found")
 
 // CypherDriver struct
@@ -22,10 +17,10 @@ type ConceptService struct {
 }
 
 type RequestParams struct {
-	page          int
-	contentLimit  int
-	fromDateEpoch int64
-	toDateEpoch   int64
+	Page          int
+	ContentLimit  int
+	FromDateEpoch int64
+	ToDateEpoch   int64
 }
 
 func NewContentByConceptService(neoURL string, neoConf neoutils.ConnectionConfig) (*ConceptService, error) {
@@ -52,19 +47,19 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 	var query *neoism.CypherQuery
 
 	var whereClause string
-	if params.fromDateEpoch > 0 && params.toDateEpoch > 0 {
+	if params.FromDateEpoch > 0 && params.ToDateEpoch > 0 {
 		whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate}"
 	}
 
 	// skipCount determines how many rows to skip before returning the results
-	skipCount := (params.page - 1) * params.contentLimit
+	skipCount := (params.Page - 1) * params.ContentLimit
 
 	parameters := neoism.Props{
 		"conceptUUID":     conceptUUID,
 		"skipCount":       skipCount,
-		"maxContentItems": params.contentLimit,
-		"fromDate":        params.fromDateEpoch,
-		"toDate":          params.toDateEpoch}
+		"maxContentItems": params.ContentLimit,
+		"fromDate":        params.FromDateEpoch,
+		"toDate":          params.ToDateEpoch}
 
 	// New concordance model
 	query = &neoism.CypherQuery{
@@ -92,7 +87,7 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 	cntList := make([]Content, 0)
 	for _, result := range results {
 		cntList = append(cntList, Content{
-			ID:     wwwThingsPrefix + result.UUID, //Not using mapper as this has a different prefix (www.ft.com not api.ft.com)
+			ID:     ThingsPrefix + result.UUID, //Not using mapper as this has a different prefix (www.ft.com not api.ft.com)
 			APIURL: mapper.APIURL(result.UUID, result.Types, ""),
 		})
 	}
