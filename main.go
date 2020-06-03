@@ -7,7 +7,6 @@ import (
 	"syscall"
 	"time"
 
-	logV1 "github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	cli "github.com/jawher/mow.cli"
@@ -69,7 +68,6 @@ func main() {
 		EnvVar: "API_YML",
 	})
 
-	logV1.InitLogger(*appName, *logLevel)
 	log := logger.NewUPPLogger(*appName, *logLevel)
 
 	app.Action = func() {
