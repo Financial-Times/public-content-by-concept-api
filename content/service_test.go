@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Financial-Times/go-logger/v2"
+
 	annrw "github.com/Financial-Times/annotations-rw-neo4j/v4/annotations"
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	"github.com/Financial-Times/concepts-rw-neo4j/concepts"
 	cnt "github.com/Financial-Times/content-rw-neo4j/v3/content"
-	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/jmcvetta/neoism"
 	"github.com/stretchr/testify/assert"
@@ -44,12 +45,12 @@ const defaultPage = 1
 var db neoutils.NeoConnection
 
 func init() {
-	logger.InitLogger("test-service", "debug")
+	log := logger.NewUPPLogger("test-service", "info")
 	conf := neoutils.DefaultConnectionConfig()
 	conf.Transactional = false
 	db, _ = neoutils.Connect(neoURL(), conf)
 	if db == nil {
-		logger.Fatal("Cannot connect to Neo4J")
+		log.Fatal("Cannot connect to Neo4J")
 	}
 }
 
