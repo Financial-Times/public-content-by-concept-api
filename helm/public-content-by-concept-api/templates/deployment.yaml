@@ -44,6 +44,10 @@ spec:
           value: "{{ .Values.env.app.port }}"
         - name: CACHE_DURATION
           value: {{ .Values.env.cache.duration }}
+        - name: RECORD_HTTP_METRICS
+          value: "{{ .Values.env.recordHTTPMetrics }}"
+        - name: LOG_LEVEL
+          value: "{{ .Values.env.logLevel }}"
         ports: 
         - containerPort: {{ .Values.env.app.port }} 
         livenessProbe: 

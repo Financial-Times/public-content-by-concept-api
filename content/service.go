@@ -1,22 +1,15 @@
 package content
 
 import (
-	log "github.com/Financial-Times/go-logger"
+	"errors"
+	"fmt"
+
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/jmcvetta/neoism"
 )
 
-const (
-	defaultLimit    = 50
-	wwwThingsPrefix = "http://www.ft.com/things/"
-)
-
-// Driver interface
-type ContentByConceptServicer interface {
-	Check() error
-	GetContentForConcept(conceptUUID string, params RequestParams) (contentList, bool, error)
-}
+var ErrContentNotFound = errors.New("content not found")
 
 // CypherDriver struct
 type ConceptService struct {
@@ -24,43 +17,49 @@ type ConceptService struct {
 }
 
 type RequestParams struct {
-	page          int
-	contentLimit  int
-	fromDateEpoch int64
-	toDateEpoch   int64
+	Page          int
+	ContentLimit  int
+	FromDateEpoch int64
+	ToDateEpoch   int64
 }
 
-func NewContentByConceptService(conn neoutils.NeoConnection) ContentByConceptServicer {
-	return ConceptService{conn}
+func NewContentByConceptService(neoURL string, neoConf neoutils.ConnectionConfig) (*ConceptService, error) {
+	conn, err := neoutils.Connect(neoURL, &neoConf)
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to Neo4j: %w", err)
+	}
+	return &ConceptService{conn}, nil
 }
 
-func (cd ConceptService) Check() error {
-	return neoutils.Check(cd.conn)
+func (cd *ConceptService) CheckConnection() (string, error) {
+	err := neoutils.Check(cd.conn)
+	if err != nil {
+		return "Could not connect to database!", err
+	}
+	return "Database connection is OK", nil
 }
 
-type neoReadStruct struct {
-	UUID  string   `json:"uuid"`
-	Types []string `json:"types"`
-}
-
-func (cd ConceptService) GetContentForConcept(conceptUUID string, params RequestParams) (contentList, bool, error) {
-	var results []neoReadStruct
+func (cd *ConceptService) GetContentForConcept(conceptUUID string, params RequestParams) ([]Content, error) {
+	var results []struct {
+		UUID  string   `json:"uuid"`
+		Types []string `json:"types"`
+	}
 	var query *neoism.CypherQuery
 
 	var whereClause string
-	if params.fromDateEpoch > 0 && params.toDateEpoch > 0 {
+	if params.FromDateEpoch > 0 && params.ToDateEpoch > 0 {
 		whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate}"
 	}
 
 	// skipCount determines how many rows to skip before returning the results
-	skipCount := (params.page - 1) * params.contentLimit
+	skipCount := (params.Page - 1) * params.ContentLimit
 
 	parameters := neoism.Props{
 		"conceptUUID":     conceptUUID,
 		"skipCount":       skipCount,
-		"maxContentItems": params.contentLimit,
-		"fromDate":        params.fromDateEpoch,
-		"toDate":          params.toDateEpoch}
+		"maxContentItems": params.ContentLimit,
+		"fromDate":        params.FromDateEpoch,
+		"toDate":          params.ToDateEpoch}
 
 	// New concordance model
 	query = &neoism.CypherQuery{
@@ -77,21 +76,21 @@ func (cd ConceptService) GetContentForConcept(conceptUUID string, params Request
 		Result:     &results,
 	}
 	err := cd.conn.CypherBatch([]*neoism.CypherQuery{query})
-	if err != nil || len(results) == 0 {
-		return contentList{}, false, err
+	if err != nil {
+		return nil, err
 	}
-	log.Debugf("Found the following content for uuid %s: %v", conceptUUID, results)
 
-	return neoReadStructToContentList(&results), true, nil
-}
-
-func neoReadStructToContentList(results *[]neoReadStruct) []content {
-	cntList := contentList{}
-	for _, result := range *results {
-		var con = content{}
-		con.APIURL = mapper.APIURL(result.UUID, result.Types, "")
-		con.ID = wwwThingsPrefix + result.UUID //Not using mapper as this has a different prefix (www.ft.com not api.ft.com)
-		cntList = append(cntList, con)
+	if len(results) == 0 {
+		return nil, ErrContentNotFound
 	}
-	return cntList
+
+	cntList := make([]Content, 0)
+	for _, result := range results {
+		cntList = append(cntList, Content{
+			ID:     ThingsPrefix + result.UUID, //Not using mapper as this has a different prefix (www.ft.com not api.ft.com)
+			APIURL: mapper.APIURL(result.UUID, result.Types, ""),
+		})
+	}
+
+	return cntList, nil
 }

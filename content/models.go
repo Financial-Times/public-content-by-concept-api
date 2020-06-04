@@ -1,8 +1,10 @@
 package content
 
-type contentList []content
+const (
+	ThingsPrefix = "http://www.ft.com/things/"
+)
 
-type content struct {
+type Content struct {
 	ID     string `json:"id"`
 	APIURL string `json:"apiUrl"`
 }

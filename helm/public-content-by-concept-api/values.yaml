@@ -12,11 +12,11 @@ env:
   app: 
     port: "8080"
   cache: 
-    duration: "30s" 
+    duration: "30s"
+  recordHTTPMetrics: false
+  logLevel: info
 resources:
   requests:
     memory: 25Mi
   limits:
     memory: 256Mi
-
-

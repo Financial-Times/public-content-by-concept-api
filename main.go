@@ -3,25 +3,18 @@ package main
 import (
 	"net/http"
 	"os"
-	"strconv"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
-	"github.com/Financial-Times/public-content-by-concept-api/content"
-	"github.com/gorilla/mux"
-	"github.com/jawher/mow.cli"
-	_ "github.com/joho/godotenv/autoload"
-	"os/signal"
-	"regexp"
-	"syscall"
-	"github.com/Financial-Times/api-endpoint"
+	cli "github.com/jawher/mow.cli"
 )
 
 const (
 	appDescription = "An API for returning content related to a given concept"
 	serviceName    = "public-content-by-concept-api"
-	uuidRegex      = "([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
 )
 
 func main() {
@@ -56,11 +49,11 @@ func main() {
 		Desc:   "Duration Get requests should be cached for. e.g. 2h45m would set the max-age value to '7440' seconds",
 		EnvVar: "CACHE_DURATION",
 	})
-	requestLoggingEnabled := app.Bool(cli.BoolOpt{
-		Name:   "requestLoggingOn",
+	recordMetrics := app.Bool(cli.BoolOpt{
+		Name:   "record-http-metrics",
+		Desc:   "enable recording of http handler metrics",
+		EnvVar: "RECORD_HTTP_METRICS",
 		Value:  false,
-		Desc:   "Whether to log requests or not",
-		EnvVar: "REQUEST_LOGGING_ENABLED",
 	})
 	logLevel := app.String(cli.StringOpt{
 		Name:   "logLevel",
@@ -77,65 +70,49 @@ func main() {
 
 	logger.InitLogger(*appName, *logLevel)
 	app.Action = func() {
-		conf := neoutils.ConnectionConfig{
-			BatchSize:     1024,
-			Transactional: false,
-			HTTPClient: &http.Client{
-				Transport: &http.Transport{
-					MaxIdleConnsPerHost: 100,
-				},
-				Timeout: 1 * time.Minute,
-			},
-			BackgroundConnect: true,
-		}
-
-		db, err := neoutils.Connect(*neoURL, &conf)
-		if err != nil {
-			logger.WithError(err).Fatal("Could not connect to Neo4j")
-		}
 
 		duration, err := time.ParseDuration(*cacheDuration)
 		if err != nil {
 			logger.WithError(err).Fatal("Failed to parse cache duration value")
 		}
 
-		apiEndpoint, err := api.NewAPIEndpointForFile(*apiYml)
+		config := ServerConfig{
+			Port:           *port,
+			APIYMLPath:     *apiYml,
+			CacheTime:      duration,
+			RecordMetrics:  *recordMetrics,
+			AppSystemCode:  *appSystemCode,
+			AppName:        *appName,
+			AppDescription: appDescription,
+			NeoURL:         *neoURL,
+			NeoConfig: neoutils.ConnectionConfig{
+				BatchSize:     1024,
+				Transactional: false,
+				HTTPClient: &http.Client{
+					Transport: &http.Transport{
+						MaxIdleConnsPerHost: 100,
+					},
+					Timeout: 1 * time.Minute,
+				},
+				BackgroundConnect: true,
+			},
+		}
+
+		stopSrv, err := StartServer(config)
 		if err != nil {
-			logger.WithError(err).WithField("file", *apiYml).Warn("Failed to serve the API Endpoint for this service. Please validate the Swagger YML and the file location.")
-		}
-
-		cbcService := content.NewContentByConceptService(db)
-
-		handler := content.ContentByConceptHandler{
-			ContentService:     cbcService,
-			CacheControlHeader: strconv.FormatFloat(duration.Seconds(), 'f', 0, 64),
-			UUIDMatcher:        regexp.MustCompile(uuidRegex),
-		}
-
-		router := mux.NewRouter()
-		handler.RegisterHandlers(router)
-		appConf := content.HealthConfig{
-			AppSystemCode:         *appSystemCode,
-			AppName:               *appName,
-			AppDescription:        appDescription,
-			RequestLoggingEnabled: *requestLoggingEnabled,
-			ApiEndpoint: 		  apiEndpoint,
-		}
-
-		monitoringRouter := handler.RegisterAdminHandlers(router, appConf)
-		http.Handle("/", monitoringRouter)
-
-		logger.Infof("Application started on port %s with args %s", *port, os.Args)
-		if err := http.ListenAndServe(":"+*port, monitoringRouter); err != nil {
-			logger.Fatalf("Unable to start server: %v", err)
+			logger.WithError(err).Fatal("Could not start the server")
 		}
 		waitForSignal()
+		stopSrv()
 	}
-	app.Run(os.Args)
+	err := app.Run(os.Args)
+	if err != nil {
+		logger.Fatal(err)
+	}
 }
 
 func waitForSignal() {
-	ch := make(chan os.Signal)
+	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
 }

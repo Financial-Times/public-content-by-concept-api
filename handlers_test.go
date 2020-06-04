@@ -1,16 +1,15 @@
-package content
+package main
 
 import (
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
-	"github.com/gorilla/mux"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +17,6 @@ const (
 	testConceptID    = "44129750-7616-11e8-b45a-da24cd01f044"
 	testContentUUID  = "e89db5e2-760d-11e8-b45a-da24cd01f044"
 	anotherConceptID = "347e2eca-7860-11e8-b45a-da24cd01f044"
-	uuidRegex        = "([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
 )
 
 func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
@@ -89,14 +87,14 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			conceptID:          "NullURI",
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 400,
-			expectedBody:       `{"message": "Missing concept URI."}`,
+			expectedBody:       `{"message": "Missing or empty query parameter isAnnotatedBy. Expecting valid absolute concept URI."}`,
 		},
 		{
 			testName:           "Bad Request: isAnnotatedBy URI has invalid UUID",
 			conceptID:          "123456",
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 400,
-			expectedBody:       `{"message": "ID extracted from request URL was not valid uuid"}`,
+			expectedBody:       `{"message": "123456 extracted from request URL was not valid uuid"}`,
 		},
 		{
 			testName:           "Bad Request: query param 'page' is invalid",
@@ -104,7 +102,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			page:               "null",
 			expectedStatusCode: 400,
-			expectedBody:       "{\"message\": provided value for page, null, could not be parsed.}",
+			expectedBody:       `{"message": "provided value for page, null, could not be parsed."}`,
 		},
 		{
 			testName:           "Bad Request: query param 'page' is less than defaultPage value",
@@ -127,7 +125,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			fromDate:           "null",
 			expectedStatusCode: 400,
-			expectedBody:       "{\"message\": From date value null could not be parsed}",
+			expectedBody:       `{"message": "From date value null could not be parsed"}`,
 		},
 		{
 			testName:           "Bad Request: query param 'toDate' is invalid",
@@ -135,30 +133,29 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			toDate:             "null",
 			expectedStatusCode: 400,
-			expectedBody:       "{\"message\": To date value null could not be parsed}",
+			expectedBody:       `{"message": "To date value null could not be parsed"}`,
 		},
 		{
 			testName:           "Backend Error returns 503",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
 			expectedStatusCode: 503,
-			expectedBody:       "{\"message\": Backend error returning content for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044}",
+			expectedBody:       `{"message": "Backend error returning content for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
 			backendError:       errors.New("there was a problem"),
 		},
 		{
 			testName:           "No content for concept returns 404",
 			conceptID:          testConceptID,
 			expectedStatusCode: 404,
-			expectedBody:       "{\"message\": No content found for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044}",
+			expectedBody:       `{"message": "No content found for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
 		},
 	}
 
 	for _, test := range tests {
 		var reqURL string
 		ds := dummyService{test.contentList, test.backendError}
-		handler := ContentByConceptHandler{&ds, "10", regexp.MustCompile(uuidRegex)}
-		router := mux.NewRouter()
-		handler.RegisterHandlers(router)
+		handler := Handler{&ds, "10"}
+
 		rec := httptest.NewRecorder()
 		if test.conceptID == "" {
 			reqURL = "/content"
@@ -169,7 +166,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 		} else {
 			reqURL = buildURL(test.conceptID, test.fromDate, test.toDate, test.page, test.contentLimit)
 		}
-		router.ServeHTTP(rec, newRequest("GET", reqURL))
+		handler.GetContentByConcept(rec, newRequest("GET", reqURL))
 		assert.Equal(test.expectedStatusCode, rec.Code, "There was an error returning the correct status code")
 		if test.expectedBody != "" {
 			assert.Equal(test.expectedBody, rec.Body.String(), "Wrong body")
@@ -207,21 +204,25 @@ type dummyService struct {
 	backendErr    error
 }
 
-func (dS dummyService) GetContentForConcept(conceptUUID string, params RequestParams) (contentList, bool, error) {
-	cntList := contentList{}
+func (dS dummyService) GetContentForConcept(conceptUUID string, params content.RequestParams) ([]content.Content, error) {
+	if dS.backendErr != nil {
+		return nil, dS.backendErr
+	}
+	if len(dS.contentIDList) == 0 && dS.backendErr == nil {
+		return nil, content.ErrContentNotFound
+	}
+
+	cntList := make([]content.Content, 0)
 	for _, contentID := range dS.contentIDList {
-		var con = content{}
+		var con = content.Content{}
 		con.APIURL = mapper.APIURL(contentID, []string{"Content", "Thing"}, "")
-		con.ID = wwwThingsPrefix + contentID
+		con.ID = content.ThingsPrefix + contentID
 		cntList = append(cntList, con)
 	}
 
-	if len(cntList) > 0 {
-		return cntList, true, dS.backendErr
-	}
-	return cntList, false, dS.backendErr
+	return cntList, nil
 }
 
-func (dS dummyService) Check() error {
-	return nil
+func (dS dummyService) CheckConnection() (string, error) {
+	return "", nil
 }
