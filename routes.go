@@ -57,25 +57,22 @@ func StartServer(config ServerConfig) (func(), error) {
 	}
 
 	router := mux.NewRouter()
-	config.Log.Debug("Registering handlers")
-	router.HandleFunc("/content", handler.GetContentByConcept).Methods(http.MethodGet)
+	config.Log.Debug("Registering service handlers")
+	monitoredHandler := httphandlers.TransactionAwareRequestLoggingHandler(config.Log, http.HandlerFunc(handler.GetContentByConcept))
+	if config.RecordMetrics {
+		monitoredHandler = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoredHandler)
+	}
+	router.Handle("/content", monitoredHandler).Methods(http.MethodGet)
 
-	config.Log.Debug("Registering healthcheck handlers")
+	config.Log.Debug("Registering admin handlers")
 	router.HandleFunc("/__health", hs.HealthHandler()).Methods(http.MethodGet)
 	router.HandleFunc(st.GTGPath, st.NewGoodToGoHandler(hs.GTG)).Methods(http.MethodGet)
 	router.HandleFunc(st.BuildInfoPath, st.BuildInfoHandler).Methods(http.MethodGet)
 	router.HandleFunc(api.DefaultPath, apiEndpoint.ServeHTTP).Methods(http.MethodGet)
 
-	config.Log.Debug("Registering monitoring middleware")
-	var monitoringRouter http.Handler = router
-	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(config.Log, monitoringRouter)
-	if config.RecordMetrics {
-		monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
-	}
-
 	srv := http.Server{
 		Addr:    ":" + config.Port,
-		Handler: monitoringRouter,
+		Handler: router,
 	}
 
 	go func() {
