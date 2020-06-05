@@ -23,7 +23,6 @@ type ServerConfig struct {
 	APIYMLPath    string
 	CacheTime     time.Duration
 	RecordMetrics bool
-	Log           *logger.UPPLogger
 
 	AppSystemCode  string
 	AppName        string
@@ -33,7 +32,7 @@ type ServerConfig struct {
 	NeoConfig neoutils.ConnectionConfig
 }
 
-func StartServer(config ServerConfig) (func(), error) {
+func StartServer(config ServerConfig, log *logger.UPPLogger) (func(), error) {
 
 	apiEndpoint, err := api.NewAPIEndpointForFile(config.APIYMLPath)
 	if err != nil {
@@ -47,7 +46,7 @@ func StartServer(config ServerConfig) (func(), error) {
 	handler := Handler{
 		ContentService:     cbcService,
 		CacheControlHeader: strconv.FormatFloat(config.CacheTime.Seconds(), 'f', 0, 64),
-		Log:                config.Log,
+		Log:                log,
 	}
 
 	hs := &HealthcheckService{
@@ -58,14 +57,14 @@ func StartServer(config ServerConfig) (func(), error) {
 	}
 
 	router := mux.NewRouter()
-	config.Log.Debug("Registering service handlers")
-	monitoredHandler := httphandlers.TransactionAwareRequestLoggingHandler(config.Log, http.HandlerFunc(handler.GetContentByConcept))
+	log.Debug("Registering service handlers")
+	monitoredHandler := httphandlers.TransactionAwareRequestLoggingHandler(log, http.HandlerFunc(handler.GetContentByConcept))
 	if config.RecordMetrics {
 		monitoredHandler = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoredHandler)
 	}
 	router.Handle("/content", monitoredHandler).Methods(http.MethodGet)
 
-	config.Log.Debug("Registering admin handlers")
+	log.Debug("Registering admin handlers")
 	router.HandleFunc("/__health", hs.HealthHandler()).Methods(http.MethodGet)
 	router.HandleFunc(st.GTGPath, st.NewGoodToGoHandler(hs.GTG)).Methods(http.MethodGet)
 	router.HandleFunc(st.BuildInfoPath, st.BuildInfoHandler).Methods(http.MethodGet)
@@ -77,10 +76,10 @@ func StartServer(config ServerConfig) (func(), error) {
 	}
 
 	go func() {
-		config.Log.Debugf("Application started on port %s with args %s", config.Port, os.Args)
-		config.Log.Info("Start listening")
+		log.Debugf("Application started on port %s with args %s", config.Port, os.Args)
+		log.Info("Start listening")
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			config.Log.WithError(err).Error("Server closed with unexpected error")
+			log.WithError(err).Error("Server closed with unexpected error")
 		}
 	}()
 
@@ -90,7 +89,7 @@ func StartServer(config ServerConfig) (func(), error) {
 
 		err := srv.Shutdown(ctx)
 		if err != nil {
-			config.Log.WithError(err).Error("Server shutdown with unexpected error")
+			log.WithError(err).Error("Server shutdown with unexpected error")
 		}
 	}, nil
 }

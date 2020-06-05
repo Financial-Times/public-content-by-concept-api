@@ -82,7 +82,6 @@ func main() {
 			APIYMLPath:     *apiYml,
 			CacheTime:      duration,
 			RecordMetrics:  *recordMetrics,
-			Log:            log,
 			AppSystemCode:  *appSystemCode,
 			AppName:        *appName,
 			AppDescription: appDescription,
@@ -100,7 +99,7 @@ func main() {
 			},
 		}
 
-		stopSrv, err := StartServer(config)
+		stopSrv, err := StartServer(config, log)
 		if err != nil {
 			log.WithError(err).Fatal("Could not start the server")
 		}
