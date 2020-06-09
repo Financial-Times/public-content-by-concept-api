@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Financial-Times/go-logger"
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	cli "github.com/jawher/mow.cli"
 )
@@ -68,12 +68,13 @@ func main() {
 		EnvVar: "API_YML",
 	})
 
-	logger.InitLogger(*appName, *logLevel)
+	log := logger.NewUPPLogger(*appName, *logLevel)
+
 	app.Action = func() {
 
 		duration, err := time.ParseDuration(*cacheDuration)
 		if err != nil {
-			logger.WithError(err).Fatal("Failed to parse cache duration value")
+			log.WithError(err).Fatal("Failed to parse cache duration value")
 		}
 
 		config := ServerConfig{
@@ -98,16 +99,16 @@ func main() {
 			},
 		}
 
-		stopSrv, err := StartServer(config)
+		stopSrv, err := StartServer(config, log)
 		if err != nil {
-			logger.WithError(err).Fatal("Could not start the server")
+			log.WithError(err).Fatal("Could not start the server")
 		}
 		waitForSignal()
 		stopSrv()
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
