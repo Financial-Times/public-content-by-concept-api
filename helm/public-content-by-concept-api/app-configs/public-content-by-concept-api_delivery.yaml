@@ -1,7 +1,0 @@
-# Values used for the deployed application.
-replicaCount: 2
-service:
-  name: public-content-by-concept-api
-env:
-  logLevel: info
-  recordHTTPMetrics: false
