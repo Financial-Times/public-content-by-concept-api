@@ -324,11 +324,10 @@ func cleanDB(t *testing.T, uuids ...string) {
 		qs[i] = &neoism.CypherQuery{
 			Statement: fmt.Sprintf(`
 			MATCH (a:Thing {uuid: "%s"})
-			OPTIONAL MATCH (a)<-[ii:IDENTIFIES]-(i)
 			OPTIONAL MATCH (a)-[annotation]-(c:Content)
 			OPTIONAL MATCH (a)-[eq:EQUIVALENT_TO]-(canonical)
 			OPTIONAL MATCH (canonical)<-[eq2:EQUIVALENT_TO]-(concepts)
-			DETACH DELETE ii, i, annotation, eq, eq2, canonical, a`, uuid)}
+			DETACH DELETE annotation, eq, eq2, canonical, a`, uuid)}
 	}
 	err := db.CypherBatch(qs)
 	assert.NoError(t, err, fmt.Sprintf("Error executing clean up cypher. Error: %v", err))
