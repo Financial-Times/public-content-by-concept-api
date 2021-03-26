@@ -6,7 +6,7 @@ require (
 	github.com/Financial-Times/annotations-rw-neo4j/v4 v4.0.1
 	github.com/Financial-Times/api-endpoint v1.0.0
 	github.com/Financial-Times/base-ft-rw-app-go v0.0.0-20171010162315-74eab27b0c6d
-	github.com/Financial-Times/concepts-rw-neo4j v1.28.0-dev-identifiers-rc1
+	github.com/Financial-Times/concepts-rw-neo4j v1.28.0
 	github.com/Financial-Times/content-rw-neo4j/v3 v3.1.0
 	github.com/Financial-Times/go-fthealth v0.0.0-20180807113633-3d8eb430d5b5
 	github.com/Financial-Times/go-logger/v2 v2.0.1
