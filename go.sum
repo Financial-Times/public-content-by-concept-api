@@ -6,8 +6,8 @@ github.com/Financial-Times/api-endpoint v1.0.0 h1:EhJfcVcrktPrweue6dCUQAYcEQiXwh
 github.com/Financial-Times/api-endpoint v1.0.0/go.mod h1:QrJsxP8uEZIPJZon+qhc+zO7H0634DpoqDI291i0Nag=
 github.com/Financial-Times/base-ft-rw-app-go v0.0.0-20171010162315-74eab27b0c6d h1:p6erLN58Pymv7XgCzOnZaH2ZHJ+vNqH7dPPP2p6qNwo=
 github.com/Financial-Times/base-ft-rw-app-go v0.0.0-20171010162315-74eab27b0c6d/go.mod h1:olJfPwdMPV/SJUrv4J+9gI9yaj7d24vXF2GNisFRCOg=
-github.com/Financial-Times/concepts-rw-neo4j v1.24.3 h1:wV13bNn870RSN7fzgjyfdBN2aqtXVHydFakN3CCerPA=
-github.com/Financial-Times/concepts-rw-neo4j v1.24.3/go.mod h1:5DkBQpYrZHoo3Qm0KNRfdX7W8C8LrbkpC5g1zCxvl0g=
+github.com/Financial-Times/concepts-rw-neo4j v1.28.0 h1:i9uSSnbFn/miJ23VSYyje705SuVRy4Xn7W43C5rPGNo=
+github.com/Financial-Times/concepts-rw-neo4j v1.28.0/go.mod h1:dzsMkapEPuXLoq6/fERZ6Se3qh/Af9/taweycMnkvsI=
 github.com/Financial-Times/content-rw-neo4j/v3 v3.1.0 h1:gPJp3PFo51GH3ahfx+yqjGVDwuRgPm/ZSDHWE1ZXDFI=
 github.com/Financial-Times/content-rw-neo4j/v3 v3.1.0/go.mod h1:3yry7JJ8ZjFpGG2osBvqB2Ja3ORVRmnfNw5dMNWYbGA=
 github.com/Financial-Times/go-fthealth v0.0.0-20171204124831-1b007e2b37b7/go.mod h1:gpAzq6W5rCheYlY32JOIxS/VjVcYHbC2PkMzQngHT9c=
@@ -28,6 +28,8 @@ github.com/Financial-Times/kafka v0.0.0-20181214115819-fddecb2b8f89/go.mod h1:9i
 github.com/Financial-Times/kafka-client-go v0.0.0-20181214120216-c3a1941e42a4/go.mod h1:IRxo6zPqM44uCWpM7YBkm5o9lOxwPgR0/WvCX0KcV/Y=
 github.com/Financial-Times/neo-model-utils-go v0.0.0-20180712095719-aea1e95c8305 h1:ob+VRuAq7QGfqT4ccoH5Ru0nfnBmjmNgUEaLzXTzUNw=
 github.com/Financial-Times/neo-model-utils-go v0.0.0-20180712095719-aea1e95c8305/go.mod h1:HdCuBcOftPWj3SBix/6H9NbPQpur9F7stSF0MEROMcU=
+github.com/Financial-Times/neo-model-utils-go v1.0.0 h1:0iTxDtXKkJ9vYQDE73KM/+ghtFLdq0U6bQPdiwaSEaQ=
+github.com/Financial-Times/neo-model-utils-go v1.0.0/go.mod h1:D5ny/A+002uCPCZbtP/E+qpY3//gYJzHw6sqqBUm2Lc=
 github.com/Financial-Times/neo-utils-go v0.0.0-20180807105745-1fe6ae2f38f3 h1:oH+0BiMwcZVV1zwYm4f/jybJ9LhzrQn1Y4WwbIpwQ+s=
 github.com/Financial-Times/neo-utils-go v0.0.0-20180807105745-1fe6ae2f38f3/go.mod h1:LF1qICt4PuWDINYtXL4WXU595WTKReIBwV6obcncNBI=
 github.com/Financial-Times/service-status-go v0.0.0-20160323111542-3f5199736a3d h1:USNBTIof6vWGM49SYrxvC5Y8NqyDL3YuuYmID81ORZQ=
@@ -54,6 +56,8 @@ github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMo
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/snappy v0.0.1/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
 github.com/google/go-cmp v0.3.0/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
+github.com/google/go-cmp v0.5.4 h1:L8R9j+yAqZuZjsqh/z+F1NCffTKKLShY6zXTItVIZ8M=
+github.com/google/go-cmp v0.5.4/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/gorilla/context v1.1.1 h1:AWwleXJkX/nhcU9bZSnZoi3h/qGYqQAGhq6zZe/aQW8=
 github.com/gorilla/context v1.1.1/go.mod h1:kBGZzfjB9CEq2AlWe17Uuf7NDRt0dE0s8S51q0aT7Yg=
 github.com/gorilla/handlers v1.4.0 h1:XulKRWSQK5uChr4pEgSE4Tc/OcmnU9GJuSwdog/tZsA=
@@ -118,6 +122,8 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H4=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
+github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
+github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/wvanbergen/kazoo-go v0.0.0-20180202103751-f72d8611297a/go.mod h1:vQQATAGxVK20DC1rRubTJbZDDhhpA4QfU02pMdPxGO4=
 github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c/go.mod h1:lB8K/P019DLNhemzwFU4jHLhdvlE6uDZjXFejJXr49I=
 github.com/xdg/stringprep v1.0.0/go.mod h1:Jhud4/sHMO4oL310DaZAKk9ZaJ08SJfe+sJh0HrGL1Y=
@@ -145,6 +151,8 @@ golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0/go.mod h1:tRJNPiyCQ0inRvYxbN9jk5I+vvW/OXSQhTDSoE431IQ=
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=
+golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 gopkg.in/airbrake/gobrake.v2 v2.0.9/go.mod h1:/h5ZAUhDkGaJfjzjKLSjv6zCL6O0LLBxU4K+aSYdM/U=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 h1:YR8cESwS4TdDjEe65xsg0ogRM/Nc3DYOhEAlW+xobZo=
@@ -165,3 +173,5 @@ gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.4/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.3.0 h1:clyUAQHOM3G0M3f5vQj7LuJrETvjVot3Z5el9nffUtU=
 gopkg.in/yaml.v2 v2.3.0/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c h1:dUUwHk2QECo/6vqA44rthZ8ie2QXMNeKRTHCNY2nXvo=
+gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
