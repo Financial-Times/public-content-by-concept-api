@@ -51,7 +51,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/RelatedContent"
+                  $ref: "#/components/schemas/Content"
         "400":
           description: Bad request if the uuid/uri path parameter is badly formed or
             missing or if fromDate/toDate's cannot be parsed
@@ -116,14 +116,6 @@ servers:
 
 components:
   schemas:
-    RelatedContent:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            type: string
-          description: Types of the related object
     Content:
       type: object
       properties:
