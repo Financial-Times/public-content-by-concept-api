@@ -1,18 +1,15 @@
-swagger: "2.0"
+openapi: 3.0.0
 info:
   title: Public Content By Concept API
-  description: Provides a public API for retrieving a list of the most recently published content related to a given concept
-  version: "2.0.0"
+  description: Provides a public API for retrieving a list of the most recently published
+    content related to a given concept
+  version: 2.0.0
   contact:
     name: Universal Publishing
     email: Universal.Publishing.Platform@ft.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-host: api.ft.com
-schemes:
-  - https
-basePath: /
 paths:
   /content:
     get:
@@ -22,97 +19,103 @@ paths:
       parameters:
         - in: query
           name: isAnnotatedBy
-          type: string
           required: true
           description: The given concept's UUID or URI we want to query
+          schema:
+            type: string
         - in: query
           name: fromDate
-          type: string
           description: Start date, in YYYY-MM-DD format.
+          schema:
+            type: string
         - in: query
           name: toDate
-          type: string
           description: End date, in YYYY-MM-DD format.
+          schema:
+            type: string
         - in: query
           name: limit
-          type: string
           description: The maximum number of related content, defaults to 50 if not given
+          schema:
+            type: string
         - in: query
           name: page
-          type: string
           description: The page number, defaults to 1 if not given
+          schema:
+            type: string
       responses:
-        200:
+        "200":
           description: Success body if at least 1 piece of content is found.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/RelatedContent"
-        400:
-          description: Bad request if the uuid/uri path parameter is badly
-            formed or missing or if fromDate/toDate's cannot be parsed
-        404:
+                  $ref: "#/components/schemas/Content"
+        "400":
+          description: Bad request if the uuid/uri path parameter is badly formed or
+            missing or if fromDate/toDate's cannot be parsed
+        "404":
           description: Not Found if there are no annotations for specified concept
-        500:
-          description: Internal Server Error if there was an issue
-            processing the records.
-        503:
+        "500":
+          description: Internal Server Error if there was an issue processing the records.
+        "503":
           description: Service Unavailable if it cannot connect to Neo4j.
   /__health:
     get:
       summary: Healthchecks
-      description: Runs application healthchecks and returns FT Healthcheck
-        style json.
-      produces:
-        - application/json
+      description: Runs application healthchecks and returns FT Healthcheck style json.
       tags:
         - Health
       responses:
-        200:
-          description: Should always return 200 along with the output of the
-            healthchecks - regardless of whether the healthchecks failed or
-            not. Please inspect the overall `ok` property to see whether or
-            not the application is healthy.
+        "200":
+          description: Should always return 200 along with the output of the healthchecks -
+            regardless of whether the healthchecks failed or not. Please inspect
+            the overall `ok` property to see whether or not the application is
+            healthy.
   /__build-info:
     get:
       summary: Build Information
-      description: Returns application build info, such as the git
-        repository and revision, the golang version it was built with, and
-        the app release version.
-      produces:
-       - application/json; charset=UTF-8
+      description: Returns application build info, such as the git repository and revision,
+        the golang version it was built with, and the app release version.
       tags:
         - Info
       responses:
-        200:
+        "200":
           description: Outputs build information as described in the summary.
   /__gtg:
     get:
       summary: Good To Go
-      description: Lightly healthchecks the application, and returns a 200
-        if it's Good-To-Go.
+      description: Lightly healthchecks the application, and returns a 200 if it's
+        Good-To-Go.
       tags:
         - Health
       responses:
-        200:
-           description: The application is healthy enough to perform all its
-            functions correctly - i.e. good to go.
-        503:
-           description: One or more of the applications healthchecks have
-            failed, so please do not use the app. See the /__health endpoint
-            for more detailed information.
+        "200":
+          description: The application is healthy enough to perform all its functions
+            correctly - i.e. good to go.
+        "503":
+          description: One or more of the applications healthchecks have failed, so please
+            do not use the app. See the /__health endpoint for more detailed
+            information.
+  /__api:
+    get:
+      summary: API Documentation
+      description: Returns OpenAPI documentation for the application.
+      tags:
+        - Info
+      responses:
+        "200":
+          description: Returns OpenAPI information.
+          content:
+            text/plain;charset=utf-8:
+              schema:
+                type: string
+servers:
+  - url: https://api.ft.com/
+
 components:
   schemas:
-    RelatedContent:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            type: string
-          description: Types of the related object
     Content:
       type: object
       properties:
