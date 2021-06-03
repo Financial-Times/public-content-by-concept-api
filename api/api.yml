@@ -10,6 +10,8 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
+security:
+    - ApiKeyAuth: []
 paths:
   /content:
     get:
@@ -62,9 +64,14 @@ paths:
         "503":
           description: Service Unavailable if it cannot connect to Neo4j.
   /__health:
+    servers:
+       - url: https://upp-prod-delivery-glb.upp.ft.com/__public-content-by-concept-api/
+       - url: https://upp-staging-delivery-glb.upp.ft.com/__public-content-by-concept-api/
     get:
       summary: Healthchecks
       description: Runs application healthchecks and returns FT Healthcheck style json.
+      security:
+        - BasicAuth: []
       tags:
         - Health
       responses:
@@ -74,20 +81,30 @@ paths:
             the overall `ok` property to see whether or not the application is
             healthy.
   /__build-info:
+    servers:
+       - url: https://upp-prod-delivery-glb.upp.ft.com/__public-content-by-concept-api/
+       - url: https://upp-staging-delivery-glb.upp.ft.com/__public-content-by-concept-api/
     get:
       summary: Build Information
       description: Returns application build info, such as the git repository and revision,
         the golang version it was built with, and the app release version.
+      security:
+        - BasicAuth: []
       tags:
         - Info
       responses:
         "200":
           description: Outputs build information as described in the summary.
   /__gtg:
+    servers:
+       - url: https://upp-prod-delivery-glb.upp.ft.com/__public-content-by-concept-api/
+       - url: https://upp-staging-delivery-glb.upp.ft.com/__public-content-by-concept-api/
     get:
       summary: Good To Go
       description: Lightly healthchecks the application, and returns a 200 if it's
         Good-To-Go.
+      security:
+        - BasicAuth: []
       tags:
         - Health
       responses:
@@ -99,9 +116,14 @@ paths:
             do not use the app. See the /__health endpoint for more detailed
             information.
   /__api:
+    servers:
+       - url: https://upp-prod-delivery-glb.upp.ft.com/__public-content-by-concept-api/
+       - url: https://upp-staging-delivery-glb.upp.ft.com/__public-content-by-concept-api/
     get:
       summary: API Documentation
       description: Returns OpenAPI documentation for the application.
+      security:
+        - BasicAuth: []
       tags:
         - Info
       responses:
@@ -113,6 +135,7 @@ paths:
                 type: string
 servers:
   - url: https://api.ft.com/
+  - url: https://api-t.ft.com/
 
 components:
   schemas:
@@ -125,3 +148,11 @@ components:
         apiUrl:
           type: string
           description: URL of the content
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+    BasicAuth:
+      type: http
+      scheme: basic
