@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Financial-Times/go-logger/v2"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 
 	annrw "github.com/Financial-Times/annotations-rw-neo4j/v4/annotations"
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
@@ -44,6 +45,10 @@ const defaultPage = 1
 // Reusable Neo4J connection
 var db neoutils.NeoConnection
 
+// TODO: remove the neoutils.NeoConnection - temporary use two different driver objects
+// neo4j.Driver are safe to use in different go routines, so it's not that problematic that it is used as global var
+var driver neo4j.Driver
+
 func init() {
 	log := logger.NewUPPLogger("test-service", "info")
 	conf := neoutils.DefaultConnectionConfig()
@@ -52,12 +57,25 @@ func init() {
 	if db == nil {
 		log.Fatal("Cannot connect to Neo4J")
 	}
+
+	driver, _ = neo4j.NewDriver(neoV4URL(), neo4j.NoAuth())
+	if driver == nil {
+		log.Fatal("Cannot connect to Neo4J with driver v4")
+	}
 }
 
 func neoURL() string {
 	url := os.Getenv("NEO4J_TEST_URL")
 	if url == "" {
 		url = "http://localhost:7474/db/data"
+	}
+	return url
+}
+
+func neoV4URL() string {
+	url := os.Getenv("NEO4J_v4_TEST_URL")
+	if url == "" {
+		url = "bolt://localhost:7687"
 	}
 	return url
 }
@@ -71,7 +89,7 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := &ConceptService{conn: db}
+	contentByConceptDriver := &ConceptService{driver: driver}
 	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
@@ -87,7 +105,7 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
-	contentByConceptDriver := &ConceptService{conn: db}
+	contentByConceptDriver := &ConceptService{driver: driver}
 	contentList, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
@@ -104,7 +122,7 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, content2UUID)
 
-	contentByConceptDriver := &ConceptService{conn: db}
+	contentByConceptDriver := &ConceptService{driver: driver}
 	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, 1, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
@@ -120,7 +138,7 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
-	contentByConceptDriver := &ConceptService{conn: db}
+	contentByConceptDriver := &ConceptService{driver: driver}
 	fromDate, _ := time.Parse("2006-01-02", "2014-03-08")
 	toDate, _ := time.Parse("2006-01-02", "2014-03-09")
 	contentList, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, fromDate.Unix(), toDate.Unix()})
@@ -135,7 +153,7 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := &ConceptService{conn: db}
+	contentByConceptDriver := &ConceptService{driver: driver}
 	content, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.Equal(ErrContentNotFound, err, "Found matching content for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(0, len(content), "Should not get any content items")
@@ -150,7 +168,7 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 
 	defer cleanDB(t, content2UUID, MSJConceptUUID, contentUUID, MetalMickeyConceptUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := &ConceptService{conn: db}
+	contentByConceptDriver := &ConceptService{driver: driver}
 	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.Equal(ErrContentNotFound, err, "Found matching content for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(0, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
@@ -171,7 +189,7 @@ func TestBrandsDontReturnParentContent(t *testing.T) {
 	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
 	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPikeParent-%v.json", OnyxPikeParentBrandUUID))
 
-	contentByConceptDriver := &ConceptService{conn: db}
+	contentByConceptDriver := &ConceptService{driver: driver}
 	contentList, err := contentByConceptDriver.GetContentForConcept(OnyxPikeBrandUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", OnyxPikeBrandUUID)
 	assert.Equal(2, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
@@ -194,7 +212,7 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordance(t *testing.T) {
 
 	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
-	contentByConceptDriver := &ConceptService{conn: db}
+	contentByConceptDriver := &ConceptService{driver: driver}
 
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
@@ -222,7 +240,7 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithDateRestrictions(t *t
 
 	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
-	contentByConceptDriver := &ConceptService{conn: db}
+	contentByConceptDriver := &ConceptService{driver: driver}
 
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
@@ -251,7 +269,7 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithPagination(t *testing
 
 	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
-	contentByConceptDriver := &ConceptService{conn: db}
+	contentByConceptDriver := &ConceptService{driver: driver}
 
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
@@ -283,7 +301,13 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithPagination(t *testing
 
 func TestConceptService_Check(t *testing.T) {
 	assert := assert.New(t)
-	contentByConceptDriver := &ConceptService{conn: db}
+
+	defer cleanDB(t, contentUUID)
+	writeContent(assert, db, contentUUID)
+
+	contentByConceptDriver := &ConceptService{driver: driver}
+	// TODO: CheckConnection is now checking whether we can get a single node from the db.
+	// TODO: Apparently such check is no working with empty db. We may want to change the logic of CheckConnection!
 	_, err := contentByConceptDriver.CheckConnection()
 	assert.NoError(err, "Test should always pass when connected to db")
 }
