@@ -1,15 +1,16 @@
 package main
 
 import (
-	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
-	"github.com/Financial-Times/go-logger/v2"
-	"github.com/Financial-Times/neo-utils-go/neoutils"
 	cli "github.com/jawher/mow.cli"
+
+	logger "github.com/Financial-Times/go-logger/v2"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 )
 
 const (
@@ -33,7 +34,7 @@ func main() {
 	})
 	neoURL := app.String(cli.StringOpt{
 		Name:   "neo-url",
-		Value:  "http://localhost:7474/db/data",
+		Value:  "bolt://localhost:7687",
 		Desc:   "neo4j endpoint URL",
 		EnvVar: "NEO_URL",
 	})
@@ -86,16 +87,10 @@ func main() {
 			AppName:        *appName,
 			AppDescription: appDescription,
 			NeoURL:         *neoURL,
-			NeoConfig: neoutils.ConnectionConfig{
-				BatchSize:     1024,
-				Transactional: false,
-				HTTPClient: &http.Client{
-					Transport: &http.Transport{
-						MaxIdleConnsPerHost: 100,
-					},
-					Timeout: 1 * time.Minute,
-				},
-				BackgroundConnect: true,
+			NeoConfig: func(config *neo4j.Config) {
+				config.SocketConnectTimeout = 15 * time.Second
+				config.MaxTransactionRetryTime = 1 * time.Minute
+				config.Log = neo4j.ConsoleLogger(parseNeoLogLevel(*logLevel))
 			},
 		}
 
@@ -116,4 +111,25 @@ func waitForSignal() {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
+}
+
+// parseNeoLogLevel parses logrus log level constants to the neo4j logger equivalent
+// TODO: move to separate library
+func parseNeoLogLevel(level string) neo4j.LogLevel {
+	switch strings.ToLower(level) {
+	case "panic":
+		return neo4j.ERROR
+	case "fatal":
+		return neo4j.ERROR
+	case "error":
+		return neo4j.ERROR
+	case "warn", "warning":
+		return neo4j.WARNING
+	case "info":
+		return neo4j.INFO
+	case "debug":
+		return neo4j.DEBUG
+	default:
+		return neo4j.ERROR
+	}
 }

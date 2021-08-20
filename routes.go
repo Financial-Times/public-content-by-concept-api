@@ -8,14 +8,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
+	"github.com/rcrowley/go-metrics"
+
 	"github.com/Financial-Times/api-endpoint"
-	"github.com/Financial-Times/go-logger/v2"
+	logger "github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/http-handlers-go/v2/httphandlers"
-	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	st "github.com/Financial-Times/service-status-go/httphandlers"
-	"github.com/gorilla/mux"
-	"github.com/rcrowley/go-metrics"
 )
 
 type ServerConfig struct {
@@ -29,7 +30,7 @@ type ServerConfig struct {
 	AppDescription string
 
 	NeoURL    string
-	NeoConfig neoutils.ConnectionConfig
+	NeoConfig func(config *neo4j.Config)
 }
 
 func StartServer(config ServerConfig, log *logger.UPPLogger) (func(), error) {
@@ -90,6 +91,11 @@ func StartServer(config ServerConfig, log *logger.UPPLogger) (func(), error) {
 		err := srv.Shutdown(ctx)
 		if err != nil {
 			log.WithError(err).Error("Server shutdown with unexpected error")
+		}
+
+		err = cbcService.Close()
+		if err != nil {
+			log.WithError(err).Error("ContentByConceptService failed to close, Neo driver failed to close")
 		}
 	}, nil
 }

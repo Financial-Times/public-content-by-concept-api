@@ -18,7 +18,7 @@ require (
 	github.com/gorilla/mux v1.6.2
 	github.com/jawher/mow.cli v1.0.4
 	github.com/jmcvetta/neoism v1.3.2-0.20160701082253-9d29cb10be18
+	github.com/neo4j/neo4j-go-driver/v4 v4.3.3
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e // indirect
 )
