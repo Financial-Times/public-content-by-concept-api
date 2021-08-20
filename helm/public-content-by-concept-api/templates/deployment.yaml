@@ -38,7 +38,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: global-config
-              key: neo4j.read.only.url
+              key: neo4j.cluster.bolt.url
         - name: APP_PORT
           value: "{{ .Values.env.app.port }}"
         - name: CACHE_DURATION
