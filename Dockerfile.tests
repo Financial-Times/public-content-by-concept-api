@@ -8,4 +8,4 @@ WORKDIR /${PROJECT}
 RUN echo "Fetching dependencies..." \
 && git clone https://github.com/vishnubob/wait-for-it.git
 
-ENTRYPOINT ["./wait-for-it/wait-for-it.sh", "neo4j:7474", "-t", "60", "--"]
+ENTRYPOINT ["./wait-for-it/wait-for-it.sh", "neo4j:7474", "-t", "60", "--strict", "--"]
