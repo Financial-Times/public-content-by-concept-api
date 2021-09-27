@@ -20,13 +20,11 @@ github.com/Financial-Times/go-logger/v2 v2.0.1/go.mod h1:Jpky5JYSX7xjGUClfA9hEMD
 github.com/Financial-Times/http-handlers-go v0.0.0-20170809121007-229ac16f1d9e/go.mod h1:sAkXv1oPYgNTYBYsYs83HwpYp7R50mvgBGGcsOlJtOw=
 github.com/Financial-Times/http-handlers-go v0.0.0-20180517120644-2c20324ab887 h1:4qEj6CB6jF9eloZIV/SCS7mQ/9iyx+3Ru/w7m10c69w=
 github.com/Financial-Times/http-handlers-go v0.0.0-20180517120644-2c20324ab887/go.mod h1:sAkXv1oPYgNTYBYsYs83HwpYp7R50mvgBGGcsOlJtOw=
-github.com/Financial-Times/http-handlers-go/v2 v2.1.0 h1:kBj41WrDXUGUiLHEjWI1zQUbRTNEw0JxSaaXQwZkib8=
 github.com/Financial-Times/http-handlers-go/v2 v2.1.0/go.mod h1:Tgkc7TqJXl/NFxB8eP8CX7YU5X01gbrL55LqNzo4YVY=
 github.com/Financial-Times/http-handlers-go/v2 v2.3.0 h1:/DqRBffuPpnKsFC+DcXSdXl/qUARqAO+NoD5Vga4NCc=
 github.com/Financial-Times/http-handlers-go/v2 v2.3.0/go.mod h1:Tgkc7TqJXl/NFxB8eP8CX7YU5X01gbrL55LqNzo4YVY=
 github.com/Financial-Times/kafka v0.0.0-20181214115819-fddecb2b8f89/go.mod h1:9iEKOqzCx6y18PdEhz4FrHLTMoMXQeN4I9vRCszREdc=
 github.com/Financial-Times/kafka-client-go v0.0.0-20181214120216-c3a1941e42a4/go.mod h1:IRxo6zPqM44uCWpM7YBkm5o9lOxwPgR0/WvCX0KcV/Y=
-github.com/Financial-Times/neo-model-utils-go v0.0.0-20180712095719-aea1e95c8305 h1:ob+VRuAq7QGfqT4ccoH5Ru0nfnBmjmNgUEaLzXTzUNw=
 github.com/Financial-Times/neo-model-utils-go v0.0.0-20180712095719-aea1e95c8305/go.mod h1:HdCuBcOftPWj3SBix/6H9NbPQpur9F7stSF0MEROMcU=
 github.com/Financial-Times/neo-model-utils-go v1.0.0 h1:0iTxDtXKkJ9vYQDE73KM/+ghtFLdq0U6bQPdiwaSEaQ=
 github.com/Financial-Times/neo-model-utils-go v1.0.0/go.mod h1:D5ny/A+002uCPCZbtP/E+qpY3//gYJzHw6sqqBUm2Lc=
@@ -120,7 +118,6 @@ github.com/stretchr/testify v1.1.4/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.1.5-0.20170130113145-4d4bfba8f1d1/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
-github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H4=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
