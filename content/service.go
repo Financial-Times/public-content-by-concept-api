@@ -2,18 +2,16 @@ package content
 
 import (
 	"errors"
-	"fmt"
 
+	cmneo4j "github.com/Financial-Times/cm-neo4j-driver"
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
-	"github.com/Financial-Times/neo-utils-go/neoutils"
-	"github.com/jmcvetta/neoism"
 )
 
 var ErrContentNotFound = errors.New("content not found")
 
-// CypherDriver struct
+// ConceptService interacts with Neo4j db to extract content by concept information
 type ConceptService struct {
-	conn neoutils.NeoConnection
+	driver *cmneo4j.Driver
 }
 
 type RequestParams struct {
@@ -23,16 +21,12 @@ type RequestParams struct {
 	ToDateEpoch   int64
 }
 
-func NewContentByConceptService(neoURL string, neoConf neoutils.ConnectionConfig) (*ConceptService, error) {
-	conn, err := neoutils.Connect(neoURL, &neoConf)
-	if err != nil {
-		return nil, fmt.Errorf("could not connect to Neo4j: %w", err)
-	}
-	return &ConceptService{conn}, nil
+func NewContentByConceptService(driver *cmneo4j.Driver) *ConceptService {
+	return &ConceptService{driver: driver}
 }
 
 func (cd *ConceptService) CheckConnection() (string, error) {
-	err := neoutils.Check(cd.conn)
+	err := cd.driver.VerifyConnectivity()
 	if err != nil {
 		return "Could not connect to database!", err
 	}
@@ -44,44 +38,44 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 		UUID  string   `json:"uuid"`
 		Types []string `json:"types"`
 	}
-	var query *neoism.CypherQuery
 
 	var whereClause string
 	if params.FromDateEpoch > 0 && params.ToDateEpoch > 0 {
-		whereClause = " WHERE c.publishedDateEpoch > {fromDate} AND c.publishedDateEpoch < {toDate}"
+		whereClause = " WHERE c.publishedDateEpoch > $fromDate AND c.publishedDateEpoch < $toDate"
 	}
 
 	// skipCount determines how many rows to skip before returning the results
 	skipCount := (params.Page - 1) * params.ContentLimit
 
-	parameters := neoism.Props{
+	parameters := map[string]interface{}{
 		"conceptUUID":     conceptUUID,
 		"skipCount":       skipCount,
 		"maxContentItems": params.ContentLimit,
 		"fromDate":        params.FromDateEpoch,
-		"toDate":          params.ToDateEpoch}
+		"toDate":          params.ToDateEpoch,
+	}
 
 	// New concordance model
-	query = &neoism.CypherQuery{
-		Statement: `
-			MATCH (:Concept{uuid:{conceptUUID}})-[:EQUIVALENT_TO]->(canon:Concept)
+	query := &cmneo4j.Query{
+		Cypher: `
+			MATCH (:Concept{uuid:$conceptUUID})-[:EQUIVALENT_TO]->(canon:Concept)
 			MATCH (canon)<-[:EQUIVALENT_TO]-(leaves)<-[]-(c:Content)` +
 			whereClause +
 			` WITH DISTINCT c
 			ORDER BY c.publishedDateEpoch DESC
-			SKIP ({skipCount})
+			SKIP ($skipCount)
 			RETURN c.uuid as uuid, labels(c) as types
-			LIMIT({maxContentItems})`,
-		Parameters: parameters,
-		Result:     &results,
-	}
-	err := cd.conn.CypherBatch([]*neoism.CypherQuery{query})
-	if err != nil {
-		return nil, err
+			LIMIT($maxContentItems)`,
+		Params: parameters,
+		Result: &results,
 	}
 
-	if len(results) == 0 {
+	err := cd.driver.Read(query)
+	if errors.Is(err, cmneo4j.ErrNoResultsFound) {
 		return nil, ErrContentNotFound
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	cntList := make([]Content, 0)

@@ -1,14 +1,12 @@
 package main
 
 import (
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/Financial-Times/go-logger/v2"
-	"github.com/Financial-Times/neo-utils-go/neoutils"
 	cli "github.com/jawher/mow.cli"
 )
 
@@ -33,7 +31,7 @@ func main() {
 	})
 	neoURL := app.String(cli.StringOpt{
 		Name:   "neo-url",
-		Value:  "http://localhost:7474/db/data",
+		Value:  "bolt://localhost:7687",
 		Desc:   "neo4j endpoint URL",
 		EnvVar: "NEO_URL",
 	})
@@ -86,17 +84,6 @@ func main() {
 			AppName:        *appName,
 			AppDescription: appDescription,
 			NeoURL:         *neoURL,
-			NeoConfig: neoutils.ConnectionConfig{
-				BatchSize:     1024,
-				Transactional: false,
-				HTTPClient: &http.Client{
-					Transport: &http.Transport{
-						MaxIdleConnsPerHost: 100,
-					},
-					Timeout: 1 * time.Minute,
-				},
-				BackgroundConnect: true,
-			},
 		}
 
 		stopSrv, err := StartServer(config, log)
