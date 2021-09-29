@@ -12,18 +12,21 @@ __A public API which returns an ordered list of the most recently annotated cont
 * `cd $GOPATH/src/github.com/Financial-Times/public-content-by-concept-api`
 * `go install`
 * `$GOPATH/bin/public-content-by-concept-api --neo-url={neo4jUrl} --port={port} --log-level={DEBUG|INFO|WARN|ERROR}--cache-duration{e.g. 22h10m3s} --requestLoggingEnabled=false`
-_Optional arguments are:
---neo-url defaults to http://localhost:7474/db/data, which is the out of box url for a local neo4j instance.
---port defaults to 8080.
---cache-duration defaults to 1 hour
---logLevel set level of app logging, request critical logs are info level with more helpful logs found at debug
---requestLoggingEnabled when true will toggle logging of both admin endpoints(health/gtg) as well as http endpoints_
+
+  Optional arguments are:
+  * --neo-url defaults to bolt://neo4j:7687, which is the default url to connect to single Neo4j instance using bolt protocol.
+  * --port defaults to 8080.
+  * --cache-duration defaults to 1 hour
+  * --logLevel set level of app logging, request critical logs are info level with more helpful logs found at debug
+  * --requestLoggingEnabled when true will toggle logging of both admin endpoints(health/gtg) as well as http endpoints_
 
 ## Testing
 * Unit tests only: `go test -race ./...`
 * Unit and integration tests:
-
+  
+  In order for the integration tests to execute you must provide GITHUB_USERNAME and GITHUB_TOKEN values, because the service is depending on internal repositories.
     ```
+    GITHUB_USERNAME="<user-name>" GITHUB_TOKEN="<personal-access-token>" \
     docker-compose -f docker-compose-tests.yml up -d --build && \
     docker logs -f test-runner && \
     docker-compose -f docker-compose-tests.yml down
