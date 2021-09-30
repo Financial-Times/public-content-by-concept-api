@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -59,6 +60,12 @@ func main() {
 		Desc:   "Level of logging in the service",
 		EnvVar: "LOG_LEVEL",
 	})
+	dbDriverLogLevel := app.String(cli.StringOpt{
+		Name:   "dbDriverLogLevel",
+		Value:  "WARNING",
+		Desc:   "Level of logging in the service",
+		EnvVar: "DB_DRIVER_LOG_LEVEL",
+	})
 	apiYml := app.String(cli.StringOpt{
 		Name:   "api-yml",
 		Value:  "./api.yml",
@@ -67,6 +74,7 @@ func main() {
 	})
 
 	log := logger.NewUPPLogger(*appName, *logLevel)
+	dbLog := logger.NewUPPLogger(fmt.Sprintf("%s %s", *appName, "cmneo4j-driver"), *dbDriverLogLevel)
 
 	app.Action = func() {
 
@@ -86,7 +94,7 @@ func main() {
 			NeoURL:         *neoURL,
 		}
 
-		stopSrv, err := StartServer(config, log)
+		stopSrv, err := StartServer(config, log, dbLog)
 		if err != nil {
 			log.WithError(err).Fatal("Could not start the server")
 		}

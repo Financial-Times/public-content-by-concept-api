@@ -32,14 +32,13 @@ type ServerConfig struct {
 	NeoURL string
 }
 
-func StartServer(config ServerConfig, log *logger.UPPLogger) (func(), error) {
-
+func StartServer(config ServerConfig, log *logger.UPPLogger, dbLog *logger.UPPLogger) (func(), error) {
 	apiEndpoint, err := api.NewAPIEndpointForFile(config.APIYMLPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serve the API Endpoint for this service from file %s: %w", config.APIYMLPath, err)
 	}
 
-	neoDriver, err := cmneo4j.NewDefaultDriver(config.NeoURL, log)
+	neoDriver, err := cmneo4j.NewDefaultDriver(config.NeoURL, dbLog)
 	if err != nil {
 		log.WithError(err).Fatal("Could not initiate cmneo4j driver")
 	}
