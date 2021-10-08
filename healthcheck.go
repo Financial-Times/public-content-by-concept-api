@@ -48,7 +48,7 @@ func (h *HealthcheckService) Checks() []fthealth.Check {
 			Name:             "Check connectivity to Neo4j",
 			PanicGuide:       "https://runbooks.ftops.tech/content-by-concept-api",
 			Severity:         2,
-			TechnicalSummary: "Cannot connect to Neo4j instance with at least one concept loaded in it",
+			TechnicalSummary: "Cannot connect to Neo4j instance",
 			Checker:          h.ConnChecker,
 		},
 	}

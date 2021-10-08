@@ -1,14 +1,13 @@
 package main
 
 import (
-	"net/http"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/Financial-Times/go-logger/v2"
-	"github.com/Financial-Times/neo-utils-go/neoutils"
 	cli "github.com/jawher/mow.cli"
 )
 
@@ -33,7 +32,7 @@ func main() {
 	})
 	neoURL := app.String(cli.StringOpt{
 		Name:   "neo-url",
-		Value:  "http://localhost:7474/db/data",
+		Value:  "bolt://localhost:7687",
 		Desc:   "neo4j endpoint URL",
 		EnvVar: "NEO_URL",
 	})
@@ -61,6 +60,12 @@ func main() {
 		Desc:   "Level of logging in the service",
 		EnvVar: "LOG_LEVEL",
 	})
+	dbDriverLogLevel := app.String(cli.StringOpt{
+		Name:   "dbDriverLogLevel",
+		Value:  "WARNING",
+		Desc:   "Level of logging in the service",
+		EnvVar: "DB_DRIVER_LOG_LEVEL",
+	})
 	apiYml := app.String(cli.StringOpt{
 		Name:   "api-yml",
 		Value:  "./api.yml",
@@ -69,6 +74,7 @@ func main() {
 	})
 
 	log := logger.NewUPPLogger(*appName, *logLevel)
+	dbLog := logger.NewUPPLogger(fmt.Sprintf("%s %s", *appName, "cmneo4j-driver"), *dbDriverLogLevel)
 
 	app.Action = func() {
 
@@ -86,20 +92,9 @@ func main() {
 			AppName:        *appName,
 			AppDescription: appDescription,
 			NeoURL:         *neoURL,
-			NeoConfig: neoutils.ConnectionConfig{
-				BatchSize:     1024,
-				Transactional: false,
-				HTTPClient: &http.Client{
-					Transport: &http.Transport{
-						MaxIdleConnsPerHost: 100,
-					},
-					Timeout: 1 * time.Minute,
-				},
-				BackgroundConnect: true,
-			},
 		}
 
-		stopSrv, err := StartServer(config, log)
+		stopSrv, err := StartServer(config, log, dbLog)
 		if err != nil {
 			log.WithError(err).Fatal("Could not start the server")
 		}

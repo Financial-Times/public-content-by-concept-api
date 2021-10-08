@@ -15,6 +15,7 @@ env:
     duration: "30s"
   recordHTTPMetrics: false
   logLevel: info
+  dbDriverLogLevel: warning
 resources:
   requests:
     memory: 25Mi

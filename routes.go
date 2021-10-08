@@ -8,14 +8,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Financial-Times/api-endpoint"
-	"github.com/Financial-Times/go-logger/v2"
-	"github.com/Financial-Times/http-handlers-go/v2/httphandlers"
-	"github.com/Financial-Times/neo-utils-go/neoutils"
-	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
-	st "github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/gorilla/mux"
 	"github.com/rcrowley/go-metrics"
+
+	"github.com/Financial-Times/api-endpoint"
+	cmneo4j "github.com/Financial-Times/cm-neo4j-driver"
+	"github.com/Financial-Times/go-logger/v2"
+	"github.com/Financial-Times/http-handlers-go/v2/httphandlers"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
+	st "github.com/Financial-Times/service-status-go/httphandlers"
 )
 
 type ServerConfig struct {
@@ -28,20 +29,21 @@ type ServerConfig struct {
 	AppName        string
 	AppDescription string
 
-	NeoURL    string
-	NeoConfig neoutils.ConnectionConfig
+	NeoURL string
 }
 
-func StartServer(config ServerConfig, log *logger.UPPLogger) (func(), error) {
-
+func StartServer(config ServerConfig, log *logger.UPPLogger, dbLog *logger.UPPLogger) (func(), error) {
 	apiEndpoint, err := api.NewAPIEndpointForFile(config.APIYMLPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serve the API Endpoint for this service from file %s: %w", config.APIYMLPath, err)
 	}
-	cbcService, err := content.NewContentByConceptService(config.NeoURL, config.NeoConfig)
+
+	neoDriver, err := cmneo4j.NewDefaultDriver(config.NeoURL, dbLog)
 	if err != nil {
-		return nil, fmt.Errorf("could not create concept service: %w", err)
+		log.WithError(err).Fatal("Could not initiate cmneo4j driver")
 	}
+
+	cbcService := content.NewContentByConceptService(neoDriver)
 
 	handler := Handler{
 		ContentService:     cbcService,
@@ -87,9 +89,12 @@ func StartServer(config ServerConfig, log *logger.UPPLogger) (func(), error) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 
-		err := srv.Shutdown(ctx)
-		if err != nil {
+		if err := srv.Shutdown(ctx); err != nil {
 			log.WithError(err).Error("Server shutdown with unexpected error")
+		}
+
+		if err := neoDriver.Close(); err != nil {
+			log.WithError(err).Error("Neo4j Driver failed to close")
 		}
 	}, nil
 }
