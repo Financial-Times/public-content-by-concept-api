@@ -5,7 +5,8 @@
       "prefLabel": "The Mall Street Journal",
       "types": [
           "http://www.ft.com/ontology/organisation/Organisation"
-      ]
+      ],
+      "predicate": "about"
     },
     "provenances": [
       {
