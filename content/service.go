@@ -45,7 +45,10 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 	}
 
 	// skipCount determines how many rows to skip before returning the results
-	skipCount := (params.Page - 1) * params.ContentLimit
+	skipCount := 0
+	if params.Page > 1 {
+		skipCount = (params.Page - 1) * params.ContentLimit
+	}
 
 	parameters := map[string]interface{}{
 		"conceptUUID":     conceptUUID,
