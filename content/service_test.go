@@ -9,16 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jmcvetta/neoism"
 	"github.com/stretchr/testify/assert"
 
 	annrw "github.com/Financial-Times/annotations-rw-neo4j/v4/annotations"
-	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
+	"github.com/Financial-Times/base-ft-rw-app-go/v2/baseftrwapp"
 	cmneo4j "github.com/Financial-Times/cm-neo4j-driver"
 	"github.com/Financial-Times/concepts-rw-neo4j/concepts"
 	cnt "github.com/Financial-Times/content-rw-neo4j/v3/content"
 	"github.com/Financial-Times/go-logger/v2"
-	"github.com/Financial-Times/neo-utils-go/neoutils"
 )
 
 const (
@@ -42,24 +40,12 @@ const (
 const defaultLimit = 10
 const defaultPage = 1
 
-// TODO: remove the neoutils.NeoConnection - temporary use two different driver objects. The old driver will be removed
-// when annotations-rw-neo4j, concepts-rw-neo4j, content-rw-neo4j are migrated to the new driver.
-// Reusable Neo4J connection.
-var db neoutils.NeoConnection
-
 // cmneo4j.Driver is safe to use in different go routines, so it's not that problematic that it is used as global var.
 var driver *cmneo4j.Driver
 
 func init() {
 	log := logger.NewUPPLogger("test-service", "info")
-	conf := neoutils.DefaultConnectionConfig()
-	conf.Transactional = false
-	db, _ = neoutils.Connect(neoURL(), conf)
-	if db == nil {
-		log.Fatal("Cannot connect to Neo4J")
-	}
-
-	driver, _ = cmneo4j.NewDefaultDriver(neoBoltURL(), log)
+	driver, _ = cmneo4j.NewDefaultDriver(neoURL(), log)
 	if driver == nil {
 		log.Fatal("Cannot connect to Neo4J with cmneo4j driver")
 	}
@@ -67,14 +53,6 @@ func init() {
 
 func neoURL() string {
 	url := os.Getenv("NEO4J_TEST_URL")
-	if url == "" {
-		url = "http://localhost:7474/db/data"
-	}
-	return url
-}
-
-func neoBoltURL() string {
-	url := os.Getenv("NEO4J_BOLT_TEST_URL")
 	if url == "" {
 		url = "bolt://localhost:7687"
 	}
@@ -84,9 +62,9 @@ func neoBoltURL() string {
 func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, db, contentUUID)
-	writeAnnotations(assert, db, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
-	writeConcept(assert, db, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json")
+	writeContent(assert, driver, contentUUID)
+	writeAnnotations(assert, driver, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeConcept(assert, driver, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
@@ -100,9 +78,9 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 func TestFindMatchingContentForV1Annotation(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, db, contentUUID)
-	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
-	writeConcept(assert, db, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
+	writeContent(assert, driver, contentUUID)
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeConcept(assert, driver, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
@@ -116,10 +94,10 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, db, contentUUID)
-	writeContent(assert, db, content2UUID)
-	writeAnnotations(assert, db, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
-	writeConcept(assert, db, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json")
+	writeContent(assert, driver, contentUUID)
+	writeContent(assert, driver, content2UUID)
+	writeAnnotations(assert, driver, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeConcept(assert, driver, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, content2UUID)
 
@@ -133,9 +111,9 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, db, contentUUID)
-	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
-	writeConcept(assert, db, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
+	writeContent(assert, driver, contentUUID)
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeConcept(assert, driver, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
@@ -150,7 +128,7 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, db, contentUUID)
+	writeContent(assert, driver, contentUUID)
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
@@ -163,9 +141,9 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, db, contentUUID)
-	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
-	writeAnnotations(assert, db, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeContent(assert, driver, contentUUID)
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeAnnotations(assert, driver, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
 
 	defer cleanDB(t, content2UUID, MSJConceptUUID, contentUUID, MetalMickeyConceptUUID, FakebookConceptUUID)
 
@@ -179,16 +157,16 @@ func TestBrandsDontReturnParentContent(t *testing.T) {
 	assert := assert.New(t)
 	defer cleanDB(t, content2UUID, content3UUID, content4UUID, OnyxPikeBrandUUID, OnyxPikeParentBrandUUID, OnyPikeyRightBrandUUID)
 
-	writeContent(assert, db, content2UUID)
-	writeContent(assert, db, content3UUID)
-	writeContent(assert, db, content4UUID)
+	writeContent(assert, driver, content2UUID)
+	writeContent(assert, driver, content3UUID)
+	writeContent(assert, driver, content4UUID)
 
-	writeAnnotations(assert, db, content2UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content2UUID))
-	writeAnnotations(assert, db, content3UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content3UUID))
-	writeAnnotations(assert, db, content4UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content4UUID))
+	writeAnnotations(assert, driver, content2UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content2UUID))
+	writeAnnotations(assert, driver, content3UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content3UUID))
+	writeAnnotations(assert, driver, content4UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content4UUID))
 
-	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
-	writeConcept(assert, db, fmt.Sprintf("./fixtures/Brand-OnyxPikeParent-%v.json", OnyxPikeParentBrandUUID))
+	writeConcept(assert, driver, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
+	writeConcept(assert, driver, fmt.Sprintf("./fixtures/Brand-OnyxPikeParent-%v.json", OnyxPikeParentBrandUUID))
 
 	contentByConceptDriver := NewContentByConceptService(driver)
 	contentList, err := contentByConceptDriver.GetContentForConcept(OnyxPikeBrandUUID, RequestParams{0, defaultLimit, 0, 0})
@@ -201,17 +179,17 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordance(t *testing.T) {
 
 	defer cleanDB(t, contentUUID, content2UUID, content3UUID, content4UUID, JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID)
 
-	writeContent(assert, db, contentUUID)
-	writeContent(assert, db, content2UUID)
-	writeContent(assert, db, content3UUID)
-	writeContent(assert, db, content4UUID)
+	writeContent(assert, driver, contentUUID)
+	writeContent(assert, driver, content2UUID)
+	writeContent(assert, driver, content3UUID)
+	writeContent(assert, driver, content4UUID)
 
-	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
-	writeAnnotations(assert, db, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
-	writeAnnotations(assert, db, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
-	writeAnnotations(assert, db, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
+	writeAnnotations(assert, driver, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
+	writeAnnotations(assert, driver, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
+	writeAnnotations(assert, driver, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
 
-	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
+	writeConcept(assert, driver, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
 	contentByConceptDriver := NewContentByConceptService(driver)
 
@@ -229,17 +207,17 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithDateRestrictions(t *t
 
 	defer cleanDB(t, contentUUID, content2UUID, content3UUID, content4UUID, JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID)
 
-	writeContent(assert, db, contentUUID)
-	writeContent(assert, db, content2UUID)
-	writeContent(assert, db, content3UUID)
-	writeContent(assert, db, content4UUID)
+	writeContent(assert, driver, contentUUID)
+	writeContent(assert, driver, content2UUID)
+	writeContent(assert, driver, content3UUID)
+	writeContent(assert, driver, content4UUID)
 
-	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
-	writeAnnotations(assert, db, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
-	writeAnnotations(assert, db, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
-	writeAnnotations(assert, db, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
+	writeAnnotations(assert, driver, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
+	writeAnnotations(assert, driver, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
+	writeAnnotations(assert, driver, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
 
-	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
+	writeConcept(assert, driver, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
 	contentByConceptDriver := NewContentByConceptService(driver)
 
@@ -258,17 +236,17 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithPagination(t *testing
 
 	defer cleanDB(t, contentUUID, content2UUID, content3UUID, content4UUID, JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID)
 
-	writeContent(assert, db, contentUUID)
-	writeContent(assert, db, content2UUID)
-	writeContent(assert, db, content3UUID)
-	writeContent(assert, db, content4UUID)
+	writeContent(assert, driver, contentUUID)
+	writeContent(assert, driver, content2UUID)
+	writeContent(assert, driver, content3UUID)
+	writeContent(assert, driver, content4UUID)
 
-	writeAnnotations(assert, db, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
-	writeAnnotations(assert, db, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
-	writeAnnotations(assert, db, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
-	writeAnnotations(assert, db, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
+	writeAnnotations(assert, driver, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
+	writeAnnotations(assert, driver, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
+	writeAnnotations(assert, driver, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
 
-	writeConcept(assert, db, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
+	writeConcept(assert, driver, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
 	contentByConceptDriver := NewContentByConceptService(driver)
 
@@ -307,14 +285,14 @@ func TestConceptService_Check(t *testing.T) {
 	assert.NoError(err, "Test should always pass when connected to db")
 }
 
-func writeContent(assert *assert.Assertions, db neoutils.NeoConnection, contentUUID string) {
-	contentRW := cnt.NewCypherContentService(db)
+func writeContent(assert *assert.Assertions, driver *cmneo4j.Driver, contentUUID string) {
+	contentRW := cnt.NewContentService(driver)
 	assert.NoError(contentRW.Initialise())
 	writeJSONToService(contentRW, "./fixtures/Content-"+contentUUID+".json", assert)
 }
 
-func writeAnnotations(assert *assert.Assertions, db neoutils.NeoConnection, contentUUID string, lifecycle string, fixtureFile string) {
-	annotationsRW := annrw.NewCypherAnnotationsService(db)
+func writeAnnotations(assert *assert.Assertions, driver *cmneo4j.Driver, contentUUID string, lifecycle string, fixtureFile string) {
+	annotationsRW := annrw.NewCypherAnnotationsService(driver)
 	assert.NoError(annotationsRW.Initialise())
 	f, err := os.Open(fixtureFile)
 	assert.NoError(err)
@@ -324,8 +302,9 @@ func writeAnnotations(assert *assert.Assertions, db neoutils.NeoConnection, cont
 	assert.NoError(annotationsRW.Write(contentUUID, lifecycle, "", "", json))
 }
 
-func writeConcept(assert *assert.Assertions, db neoutils.NeoConnection, fixture string) concepts.ConceptService {
-	conceptsRW := concepts.NewConceptService(db)
+func writeConcept(assert *assert.Assertions, driver *cmneo4j.Driver, fixture string) {
+	log := logger.NewUPPLogger("test-service", "warning")
+	conceptsRW := concepts.NewConceptService(driver, log)
 	assert.NoError(conceptsRW.Initialise())
 	f, err := os.Open(fixture)
 	assert.NoError(err)
@@ -334,21 +313,24 @@ func writeConcept(assert *assert.Assertions, db neoutils.NeoConnection, fixture 
 	assert.NoError(errr)
 	_, err = conceptsRW.Write(inst, "TEST_TRANS_ID")
 	assert.NoError(err)
-	return conceptsRW
 }
 
 func cleanDB(t *testing.T, uuids ...string) {
-	qs := make([]*neoism.CypherQuery, len(uuids))
+	qs := make([]*cmneo4j.Query, len(uuids))
 	for i, uuid := range uuids {
-		qs[i] = &neoism.CypherQuery{
-			Statement: fmt.Sprintf(`
-			MATCH (a:Thing {uuid: "%s"})
+		qs[i] = &cmneo4j.Query{
+			Cypher: `
+			MATCH (a:Thing {uuid: $uuid})
 			OPTIONAL MATCH (a)-[annotation]-(c:Content)
 			OPTIONAL MATCH (a)-[eq:EQUIVALENT_TO]-(canonical)
 			OPTIONAL MATCH (canonical)<-[eq2:EQUIVALENT_TO]-(concepts)
-			DETACH DELETE annotation, eq, eq2, canonical, a`, uuid)}
+			DETACH DELETE annotation, eq, eq2, canonical, a`,
+			Params: map[string]interface{}{
+				"uuid": uuid,
+			},
+		}
 	}
-	err := db.CypherBatch(qs)
+	err := driver.Write(qs...)
 	assert.NoError(t, err, fmt.Sprintf("Error executing clean up cypher. Error: %v", err))
 }
 

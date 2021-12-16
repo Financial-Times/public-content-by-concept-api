@@ -128,6 +128,8 @@ func extractRequestParams(val url.Values, log *logger.LogEntry) (content.Request
 		limit, err := strconv.Atoi(limitParam)
 		if err != nil {
 			log.Debugf("provided value for contentLimit, %s, could not be parsed. Using default: %d", limitParam, defaultLimit)
+		} else if limit < 0 {
+			contentLimit = 0
 		} else {
 			contentLimit = limit
 		}
