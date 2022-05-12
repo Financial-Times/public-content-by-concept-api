@@ -41,6 +41,8 @@ spec:
               key: neo4j.cluster.bolt.url
         - name: APP_PORT
           value: "{{ .Values.env.app.port }}"
+        - name: APP_SYSTEM_CODE
+          value: {{ .Values.service.systemCode }}
         - name: CACHE_DURATION
           value: {{ .Values.env.cache.duration }}
         - name: RECORD_HTTP_METRICS
