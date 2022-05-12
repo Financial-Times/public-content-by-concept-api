@@ -3,12 +3,12 @@ module github.com/Financial-Times/public-content-by-concept-api/v2
 go 1.17
 
 require (
-	github.com/Financial-Times/annotations-rw-neo4j/v4 v4.4.0
+	github.com/Financial-Times/annotations-rw-neo4j/v4 v4.4.1
 	github.com/Financial-Times/api-endpoint v1.0.0
 	github.com/Financial-Times/base-ft-rw-app-go/v2 v2.0.0-20211207113529-d0faaa432d5d
-	github.com/Financial-Times/cm-neo4j-driver v0.1.1
-	github.com/Financial-Times/concepts-rw-neo4j v1.31.5
-	github.com/Financial-Times/content-rw-neo4j/v3 v3.5.1
+	github.com/Financial-Times/cm-neo4j-driver v1.1.0
+	github.com/Financial-Times/concepts-rw-neo4j v1.34.0
+	github.com/Financial-Times/content-rw-neo4j/v3 v3.5.2
 	github.com/Financial-Times/go-fthealth v0.0.0-20180807113633-3d8eb430d5b5
 	github.com/Financial-Times/go-logger/v2 v2.0.1
 	github.com/Financial-Times/http-handlers-go/v2 v2.3.0
@@ -18,10 +18,11 @@ require (
 	github.com/gorilla/mux v1.6.2
 	github.com/jawher/mow.cli v1.0.4
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 )
 
 require (
+	github.com/Financial-Times/cm-graph-ontology v0.0.1 // indirect
 	github.com/Financial-Times/http-handlers-go v0.0.0-20180517120644-2c20324ab887 // indirect
 	github.com/Financial-Times/up-rw-app-api-go v0.0.0-20170710125828-d9d93a1f6895 // indirect
 	github.com/cyberdelia/go-metrics-graphite v0.0.0-20161219230853-39f87cc3b432 // indirect
