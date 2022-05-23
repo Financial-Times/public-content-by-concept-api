@@ -46,7 +46,7 @@ func (h *HealthcheckService) Checks() []fthealth.Check {
 		{
 			BusinessImpact:   "Cannot respond to API requests",
 			Name:             "Check connectivity to Neo4j",
-			PanicGuide:       "https://runbooks.ftops.tech/content-by-concept-api",
+			PanicGuide:       "https://runbooks.ftops.tech/" + h.AppSystemCode,
 			Severity:         2,
 			TechnicalSummary: "Cannot connect to Neo4j instance",
 			Checker:          h.ConnChecker,
