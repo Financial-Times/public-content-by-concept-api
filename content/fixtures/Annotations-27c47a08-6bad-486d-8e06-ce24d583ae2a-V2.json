@@ -1,0 +1,26 @@
+[
+  {
+    "thing": {
+      "id": "http://api.ft.com/things/64ba2208-0c0d-43e2-a883-beecb55c0d33",
+      "prefLabel": "Social affairs",
+      "types": [
+        "Thing",
+        "Concept",
+        "Topic"
+      ],
+      "predicate": "mentions"
+    },
+    "provenances": [
+      {
+        "scores": [
+          {
+            "scoringSystem": "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM"
+          },
+          {
+            "scoringSystem": "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM"
+          }
+        ]
+      }
+    ]
+  }
+]

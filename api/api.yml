@@ -63,6 +63,35 @@ paths:
           description: Internal Server Error if there was an issue processing the records.
         "503":
           description: Service Unavailable if it cannot connect to Neo4j.
+  /content/{conceptUUID}/implicitly:
+    get:
+      description: Get recently published content for a concept implicitly
+      tags:
+        - Public API
+      parameters:
+        - in: path
+          name: conceptUUID
+          required: true
+          description: The given concept's UUID or URI we want to query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success body if at least 1 piece of content is found.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Content"
+        "400":
+          description: Bad request if the uuid/uri path parameter is badly formed
+        "404":
+          description: Not Found if there are no annotations for specified concept
+        "500":
+          description: Internal Server Error if there was an issue processing the records.
+        "503":
+          description: Service Unavailable if it cannot connect to Neo4j.
   /__health:
     servers:
        - url: https://upp-prod-delivery-glb.upp.ft.com/__public-content-by-concept-api/

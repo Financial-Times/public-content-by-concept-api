@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
+
 	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/neo-model-utils-go/mapper"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
@@ -175,6 +177,63 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 	}
 }
 
+func TestContentByConceptHandler_GetContentByConceptImplicitly(t *testing.T) {
+	log := logger.NewUPPLogger("test-service", "info")
+
+	assert := assert.New(t)
+
+	tests := []struct {
+		testName           string
+		conceptID          string
+		contentList        []string
+		expectedStatusCode int
+		expectedBody       string
+		backendError       error
+	}{
+		{
+			testName:           "Successful request",
+			conceptID:          testConceptID,
+			contentList:        []string{testContentUUID},
+			expectedStatusCode: 200,
+		},
+		{
+			testName:           "Bad Request: conceptUUID param has invalid URI/UUID",
+			conceptID:          "NullURI",
+			contentList:        []string{testContentUUID},
+			expectedStatusCode: 400,
+			expectedBody:       `{"message": "NullURI extracted from request URL was not valid uuid"}`,
+		},
+		{
+			testName:           "Backend Error returns 503",
+			conceptID:          testConceptID,
+			contentList:        []string{testContentUUID},
+			expectedStatusCode: 503,
+			expectedBody:       `{"message": "Backend error returning content for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
+			backendError:       errors.New("there was a problem"),
+		},
+		{
+			testName:           "No content for concept returns 404",
+			conceptID:          testConceptID,
+			expectedStatusCode: 404,
+			expectedBody:       `{"message": "No content found for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
+		},
+	}
+
+	for _, test := range tests {
+		ds := dummyService{test.contentList, test.backendError}
+		handler := Handler{ContentService: &ds, CacheControlHeader: "10", Log: log}
+
+		rec := httptest.NewRecorder()
+		r := mux.NewRouter()
+		r.HandleFunc("/content/{conceptUUID}/implicitly", handler.GetContentByConceptImplicitly).Methods("GET")
+		r.ServeHTTP(rec, newRequest("GET", fmt.Sprintf("/content/%s/implicitly", test.conceptID)))
+		assert.Equal(test.expectedStatusCode, rec.Code, "There was an error returning the correct status code")
+		if test.expectedBody != "" {
+			assert.Equal(test.expectedBody, rec.Body.String(), "Wrong body")
+		}
+	}
+}
+
 func buildURL(conceptID, fromDate, toDate, page, contentLimit string) string {
 	var URL = fmt.Sprintf("/content?isAnnotatedBy=http://api.ft.com/things/%s", conceptID)
 	if fromDate != "" {
@@ -206,6 +265,25 @@ type dummyService struct {
 }
 
 func (dS dummyService) GetContentForConcept(conceptUUID string, params content.RequestParams) ([]content.Content, error) {
+	if dS.backendErr != nil {
+		return nil, dS.backendErr
+	}
+	if len(dS.contentIDList) == 0 && dS.backendErr == nil {
+		return nil, content.ErrContentNotFound
+	}
+
+	cntList := make([]content.Content, 0)
+	for _, contentID := range dS.contentIDList {
+		var con = content.Content{}
+		con.APIURL = mapper.APIURL(contentID, []string{"Content", "Thing"}, "")
+		con.ID = content.ThingsPrefix + contentID
+		cntList = append(cntList, con)
+	}
+
+	return cntList, nil
+}
+
+func (dS dummyService) GetContentForConceptImplicitly(conceptUUID string) ([]content.Content, error) {
 	if dS.backendErr != nil {
 		return nil, dS.backendErr
 	}

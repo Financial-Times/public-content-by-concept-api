@@ -64,7 +64,14 @@ func StartServer(config ServerConfig, log *logger.UPPLogger, dbLog *logger.UPPLo
 	if config.RecordMetrics {
 		monitoredHandler = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoredHandler)
 	}
+
+	monitoredImplicitHandler := httphandlers.TransactionAwareRequestLoggingHandler(log, http.HandlerFunc(handler.GetContentByConceptImplicitly))
+	if config.RecordMetrics {
+		monitoredImplicitHandler = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoredImplicitHandler)
+	}
+
 	router.Handle("/content", monitoredHandler).Methods(http.MethodGet)
+	router.Handle("/content/{conceptUUID}/implicitly", monitoredImplicitHandler).Methods(http.MethodGet)
 
 	log.Debug("Registering admin handlers")
 	router.HandleFunc("/__health", hs.HealthHandler()).Methods(http.MethodGet)

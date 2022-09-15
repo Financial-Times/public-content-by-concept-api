@@ -1,0 +1,17 @@
+{
+  "uuid": "4e6a0098-94a9-45c1-835c-7572e1fcc567",
+  "title": "Sustainable Cities Innovation: Balancing Financial Priorities and Wellbeing",
+  "identifiers": [
+    {
+      "authority": "http://api.ft.com/system/FTCOM-METHODE",
+      "identifierValue": "4e6a0098-94a9-45c1-835c-7572e1fcc567"
+    }
+  ],
+  "publishedDate": "2014-03-07T19:18:01.000Z",
+  "body": "<body>Yet another testing document</body>",
+  "brands": [
+    {
+      "id": "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
+    }
+  ]
+}

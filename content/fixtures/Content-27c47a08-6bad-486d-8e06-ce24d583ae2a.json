@@ -1,0 +1,17 @@
+{
+  "uuid": "27c47a08-6bad-486d-8e06-ce24d583ae2a",
+  "title": "Improving the Accuracy of ESG Reporting",
+  "identifiers": [
+    {
+      "authority": "http://api.ft.com/system/FTCOM-METHODE",
+      "identifierValue": "27c47a08-6bad-486d-8e06-ce24d583ae2a"
+    }
+  ],
+  "publishedDate": "2014-03-07T19:18:01.000Z",
+  "body": "<body>Yet another testing document</body>",
+  "brands": [
+    {
+      "id": "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "thing": {
+      "id": "http://api.ft.com/things/2e7429bd-7a84-41cb-a619-2c702893e359",
+      "prefLabel": "Environment",
+      "types": [
+        "Thing",
+        "Concept",
+        "Topic"
+      ],
+      "predicate": "mentions"
+    },
+    "provenances": [
+      {
+        "scores": [
+          {
+            "scoringSystem": "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM"
+          },
+          {
+            "scoringSystem": "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM"
+          }
+        ]
+      }
+    ]
+  }
+]

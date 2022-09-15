@@ -1,0 +1,20 @@
+{
+  "aliases": [
+    "Environment"
+  ],
+  "prefLabel": "Environment",
+  "prefUUID": "2e7429bd-7a84-41cb-a619-2c702893e359",
+  "sourceRepresentations": [
+    {
+      "aliases": [
+        "Environment"
+      ],
+      "authority": "Smartlogic",
+      "authorityValue": "2e7429bd-7a84-41cb-a619-2c702893e359",
+      "prefLabel": "Environment",
+      "type": "Topic",
+      "uuid": "2e7429bd-7a84-41cb-a619-2c702893e359"
+    }
+  ],
+  "type": "Topic"
+}

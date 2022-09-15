@@ -91,3 +91,53 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 
 	return cntList, nil
 }
+
+func (cd *ConceptService) GetContentForConceptImplicitly(conceptUUID string) ([]Content, error) {
+	var results []struct {
+		UUID  string   `json:"uuid"`
+		Types []string `json:"types"`
+	}
+
+	query := &cmneo4j.Query{
+		Cypher: ` 
+		MATCH (:Thing{uuid:$conceptUUID})-[:EQUIVALENT_TO]->(canonicalConcept:Concept)
+		MATCH (canonicalConcept)<-[:EQUIVALENT_TO]-(leaf)
+		MATCH (leaf)<-[:HAS_BROADER|HAS_PARENT|IS_PART_OF*0..]-(narrowerLeaf)
+		MATCH (narrowerLeaf)-[:EQUIVALENT_TO]->(narrowerCanonical)
+		WITH DISTINCT narrowerCanonical
+		MATCH (narrowerCanonical)<-[:EQUIVALENT_TO]-(conceptLeaves)
+		MATCH (conceptLeaves)-[]-(content:Content)
+		WITH DISTINCT content
+		RETURN content.uuid as uuid, labels(content) as types
+		UNION
+		MATCH (:Thing{uuid:$conceptUUID})-[:EQUIVALENT_TO]->(canonicalConcept:Concept)
+		MATCH (canonicalConcept)<-[:EQUIVALENT_TO]-(leaf)
+		MATCH (leaf)-[:IMPLIED_BY*0..]->(narrowerLeaf)
+		MATCH (narrowerLeaf)-[:EQUIVALENT_TO]->(narrowerCanonical)
+		WITH DISTINCT narrowerCanonical
+		MATCH (narrowerCanonical)<-[:EQUIVALENT_TO]-(conceptLeaves)
+		MATCH (conceptLeaves)-[]-(content:Content)
+		WITH DISTINCT content
+		RETURN content.uuid as uuid, labels(content) as types`,
+		Params: map[string]interface{}{"conceptUUID": conceptUUID},
+		Result: &results,
+	}
+
+	err := cd.driver.Read(query)
+	if errors.Is(err, cmneo4j.ErrNoResultsFound) {
+		return nil, ErrContentNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	cntList := make([]Content, 0)
+	for _, result := range results {
+		cntList = append(cntList, Content{
+			ID:     ThingsPrefix + result.UUID, //Not using mapper as this has a different prefix (www.ft.com not api.ft.com)
+			APIURL: mapper.APIURL(result.UUID, result.Types, ""),
+		})
+	}
+
+	return cntList, nil
+}

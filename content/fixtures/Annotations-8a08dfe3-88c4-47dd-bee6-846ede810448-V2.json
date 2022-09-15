@@ -1,0 +1,26 @@
+[
+  {
+    "thing": {
+      "id": "http://api.ft.com/things/18e24d65-c8e6-4e23-ab19-206e0d463205",
+      "prefLabel": "Demographics and population",
+      "types": [
+        "Thing",
+        "Concept",
+        "Topic"
+      ],
+      "predicate": "about"
+    },
+    "provenances": [
+      {
+        "scores": [
+          {
+            "scoringSystem": "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM"
+          },
+          {
+            "scoringSystem": "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM"
+          }
+        ]
+      }
+    ]
+  }
+]
