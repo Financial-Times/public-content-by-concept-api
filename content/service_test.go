@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package content
@@ -25,6 +26,10 @@ const (
 	content2UUID            = "bfa97890-76ff-4a35-a775-b8768f7ea383"
 	content3UUID            = "5a9c7429-e76b-4f37-b5d1-842d64a45167"
 	content4UUID            = "8e193b84-4697-41aa-a480-065831d1d964"
+	content5UUID            = "8a08dfe3-88c4-47dd-bee6-846ede810448"
+	content6UUID            = "27c47a08-6bad-486d-8e06-ce24d583ae2a"
+	content7UUID            = "df7e4deb-e048-43d7-9441-f7d152075a91"
+	content8UUID            = "4e6a0098-94a9-45c1-835c-7572e1fcc567"
 	MSJConceptUUID          = "5d1510f8-2779-4b74-adab-0a5eb138fca6"
 	FakebookConceptUUID     = "eac853f5-3859-4c08-8540-55e043719400"
 	MetalMickeyConceptUUID  = "0483bef8-5797-40b8-9b25-b12e492f63c6"
@@ -35,6 +40,10 @@ const (
 	JohnSmithSmartlogicUUID = "d46c09ce-7861-11e8-b45a-da24cd01f044"
 	JohnSmithTMEUUID        = "3af8b4e4-7862-11e8-b45a-da24cd01f044"
 	JohnSmithOtherTMEUUID   = "521a2338-2cc7-47dd-8da2-e757b4ceb7ef"
+	topic1UUID              = "18e24d65-c8e6-4e23-ab19-206e0d463205"
+	topic2UUID              = "64ba2208-0c0d-43e2-a883-beecb55c0d33"
+	topic3UUID              = "2e7429bd-7a84-41cb-a619-2c702893e359"
+	brand1UUID              = "5c7592a8-1f0c-11e4-b0cb-b2227cce2b54"
 )
 
 const defaultLimit = 10
@@ -276,6 +285,64 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithPagination(t *testing
 
 		assert.Equal(4, len(allContent), "Didn't get the right number of content items, content=%s", allContent)
 	}
+}
+
+func TestContentIsReturnedImplicitlyForHasBroaderOrHasParentOrIsPartOfRelationship(t *testing.T) {
+	assert := assert.New(t)
+
+	defer cleanDB(t, content5UUID, content6UUID, topic1UUID, topic2UUID)
+
+	writeContent(assert, driver, content5UUID)
+	writeContent(assert, driver, content6UUID)
+
+	writeAnnotations(assert, driver, content5UUID, "v2", "./fixtures/Annotations-8a08dfe3-88c4-47dd-bee6-846ede810448-V2.json")
+	writeAnnotations(assert, driver, content6UUID, "v2", "./fixtures/Annotations-27c47a08-6bad-486d-8e06-ce24d583ae2a-V2.json")
+
+	writeConcept(assert, driver, "./fixtures/Topic-18e24d65-c8e6-4e23-ab19-206e0d463205.json")
+	writeConcept(assert, driver, "./fixtures/Topic-64ba2208-0c0d-43e2-a883-beecb55c0d33.json")
+
+	contentByConceptDriver := NewContentByConceptService(driver)
+
+	contentList1, err := contentByConceptDriver.GetContentForConcept(topic1UUID, RequestParams{0, defaultLimit, 0, 0})
+	assert.NoError(err, "Unexpected error for concept %s", topic1UUID)
+	assert.Equal(1, len(contentList1), "Didn't get the right number of content items, content=%s", contentList1)
+
+	contentList2, err := contentByConceptDriver.GetContentForConcept(topic2UUID, RequestParams{0, defaultLimit, 0, 0})
+	assert.NoError(err, "Unexpected error for concept %s", topic2UUID)
+	assert.Equal(1, len(contentList2), "Didn't get the right number of content items, content=%s", contentList2)
+
+	contentList3, err := contentByConceptDriver.GetContentForConceptImplicitly(topic2UUID)
+	assert.NoError(err, "Unexpected error for concept %s", topic2UUID)
+	assert.Equal(2, len(contentList3), "Didn't get the right number of content items, content=%s", contentList3)
+}
+
+func TestContentIsReturnedImplicitlyForImpliedByRelationship(t *testing.T) {
+	assert := assert.New(t)
+
+	defer cleanDB(t, content7UUID, content8UUID, brand1UUID, topic3UUID)
+
+	writeContent(assert, driver, content7UUID)
+	writeContent(assert, driver, content8UUID)
+
+	writeAnnotations(assert, driver, content7UUID, "v2", "./fixtures/Annotations-df7e4deb-e048-43d7-9441-f7d152075a91-V2.json")
+	writeAnnotations(assert, driver, content8UUID, "v2", "./fixtures/Annotations-4e6a0098-94a9-45c1-835c-7572e1fcc567-V2.json")
+
+	writeConcept(assert, driver, "./fixtures/Brand-5c7592a8-1f0c-11e4-b0cb-b2227cce2b54.json")
+	writeConcept(assert, driver, "./fixtures/Topic-2e7429bd-7a84-41cb-a619-2c702893e359.json")
+
+	contentByConceptDriver := NewContentByConceptService(driver)
+
+	contentList1, err := contentByConceptDriver.GetContentForConcept(brand1UUID, RequestParams{0, defaultLimit, 0, 0})
+	assert.NoError(err, "Unexpected error for concept %s", brand1UUID)
+	assert.Equal(1, len(contentList1), "Didn't get the right number of content items, content=%s", contentList1)
+
+	contentList2, err := contentByConceptDriver.GetContentForConcept(topic3UUID, RequestParams{0, defaultLimit, 0, 0})
+	assert.NoError(err, "Unexpected error for concept %s", topic3UUID)
+	assert.Equal(1, len(contentList2), "Didn't get the right number of content items, content=%s", contentList2)
+
+	contentList3, err := contentByConceptDriver.GetContentForConceptImplicitly(brand1UUID)
+	assert.NoError(err, "Unexpected error for concept %s", brand1UUID)
+	assert.Equal(2, len(contentList3), "Didn't get the right number of content items, content=%s", contentList3)
 }
 
 func TestConceptService_Check(t *testing.T) {

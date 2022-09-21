@@ -1,0 +1,25 @@
+{
+  "aliases": [
+    "Social affairs"
+  ],
+  "prefLabel": "Social affairs",
+  "prefUUID": "64ba2208-0c0d-43e2-a883-beecb55c0d33",
+  "relatedUUIDs": [
+    "eeb94f22-f2ed-4b4d-ab3f-4c7944801c11"
+  ],
+  "scopeNote": "Social affairs covers social security, poverty reduction, gender equality, people with disabilities, migration, human rights, the needs of children and families, young people, older people and minorities,  access to health, justice and education. ",
+  "sourceRepresentations": [
+    {
+      "aliases": [
+        "Social affairs"
+      ],
+      "authority": "Smartlogic",
+      "authorityValue": "64ba2208-0c0d-43e2-a883-beecb55c0d33",
+      "prefLabel": "Social affairs",
+      "scopeNote": "Social affairs covers social security, poverty reduction, gender equality, people with disabilities, migration, human rights, the needs of children and families, young people, older people and minorities,  access to health, justice and education. ",
+      "type": "Topic",
+      "uuid": "64ba2208-0c0d-43e2-a883-beecb55c0d33"
+    }
+  ],
+  "type": "Topic"
+}

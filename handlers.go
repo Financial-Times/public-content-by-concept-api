@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
@@ -27,6 +29,7 @@ var UUIDRegex = regexp.MustCompile(`([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4
 
 type dbContentForConceptGetter interface {
 	GetContentForConcept(conceptUUID string, params content.RequestParams) ([]content.Content, error)
+	GetContentForConceptImplicitly(conceptUUID string) ([]content.Content, error)
 }
 
 type Handler struct {
@@ -70,7 +73,50 @@ func (h *Handler) GetContentByConcept(w http.ResponseWriter, r *http.Request) {
 
 	contentList, err := h.ContentService.GetContentForConcept(conceptUUID, requestParams)
 	if err != nil {
+		if err == content.ErrContentNotFound {
+			msg := fmt.Sprintf("No content found for concept with uuid %s", conceptUUID)
+			logEntry.Debugf(msg)
+			writeJSONMessage(w, http.StatusNotFound, msg)
+			return
+		}
 
+		msg := fmt.Sprintf("Backend error returning content for concept with uuid %s", conceptUUID)
+		logEntry.WithError(err).Error(msg)
+		writeJSONMessage(w, http.StatusServiceUnavailable, msg)
+		return
+	}
+
+	w.Header().Set("Cache-Control", h.CacheControlHeader)
+	w.WriteHeader(http.StatusOK)
+
+	if err = json.NewEncoder(w).Encode(contentList); err != nil {
+		msg := fmt.Sprintf("Error parsing returned content list for concept with uuid %s", conceptUUID)
+		logEntry.WithError(err).Error(msg)
+		writeJSONMessage(w, http.StatusInternalServerError, msg)
+		return
+	}
+}
+
+func (h *Handler) GetContentByConceptImplicitly(w http.ResponseWriter, r *http.Request) {
+	transID := transactionidutils.GetTransactionIDFromRequest(r)
+
+	logEntry := h.Log.WithTransactionID(transID)
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set(transactionidutils.TransactionIDHeader, transID)
+	logEntry.Debugf("Request url is %s", r.URL.RawQuery)
+
+	vars := mux.Vars(r)
+	conceptUUID := vars["conceptUUID"]
+	conceptUUID = strings.TrimPrefix(conceptUUID, thingURIPrefix)
+	if !UUIDRegex.MatchString(conceptUUID) {
+		writeJSONMessage(w, http.StatusBadRequest, fmt.Sprintf("%s extracted from request URL was not valid uuid", conceptUUID))
+		return
+	}
+	logEntry = logEntry.WithUUID(conceptUUID)
+
+	contentList, err := h.ContentService.GetContentForConceptImplicitly(conceptUUID)
+	if err != nil {
 		if err == content.ErrContentNotFound {
 			msg := fmt.Sprintf("No content found for concept with uuid %s", conceptUUID)
 			logEntry.Debugf(msg)

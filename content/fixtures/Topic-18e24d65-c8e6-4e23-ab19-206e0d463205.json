@@ -1,0 +1,29 @@
+{
+  "aliases": [
+    "Demographics and population"
+  ],
+  "broaderUUIDs": [
+    "64ba2208-0c0d-43e2-a883-beecb55c0d33"
+  ],
+  "prefLabel": "Demographics and population",
+  "prefUUID": "18e24d65-c8e6-4e23-ab19-206e0d463205",
+  "relatedUUIDs": [
+    "c9b52401-c500-4a95-a655-a09e6f33be78"
+  ],
+  "sourceRepresentations": [
+    {
+      "aliases": [
+        "Demographics and population"
+      ],
+      "authority": "Smartlogic",
+      "authorityValue": "18e24d65-c8e6-4e23-ab19-206e0d463205",
+      "broaderUUIDs": [
+        "64ba2208-0c0d-43e2-a883-beecb55c0d33"
+      ],
+      "prefLabel": "Demographics and population",
+      "type": "Topic",
+      "uuid": "18e24d65-c8e6-4e23-ab19-206e0d463205"
+    }
+  ],
+  "type": "Topic"
+}

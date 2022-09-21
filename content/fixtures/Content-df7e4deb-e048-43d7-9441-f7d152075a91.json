@@ -1,0 +1,17 @@
+{
+  "uuid": "df7e4deb-e048-43d7-9441-f7d152075a91",
+  "title": "Tak is editing",
+  "identifiers": [
+    {
+      "authority": "http://api.ft.com/system/FTCOM-METHODE",
+      "identifierValue": "df7e4deb-e048-43d7-9441-f7d152075a91"
+    }
+  ],
+  "publishedDate": "2014-03-07T19:18:01.000Z",
+  "body": "<body>Yet another testing document</body>",
+  "brands": [
+    {
+      "id": "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "aliases": [
+    "Fast FT",
+    "fastFT"
+  ],
+  "descriptionXML": "<p>Fast FT is a global team working across timezones to give you market-moving news and views twenty-four hours a day, five days a week</p>",
+  "prefLabel": "fastFT",
+  "prefUUID": "5c7592a8-1f0c-11e4-b0cb-b2227cce2b54",
+  "sourceRepresentations": [
+    {
+      "aliases": [
+        "fastFT"
+      ],
+      "authority": "Smartlogic",
+      "authorityValue": "5c7592a8-1f0c-11e4-b0cb-b2227cce2b54",
+      "descriptionXML": "<p>Fast FT is a global team working across timezones to give you market-moving news and views twenty-four hours a day, five days a week</p>",
+      "impliedByUUIDs": [
+        "2e7429bd-7a84-41cb-a619-2c702893e359"
+      ],
+      "prefLabel": "fastFT",
+      "strapline": "Market-moving news and views, 24 hours a day",
+      "type": "Brand",
+      "uuid": "5c7592a8-1f0c-11e4-b0cb-b2227cce2b54"
+    }
+  ],
+  "strapline": "Market-moving news and views, 24 hours a day",
+  "type": "Brand"
+}

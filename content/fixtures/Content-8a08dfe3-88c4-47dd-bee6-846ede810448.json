@@ -1,0 +1,18 @@
+{
+  "uuid": "8a08dfe3-88c4-47dd-bee6-846ede810448",
+  "title": "Testing the parent brands content doesn't come home",
+  "byline": "By Mr Smith",
+  "identifiers": [
+    {
+      "authority": "http://api.ft.com/system/FTCOM-METHODE",
+      "identifierValue": "8a08dfe3-88c4-47dd-bee6-846ede810448"
+    }
+  ],
+  "publishedDate": "2014-03-07T19:18:01.000Z",
+  "body": "<body>Yet another testing document</body>",
+  "brands": [
+    {
+      "id": "http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54"
+    }
+  ]
+}
