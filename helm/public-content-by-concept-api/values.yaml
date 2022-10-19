@@ -18,6 +18,6 @@ env:
   dbDriverLogLevel: warning
 resources:
   requests:
-    memory: 25Mi
+    memory: 300Mi
   limits:
-    memory: 256Mi
+    memory: 600Mi
