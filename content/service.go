@@ -39,9 +39,9 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 		Types []string `json:"types"`
 	}
 
-	var whereClause string
+	var dateFilter string
 	if params.FromDateEpoch > 0 && params.ToDateEpoch > 0 {
-		whereClause = " WHERE c.publishedDateEpoch > $fromDate AND c.publishedDateEpoch < $toDate"
+		dateFilter = " AND c.publishedDateEpoch > $fromDate AND c.publishedDateEpoch < $toDate"
 	}
 
 	// skipCount determines how many rows to skip before returning the results
@@ -62,8 +62,9 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 	query := &cmneo4j.Query{
 		Cypher: `
 			MATCH (:Concept{uuid:$conceptUUID})-[:EQUIVALENT_TO]->(canon:Concept)
-			MATCH (canon)<-[:EQUIVALENT_TO]-(leaves)<-[]-(c:Content)` +
-			whereClause +
+			MATCH (canon)<-[:EQUIVALENT_TO]-(leaves)<-[]-(c:Content)
+			WHERE NOT 'LiveEvent' IN labels(c)` +
+			dateFilter +
 			` WITH DISTINCT c
 			ORDER BY c.publishedDateEpoch DESC
 			SKIP ($skipCount)
