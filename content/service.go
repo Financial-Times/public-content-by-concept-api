@@ -2,9 +2,10 @@ package content
 
 import (
 	"errors"
+	"net/url"
+	"strings"
 
 	cmneo4j "github.com/Financial-Times/cm-neo4j-driver"
-	"github.com/Financial-Times/neo-model-utils-go/mapper"
 )
 
 var ErrContentNotFound = errors.New("content not found")
@@ -12,6 +13,7 @@ var ErrContentNotFound = errors.New("content not found")
 // ConceptService interacts with Neo4j db to extract content by concept information
 type ConceptService struct {
 	driver *cmneo4j.Driver
+	apiURL string
 }
 
 type RequestParams struct {
@@ -21,8 +23,16 @@ type RequestParams struct {
 	ToDateEpoch   int64
 }
 
-func NewContentByConceptService(driver *cmneo4j.Driver) *ConceptService {
-	return &ConceptService{driver: driver}
+func NewContentByConceptService(driver *cmneo4j.Driver, apiURL string) (*ConceptService, error) {
+	_, err := url.ParseRequestURI(apiURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ConceptService{
+		driver: driver,
+		apiURL: apiURL,
+	}, nil
 }
 
 func (cd *ConceptService) CheckConnection() (string, error) {
@@ -85,8 +95,8 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 	cntList := make([]Content, 0)
 	for _, result := range results {
 		cntList = append(cntList, Content{
-			ID:     ThingsPrefix + result.UUID, //Not using mapper as this has a different prefix (www.ft.com not api.ft.com)
-			APIURL: mapper.APIURL(result.UUID, result.Types, ""),
+			ID:     idURL(result.UUID),
+			APIURL: apiURL(result.UUID, cd.apiURL),
 		})
 	}
 
@@ -135,10 +145,18 @@ func (cd *ConceptService) GetContentForConceptImplicitly(conceptUUID string) ([]
 	cntList := make([]Content, 0)
 	for _, result := range results {
 		cntList = append(cntList, Content{
-			ID:     ThingsPrefix + result.UUID, //Not using mapper as this has a different prefix (www.ft.com not api.ft.com)
-			APIURL: mapper.APIURL(result.UUID, result.Types, ""),
+			ID:     idURL(result.UUID),
+			APIURL: apiURL(result.UUID, cd.apiURL),
 		})
 	}
 
 	return cntList, nil
+}
+
+func idURL(uuid string) string {
+	return ThingsPrefix + uuid
+}
+
+func apiURL(uuid, baseURL string) string {
+	return strings.TrimRight(baseURL, "/") + "/content/" + uuid
 }

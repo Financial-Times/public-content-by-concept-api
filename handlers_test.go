@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/Financial-Times/go-logger/v2"
-	"github.com/Financial-Times/neo-model-utils-go/mapper"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
 	"github.com/stretchr/testify/assert"
 )
@@ -275,8 +274,8 @@ func (dS dummyService) GetContentForConcept(conceptUUID string, params content.R
 	cntList := make([]content.Content, 0)
 	for _, contentID := range dS.contentIDList {
 		var con = content.Content{}
-		con.APIURL = mapper.APIURL(contentID, []string{"Content", "Thing"}, "")
-		con.ID = content.ThingsPrefix + contentID
+		con.APIURL = apiURL(contentID)
+		con.ID = idURL(contentID)
 		cntList = append(cntList, con)
 	}
 
@@ -294,8 +293,8 @@ func (dS dummyService) GetContentForConceptImplicitly(conceptUUID string) ([]con
 	cntList := make([]content.Content, 0)
 	for _, contentID := range dS.contentIDList {
 		var con = content.Content{}
-		con.APIURL = mapper.APIURL(contentID, []string{"Content", "Thing"}, "")
-		con.ID = content.ThingsPrefix + contentID
+		con.APIURL = apiURL(contentID)
+		con.ID = idURL(contentID)
 		cntList = append(cntList, con)
 	}
 
@@ -304,4 +303,12 @@ func (dS dummyService) GetContentForConceptImplicitly(conceptUUID string) ([]con
 
 func (dS dummyService) CheckConnection() (string, error) {
 	return "", nil
+}
+
+func apiURL(uuid string) string {
+	return "http://api.ft.com/content/" + uuid
+}
+
+func idURL(uuid string) string {
+	return "http://www.ft.com/content/" + uuid
 }

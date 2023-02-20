@@ -44,6 +44,8 @@ const (
 	topic2UUID              = "64ba2208-0c0d-43e2-a883-beecb55c0d33"
 	topic3UUID              = "2e7429bd-7a84-41cb-a619-2c702893e359"
 	brand1UUID              = "5c7592a8-1f0c-11e4-b0cb-b2227cce2b54"
+
+	apigURL = "http://api.ft.com"
 )
 
 const defaultLimit = 10
@@ -77,7 +79,8 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
@@ -93,7 +96,8 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 	contentList, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
@@ -110,7 +114,8 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, content2UUID)
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, 1, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
@@ -126,7 +131,8 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 	fromDate, _ := time.Parse("2006-01-02", "2014-03-08")
 	toDate, _ := time.Parse("2006-01-02", "2014-03-09")
 	contentList, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, fromDate.Unix(), toDate.Unix()})
@@ -141,7 +147,8 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 	content, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.Equal(ErrContentNotFound, err, "Found matching content for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(0, len(content), "Should not get any content items")
@@ -156,7 +163,8 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 
 	defer cleanDB(t, content2UUID, MSJConceptUUID, contentUUID, MetalMickeyConceptUUID, FakebookConceptUUID)
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.Equal(ErrContentNotFound, err, "Found matching content for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(0, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
@@ -177,7 +185,8 @@ func TestBrandsDontReturnParentContent(t *testing.T) {
 	writeConcept(assert, driver, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
 	writeConcept(assert, driver, fmt.Sprintf("./fixtures/Brand-OnyxPikeParent-%v.json", OnyxPikeParentBrandUUID))
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 	contentList, err := contentByConceptDriver.GetContentForConcept(OnyxPikeBrandUUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", OnyxPikeBrandUUID)
 	assert.Equal(2, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
@@ -200,7 +209,8 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordance(t *testing.T) {
 
 	writeConcept(assert, driver, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
@@ -228,7 +238,8 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithDateRestrictions(t *t
 
 	writeConcept(assert, driver, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
@@ -257,7 +268,8 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithPagination(t *testing
 
 	writeConcept(assert, driver, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
@@ -301,7 +313,8 @@ func TestContentIsReturnedImplicitlyForHasBroaderOrHasParentOrIsPartOfRelationsh
 	writeConcept(assert, driver, "./fixtures/Topic-18e24d65-c8e6-4e23-ab19-206e0d463205.json")
 	writeConcept(assert, driver, "./fixtures/Topic-64ba2208-0c0d-43e2-a883-beecb55c0d33.json")
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 
 	contentList1, err := contentByConceptDriver.GetContentForConcept(topic1UUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", topic1UUID)
@@ -330,7 +343,8 @@ func TestContentIsReturnedImplicitlyForImpliedByRelationship(t *testing.T) {
 	writeConcept(assert, driver, "./fixtures/Brand-5c7592a8-1f0c-11e4-b0cb-b2227cce2b54.json")
 	writeConcept(assert, driver, "./fixtures/Topic-2e7429bd-7a84-41cb-a619-2c702893e359.json")
 
-	contentByConceptDriver := NewContentByConceptService(driver)
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
 
 	contentList1, err := contentByConceptDriver.GetContentForConcept(brand1UUID, RequestParams{0, defaultLimit, 0, 0})
 	assert.NoError(err, "Unexpected error for concept %s", brand1UUID)
@@ -347,8 +361,9 @@ func TestContentIsReturnedImplicitlyForImpliedByRelationship(t *testing.T) {
 
 func TestConceptService_Check(t *testing.T) {
 	assert := assert.New(t)
-	contentByConceptDriver := NewContentByConceptService(driver)
-	_, err := contentByConceptDriver.CheckConnection()
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
+	_, err = contentByConceptDriver.CheckConnection()
 	assert.NoError(err, "Test should always pass when connected to db")
 }
 
