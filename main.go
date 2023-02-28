@@ -72,6 +72,12 @@ func main() {
 		Desc:   "Location of the API Swagger YML file.",
 		EnvVar: "API_YML",
 	})
+	apiURL := app.String(cli.StringOpt{
+		Name:   "publicAPIURL",
+		Value:  "http://api.ft.com",
+		Desc:   "API Gateway URL used when building the thing ID url in the response, in the format scheme://host",
+		EnvVar: "PUBLIC_API_URL",
+	})
 
 	log := logger.NewUPPLogger(*appName, *logLevel)
 	dbLog := logger.NewUPPLogger(fmt.Sprintf("%s %s", *appName, "cmneo4j-driver"), *dbDriverLogLevel)
@@ -94,7 +100,7 @@ func main() {
 			NeoURL:         *neoURL,
 		}
 
-		stopSrv, err := StartServer(config, log, dbLog)
+		stopSrv, err := StartServer(config, log, dbLog, *apiURL)
 		if err != nil {
 			log.WithError(err).Fatal("Could not start the server")
 		}

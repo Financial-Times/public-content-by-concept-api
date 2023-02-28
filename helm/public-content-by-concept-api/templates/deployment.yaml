@@ -51,6 +51,11 @@ spec:
           value: "{{ .Values.env.logLevel }}"
         - name: DB_DRIVER_LOG_LEVEL
           value: "{{ .Values.env.dbDriverLogLevel }}"
+        - name: PUBLIC_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: api.host.with.protocol.insecure
         ports:
         - containerPort: {{ .Values.env.app.port }}
         livenessProbe:

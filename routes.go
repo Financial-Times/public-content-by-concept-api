@@ -32,7 +32,7 @@ type ServerConfig struct {
 	NeoURL string
 }
 
-func StartServer(config ServerConfig, log *logger.UPPLogger, dbLog *logger.UPPLogger) (func(), error) {
+func StartServer(config ServerConfig, log *logger.UPPLogger, dbLog *logger.UPPLogger, apiURL string) (func(), error) {
 	apiEndpoint, err := api.NewAPIEndpointForFile(config.APIYMLPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serve the API Endpoint for this service from file %s: %w", config.APIYMLPath, err)
@@ -40,10 +40,13 @@ func StartServer(config ServerConfig, log *logger.UPPLogger, dbLog *logger.UPPLo
 
 	neoDriver, err := cmneo4j.NewDefaultDriver(config.NeoURL, dbLog)
 	if err != nil {
-		log.WithError(err).Fatal("Could not initiate cmneo4j driver")
+		return nil, fmt.Errorf("creating neo driver: %w", err)
 	}
 
-	cbcService := content.NewContentByConceptService(neoDriver)
+	cbcService, err := content.NewContentByConceptService(neoDriver, apiURL)
+	if err != nil {
+		return nil, fmt.Errorf("creating content by concept service: %w", err)
+	}
 
 	handler := Handler{
 		ContentService:     cbcService,

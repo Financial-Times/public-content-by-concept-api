@@ -13,12 +13,20 @@ __A public API which returns an ordered list of the most recently annotated cont
 * `go install`
 * `$GOPATH/bin/public-content-by-concept-api --neo-url={neo4jUrl} --port={port} --log-level={DEBUG|INFO|WARN|ERROR}--cache-duration{e.g. 22h10m3s} --requestLoggingEnabled=false`
 
-  Optional arguments are:
-  * --neo-url defaults to bolt://neo4j:7687, which is the default url to connect to single Neo4j instance using bolt protocol.
-  * --port defaults to 8080.
-  * --cache-duration defaults to 1 hour
-  * --logLevel set level of app logging, request critical logs are info level with more helpful logs found at debug
-  * --requestLoggingEnabled when true will toggle logging of both admin endpoints(health/gtg) as well as http endpoints_
+```shell
+Options:
+  --app-system-code       System Code of the application (env $APP_SYSTEM_CODE) (default "public-content-by-concept-api")
+  --app-name              Application name (env $APP_NAME) (default "Public Content by Concept API")
+  --neo-url               neo4j endpoint URL (env $NEO_URL) (default "bolt://localhost:7687")
+  --port                  Port to listen on (env $APP_PORT) (default "8080")
+  --cache-duration        Duration Get requests should be cached for. e.g. 2h45m would set the max-age value to '7440' seconds (env $CACHE_DURATION) (default "30s")
+  --record-http-metrics   enable recording of http handler metrics (env $RECORD_HTTP_METRICS)
+  --logLevel              Level of logging in the service (env $LOG_LEVEL) (default "INFO")
+  --dbDriverLogLevel      Level of logging in the service (env $DB_DRIVER_LOG_LEVEL) (default "WARNING")
+  --api-yml               Location of the API Swagger YML file. (env $API_YML) (default "./api.yml")
+  --publicAPIURL          API Gateway URL used when building the thing ID url in the response, in the format scheme://host (env $PUBLIC_API_URL) (default "http://api.ft.com")
+  --ftURL                 FT's URL used when building the ID url in the response, in the format scheme://host (env $FT_URL) (default "http://www.ft.com")
+```
 
 ## Testing
 * Unit tests only: `go test -race ./...`
