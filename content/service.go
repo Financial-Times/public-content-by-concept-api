@@ -45,8 +45,11 @@ func (cd *ConceptService) CheckConnection() (string, error) {
 
 func (cd *ConceptService) GetContentForConcept(conceptUUID string, params RequestParams) ([]Content, error) {
 	var results []struct {
-		UUID  string   `json:"uuid"`
-		Types []string `json:"types"`
+		UUID                    string   `json:"uuid"`
+		Types                   []string `json:"types"`
+		ContentPublication      string   `json:"contentPublication"`
+		RelationshipPublication string   `json:"relationshipPublication"`
+		ConceptPublication      string   `json:"conceptPublication"`
 	}
 
 	var dateFilter string
@@ -71,14 +74,14 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 	// New concordance model
 	query := &cmneo4j.Query{
 		Cypher: `
-			MATCH (:Concept{uuid:$conceptUUID})-[:EQUIVALENT_TO]->(canon:Concept)
-			MATCH (canon)<-[:EQUIVALENT_TO]-(leaves)<-[]-(c:Content)
+			MATCH (:Thing{uuid:$conceptUUID})-[:EQUIVALENT_TO]->(canon:Thing)
+			MATCH (canon)<-[:EQUIVALENT_TO]-(leaves)<-[r]-(c:Content)
 			WHERE NOT 'LiveEvent' IN labels(c)` +
 			dateFilter +
-			` WITH DISTINCT c
+			` WITH DISTINCT c, r, leaves
 			ORDER BY c.publishedDateEpoch DESC
 			SKIP ($skipCount)
-			RETURN c.uuid as uuid, labels(c) as types
+			RETURN c.uuid as uuid, labels(c) as types, r.publication as relationshipPublication, c.publication as contentPublication, leaves.authority as conceptPublication
 			LIMIT($maxContentItems)`,
 		Params: parameters,
 		Result: &results,
@@ -95,8 +98,11 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 	cntList := make([]Content, 0)
 	for _, result := range results {
 		cntList = append(cntList, Content{
-			ID:     idURL(result.UUID),
-			APIURL: apiURL(result.UUID, cd.apiURL),
+			ID:                      idURL(result.UUID),
+			APIURL:                  apiURL(result.UUID, cd.apiURL),
+			ContentPublication:      result.ContentPublication,
+			RelationshipPublication: result.RelationshipPublication,
+			ConceptPublication:      result.ConceptPublication,
 		})
 	}
 
@@ -105,31 +111,34 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 
 func (cd *ConceptService) GetContentForConceptImplicitly(conceptUUID string) ([]Content, error) {
 	var results []struct {
-		UUID  string   `json:"uuid"`
-		Types []string `json:"types"`
+		UUID                    string   `json:"uuid"`
+		Types                   []string `json:"types"`
+		ContentPublication      string   `json:"contentPublication"`
+		RelationshipPublication string   `json:"relationshipPublication"`
+		ConceptPublication      string   `json:"conceptPublication"`
 	}
 
 	query := &cmneo4j.Query{
 		Cypher: ` 
-		MATCH (:Thing{uuid:$conceptUUID})-[:EQUIVALENT_TO]->(canonicalConcept:Concept)
+		MATCH (:Thing{uuid:$conceptUUID})-[:EQUIVALENT_TO]->(canonicalConcept:Thing)
 		MATCH (canonicalConcept)<-[:EQUIVALENT_TO]-(leaf)
 		MATCH (leaf)<-[:HAS_BROADER|HAS_PARENT|IS_PART_OF*0..]-(narrowerLeaf)
 		MATCH (narrowerLeaf)-[:EQUIVALENT_TO]->(narrowerCanonical)
 		WITH DISTINCT narrowerCanonical
 		MATCH (narrowerCanonical)<-[:EQUIVALENT_TO]-(conceptLeaves)
-		MATCH (conceptLeaves)-[]-(content:Content)
-		WITH DISTINCT content
-		RETURN content.uuid as uuid, labels(content) as types
+		MATCH (conceptLeaves)-[r]-(content:Content)
+		WITH DISTINCT content,conceptLeaves ,r
+		RETURN content.uuid as uuid, labels(content) as types, r.publication as relationshipPublication, content.publication as contentPublication, conceptLeaves.authority as conceptPublication
 		UNION
-		MATCH (:Thing{uuid:$conceptUUID})-[:EQUIVALENT_TO]->(canonicalConcept:Concept)
+		MATCH (:Thing{uuid:$conceptUUID})-[:EQUIVALENT_TO]->(canonicalConcept:Thing)
 		MATCH (canonicalConcept)<-[:EQUIVALENT_TO]-(leaf)
 		MATCH (leaf)-[:IMPLIED_BY*0..]->(narrowerLeaf)
 		MATCH (narrowerLeaf)-[:EQUIVALENT_TO]->(narrowerCanonical)
 		WITH DISTINCT narrowerCanonical
 		MATCH (narrowerCanonical)<-[:EQUIVALENT_TO]-(conceptLeaves)
-		MATCH (conceptLeaves)-[]-(content:Content)
-		WITH DISTINCT content
-		RETURN content.uuid as uuid, labels(content) as types`,
+		MATCH (conceptLeaves)-[r]-(content:Content)
+		WITH DISTINCT content,conceptLeaves,r
+		RETURN content.uuid as uuid, labels(content) as types,  r.publication as relationshipPublication, content.publication as contentPublication, conceptLeaves.authority as conceptPublication`,
 		Params: map[string]interface{}{"conceptUUID": conceptUUID},
 		Result: &results,
 	}
@@ -145,8 +154,11 @@ func (cd *ConceptService) GetContentForConceptImplicitly(conceptUUID string) ([]
 	cntList := make([]Content, 0)
 	for _, result := range results {
 		cntList = append(cntList, Content{
-			ID:     idURL(result.UUID),
-			APIURL: apiURL(result.UUID, cd.apiURL),
+			ID:                      idURL(result.UUID),
+			APIURL:                  apiURL(result.UUID, cd.apiURL),
+			ContentPublication:      result.ContentPublication,
+			RelationshipPublication: result.RelationshipPublication,
+			ConceptPublication:      result.ConceptPublication,
 		})
 	}
 
