@@ -147,6 +147,7 @@ func extractRequestParams(val url.Values, log *logger.LogEntry) (content.Request
 		contentLimit  = defaultLimit
 		fromDateEpoch = int64(0)
 		toDateEpoch   = int64(0)
+		publication   []string
 		err           error
 	)
 
@@ -208,11 +209,30 @@ func extractRequestParams(val url.Values, log *logger.LogEntry) (content.Request
 		toDateEpoch = toDateTime.Unix()
 	}
 
+	publicationParam := val["publication"]
+
+	if len(publicationParam) == 0 {
+		log.Debug("no publication url param supplied")
+	} else {
+		for _, pubParam := range publicationParam {
+			publication = append(publication, strings.Split(pubParam, ",")...)
+		}
+
+		for _, pub := range publication {
+			if !UUIDRegex.MatchString(pub) {
+				msg := fmt.Sprintf("Publication array param contains value %s which is not valid uuid", pub)
+				log.WithError(err).Error(msg)
+				return content.RequestParams{}, errors.New(msg)
+			}
+		}
+	}
+
 	return content.RequestParams{
 		Page:          page,
 		ContentLimit:  contentLimit,
 		FromDateEpoch: fromDateEpoch,
 		ToDateEpoch:   toDateEpoch,
+		Publication:   publication,
 	}, nil
 }
 
