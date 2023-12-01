@@ -5,6 +5,7 @@ const (
 )
 
 type Content struct {
-	ID     string `json:"id"`
-	APIURL string `json:"apiUrl"`
+	ID          string   `json:"id"`
+	APIURL      string   `json:"apiUrl"`
+	Publication []string `json:"publication,omitempty"`
 }

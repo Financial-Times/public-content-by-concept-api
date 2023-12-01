@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -33,6 +34,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 		toDate             string
 		page               string
 		contentLimit       string
+		publication        []string
 		expectedStatusCode int
 		expectedBody       string
 		backendError       error
@@ -45,6 +47,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			toDate:             "2018-06-20",
 			page:               "5",
 			contentLimit:       "10",
+			publication:        []string{"88fdde6c-2aa4-4f78-af02-9f680097cfd6", "8e6c705e-1132-42a2-8db0-c295e29e8658"},
 			expectedStatusCode: 200,
 		},
 		{
@@ -151,6 +154,14 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			expectedStatusCode: 404,
 			expectedBody:       `{"message": "No content found for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
 		},
+		{
+			testName:           "Bad Request: query param 'publication' has invalid uuid",
+			conceptID:          testConceptID,
+			contentList:        []string{testContentUUID},
+			publication:        []string{"88fdde6c-2aa4-4f78-af02-9f680097cfd"},
+			expectedStatusCode: 400,
+			expectedBody:       `{"message": "Publication array param contains value 88fdde6c-2aa4-4f78-af02-9f680097cfd which is not valid uuid"}`,
+		},
 	}
 
 	for _, test := range tests {
@@ -166,7 +177,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 		} else if test.conceptID == anotherConceptID {
 			reqURL = "/content?isAnnotatedBy=" + anotherConceptID
 		} else {
-			reqURL = buildURL(test.conceptID, test.fromDate, test.toDate, test.page, test.contentLimit)
+			reqURL = buildURL(test.conceptID, test.fromDate, test.toDate, test.page, test.contentLimit, test.publication)
 		}
 		handler.GetContentByConcept(rec, newRequest("GET", reqURL))
 		assert.Equal(test.expectedStatusCode, rec.Code, "There was an error returning the correct status code")
@@ -233,7 +244,7 @@ func TestContentByConceptHandler_GetContentByConceptImplicitly(t *testing.T) {
 	}
 }
 
-func buildURL(conceptID, fromDate, toDate, page, contentLimit string) string {
+func buildURL(conceptID, fromDate, toDate, page, contentLimit string, publication []string) string {
 	var URL = fmt.Sprintf("/content?isAnnotatedBy=http://api.ft.com/things/%s", conceptID)
 	if fromDate != "" {
 		URL = URL + fmt.Sprintf("&fromDate=%s", fromDate)
@@ -246,6 +257,9 @@ func buildURL(conceptID, fromDate, toDate, page, contentLimit string) string {
 	}
 	if page != "" {
 		URL = URL + fmt.Sprintf("&page=%s", page)
+	}
+	if len(publication) != 0 {
+		URL = URL + fmt.Sprintf("&publication=%s", strings.Join(publication, ","))
 	}
 	return URL
 }

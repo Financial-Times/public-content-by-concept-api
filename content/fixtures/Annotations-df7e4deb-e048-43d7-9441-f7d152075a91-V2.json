@@ -1,27 +1,13 @@
 [
   {
-    "thing": {
-      "id": "http://api.ft.com/things/5c7592a8-1f0c-11e4-b0cb-b2227cce2b54",
-      "prefLabel": "fastFT",
-      "types": [
-        "Thing",
-        "Concept",
-        "Brand",
-        "Classification"
-      ],
-      "predicate": "hasBrand"
-    },
-    "provenances": [
-      {
-        "scores": [
-          {
-            "scoringSystem": "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM"
-          },
-          {
-            "scoringSystem": "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM"
-          }
-        ]
-      }
-    ]
+    "id": "http://api.ft.com/things/5c7592a8-1f0c-11e4-b0cb-b2227cce2b54",
+    "prefLabel": "fastFT",
+    "types": [
+      "Thing",
+      "Concept",
+      "Brand",
+      "Classification"
+    ],
+    "predicate": "hasBrand"
   }
 ]

@@ -6,6 +6,7 @@ package content
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -30,6 +31,7 @@ const (
 	content6UUID            = "27c47a08-6bad-486d-8e06-ce24d583ae2a"
 	content7UUID            = "df7e4deb-e048-43d7-9441-f7d152075a91"
 	content8UUID            = "4e6a0098-94a9-45c1-835c-7572e1fcc567"
+	content9UUID            = "3fc9fe3e-af8c-4f7f-961a-e5065392bb32"
 	MSJConceptUUID          = "5d1510f8-2779-4b74-adab-0a5eb138fca6"
 	FakebookConceptUUID     = "eac853f5-3859-4c08-8540-55e043719400"
 	MetalMickeyConceptUUID  = "0483bef8-5797-40b8-9b25-b12e492f63c6"
@@ -81,7 +83,7 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 
 	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
 	assert.NoError(err)
-	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
+	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
 	assertListContainsAll(assert, contentList, getExpectedContent())
@@ -98,7 +100,7 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 
 	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
 	assert.NoError(err)
-	contentList, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, 0, 0})
+	contentList, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
 	assertListContainsAll(assert, contentList, getExpectedContent())
@@ -116,7 +118,7 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 
 	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
 	assert.NoError(err)
-	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, 1, 0, 0})
+	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, 1, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
 	assertListContainsAll(assert, contentList, getExpectedContent())
@@ -135,7 +137,7 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 	assert.NoError(err)
 	fromDate, _ := time.Parse("2006-01-02", "2014-03-08")
 	toDate, _ := time.Parse("2006-01-02", "2014-03-09")
-	contentList, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, fromDate.Unix(), toDate.Unix()})
+	contentList, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, fromDate.Unix(), toDate.Unix(), nil})
 	assert.Equal(ErrContentNotFound, err, "Found matching content for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(0, len(contentList), "Should not get any content items")
 }
@@ -149,7 +151,7 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 
 	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
 	assert.NoError(err)
-	content, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
+	content, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.Equal(ErrContentNotFound, err, "Found matching content for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(0, len(content), "Should not get any content items")
 }
@@ -165,7 +167,7 @@ func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 
 	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
 	assert.NoError(err)
-	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0})
+	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.Equal(ErrContentNotFound, err, "Found matching content for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(0, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
 }
@@ -187,7 +189,7 @@ func TestBrandsDontReturnParentContent(t *testing.T) {
 
 	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
 	assert.NoError(err)
-	contentList, err := contentByConceptDriver.GetContentForConcept(OnyxPikeBrandUUID, RequestParams{0, defaultLimit, 0, 0})
+	contentList, err := contentByConceptDriver.GetContentForConcept(OnyxPikeBrandUUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", OnyxPikeBrandUUID)
 	assert.Equal(2, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
 }
@@ -215,7 +217,7 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordance(t *testing.T) {
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
 	for _, uuid := range idsToCheck {
-		contentList, err := contentByConceptDriver.GetContentForConcept(uuid, RequestParams{0, defaultLimit, 0, 0})
+		contentList, err := contentByConceptDriver.GetContentForConcept(uuid, RequestParams{0, defaultLimit, 0, 0, nil})
 		assert.NoError(err, "Unexpected error for concept %s", uuid)
 		assert.Equal(4, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
 	}
@@ -244,7 +246,7 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithDateRestrictions(t *t
 	idsToCheck := []string{JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID}
 
 	for _, uuid := range idsToCheck {
-		contentList, err := contentByConceptDriver.GetContentForConcept(uuid, RequestParams{0, defaultLimit, 1372550400, 1388448000})
+		contentList, err := contentByConceptDriver.GetContentForConcept(uuid, RequestParams{0, defaultLimit, 1372550400, 1388448000, nil})
 		//From July 1st 2013 - January 1st 2014
 		assert.NoError(err, "Unexpected error for concept %s", uuid)
 		assert.Equal(1, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
@@ -316,11 +318,11 @@ func TestContentIsReturnedImplicitlyForHasBroaderOrHasParentOrIsPartOfRelationsh
 	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
 	assert.NoError(err)
 
-	contentList1, err := contentByConceptDriver.GetContentForConcept(topic1UUID, RequestParams{0, defaultLimit, 0, 0})
+	contentList1, err := contentByConceptDriver.GetContentForConcept(topic1UUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", topic1UUID)
 	assert.Equal(1, len(contentList1), "Didn't get the right number of content items, content=%s", contentList1)
 
-	contentList2, err := contentByConceptDriver.GetContentForConcept(topic2UUID, RequestParams{0, defaultLimit, 0, 0})
+	contentList2, err := contentByConceptDriver.GetContentForConcept(topic2UUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", topic2UUID)
 	assert.Equal(1, len(contentList2), "Didn't get the right number of content items, content=%s", contentList2)
 
@@ -346,11 +348,11 @@ func TestContentIsReturnedImplicitlyForImpliedByRelationship(t *testing.T) {
 	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
 	assert.NoError(err)
 
-	contentList1, err := contentByConceptDriver.GetContentForConcept(brand1UUID, RequestParams{0, defaultLimit, 0, 0})
+	contentList1, err := contentByConceptDriver.GetContentForConcept(brand1UUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", brand1UUID)
 	assert.Equal(1, len(contentList1), "Didn't get the right number of content items, content=%s", contentList1)
 
-	contentList2, err := contentByConceptDriver.GetContentForConcept(topic3UUID, RequestParams{0, defaultLimit, 0, 0})
+	contentList2, err := contentByConceptDriver.GetContentForConcept(topic3UUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", topic3UUID)
 	assert.Equal(1, len(contentList2), "Didn't get the right number of content items, content=%s", contentList2)
 
@@ -374,19 +376,20 @@ func writeContent(assert *assert.Assertions, driver *cmneo4j.Driver, contentUUID
 }
 
 func writeAnnotations(assert *assert.Assertions, driver *cmneo4j.Driver, contentUUID string, lifecycle string, fixtureFile string) {
-	annotationsRW := annrw.NewCypherAnnotationsService(driver)
+	annotationsRW, err := annrw.NewCypherAnnotationsService(driver, "http://api.ft.com")
+	assert.NoError(err)
 	assert.NoError(annotationsRW.Initialise())
 	f, err := os.Open(fixtureFile)
 	assert.NoError(err)
-	dec := json.NewDecoder(f)
-	json, errr := annotationsRW.DecodeJSON(dec)
-	assert.NoError(errr, "Error parsing file %s", fixtureFile)
-	assert.NoError(annotationsRW.Write(contentUUID, lifecycle, "", "", json))
+	anns, err := decode(f)
+	assert.NoError(err, "Error parsing file %s", fixtureFile)
+	_, err = annotationsRW.Write(contentUUID, lifecycle, "", nil, anns)
+	assert.NoError(err)
 }
 
 func writeConcept(assert *assert.Assertions, driver *cmneo4j.Driver, fixture string) {
 	log := logger.NewUPPLogger("test-service", "warning")
-	conceptsRW := concepts.NewConceptService(driver, log)
+	conceptsRW := concepts.NewConceptService(driver, log, []string{"prefUUID", "prefLabel", "type", "leiCode", "figiCode", "issuedBy", "geonamesFeatureCode", "isDeprecated"})
 	assert.NoError(conceptsRW.Initialise())
 	f, err := os.Open(fixture)
 	assert.NoError(err)
@@ -438,4 +441,10 @@ func getExpectedContent() Content {
 		ID:     "http://www.ft.com/things/" + contentUUID,
 		APIURL: "http://api.ft.com/content/" + contentUUID,
 	}
+}
+
+func decode(body io.Reader) ([]interface{}, error) {
+	var anns []interface{}
+	err := json.NewDecoder(body).Decode(&anns)
+	return anns, err
 }

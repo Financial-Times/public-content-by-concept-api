@@ -8,6 +8,10 @@ import (
 	cmneo4j "github.com/Financial-Times/cm-neo4j-driver"
 )
 
+const (
+	ftPinkPublication = "88fdde6c-2aa4-4f78-af02-9f680097cfd6"
+)
+
 var ErrContentNotFound = errors.New("content not found")
 
 // ConceptService interacts with Neo4j db to extract content by concept information
@@ -21,6 +25,7 @@ type RequestParams struct {
 	ContentLimit  int
 	FromDateEpoch int64
 	ToDateEpoch   int64
+	Publication   []string
 }
 
 func NewContentByConceptService(driver *cmneo4j.Driver, apiURL string) (*ConceptService, error) {
@@ -45,8 +50,9 @@ func (cd *ConceptService) CheckConnection() (string, error) {
 
 func (cd *ConceptService) GetContentForConcept(conceptUUID string, params RequestParams) ([]Content, error) {
 	var results []struct {
-		UUID  string   `json:"uuid"`
-		Types []string `json:"types"`
+		UUID        string   `json:"uuid"`
+		Types       []string `json:"types"`
+		Publication []string `json:"publication"`
 	}
 
 	var dateFilter string
@@ -60,12 +66,22 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 		skipCount = (params.Page - 1) * params.ContentLimit
 	}
 
+	var publicationFilter string
+	if len(params.Publication) == 0 {
+		// default to FT Pink if no publication param is supplied
+		params.Publication = []string{ftPinkPublication}
+		publicationFilter = " AND c.publication IS NULL OR c.publication IN $publication"
+	} else {
+		publicationFilter = " AND c.publication IN $publication"
+	}
+
 	parameters := map[string]interface{}{
 		"conceptUUID":     conceptUUID,
 		"skipCount":       skipCount,
 		"maxContentItems": params.ContentLimit,
 		"fromDate":        params.FromDateEpoch,
 		"toDate":          params.ToDateEpoch,
+		"publication":     params.Publication,
 	}
 
 	// New concordance model
@@ -75,10 +91,11 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 			MATCH (canon)<-[:EQUIVALENT_TO]-(leaves)<-[]-(c:Content)
 			WHERE NOT 'LiveEvent' IN labels(c)` +
 			dateFilter +
+			publicationFilter +
 			` WITH DISTINCT c
 			ORDER BY c.publishedDateEpoch DESC
 			SKIP ($skipCount)
-			RETURN c.uuid as uuid, labels(c) as types
+			RETURN c.uuid as uuid, labels(c) as types, c.publication as publication
 			LIMIT($maxContentItems)`,
 		Params: parameters,
 		Result: &results,
@@ -95,8 +112,9 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 	cntList := make([]Content, 0)
 	for _, result := range results {
 		cntList = append(cntList, Content{
-			ID:     idURL(result.UUID),
-			APIURL: apiURL(result.UUID, cd.apiURL),
+			ID:          idURL(result.UUID),
+			APIURL:      apiURL(result.UUID, cd.apiURL),
+			Publication: result.Publication,
 		})
 	}
 
