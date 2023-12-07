@@ -70,7 +70,7 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 	if len(params.Publication) == 0 {
 		// default to FT Pink if no publication param is supplied
 		params.Publication = []string{ftPinkPublication}
-		publicationFilter = " AND c.publication IS NULL OR any(publication IN c.publication WHERE publication IN $publication)"
+		publicationFilter = " AND (c.publication IS NULL OR any(publication IN c.publication WHERE publication IN $publication))"
 	} else {
 		publicationFilter = " AND any(publication IN c.publication WHERE publication IN $publication)"
 	}
