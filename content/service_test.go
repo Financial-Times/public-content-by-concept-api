@@ -32,6 +32,7 @@ const (
 	content7UUID            = "df7e4deb-e048-43d7-9441-f7d152075a91"
 	content8UUID            = "4e6a0098-94a9-45c1-835c-7572e1fcc567"
 	content9UUID            = "3fc9fe3e-af8c-4f7f-961a-e5065392bb32"
+	content10UUID           = "93e528d3-4ceb-452f-bf88-0ff6b99eab8b"
 	MSJConceptUUID          = "5d1510f8-2779-4b74-adab-0a5eb138fca6"
 	FakebookConceptUUID     = "eac853f5-3859-4c08-8540-55e043719400"
 	MetalMickeyConceptUUID  = "0483bef8-5797-40b8-9b25-b12e492f63c6"
@@ -46,6 +47,7 @@ const (
 	topic2UUID              = "64ba2208-0c0d-43e2-a883-beecb55c0d33"
 	topic3UUID              = "2e7429bd-7a84-41cb-a619-2c702893e359"
 	brand1UUID              = "5c7592a8-1f0c-11e4-b0cb-b2227cce2b54"
+	provision1UUID          = "a7a8748c-24f9-4034-809b-eb5fcabf96f4"
 
 	apigURL = "http://api.ft.com"
 )
@@ -359,6 +361,26 @@ func TestContentIsReturnedImplicitlyForImpliedByRelationship(t *testing.T) {
 	contentList3, err := contentByConceptDriver.GetContentForConceptImplicitly(brand1UUID)
 	assert.NoError(err, "Unexpected error for concept %s", brand1UUID)
 	assert.Equal(2, len(contentList3), "Didn't get the right number of content items, content=%s", contentList3)
+}
+func TestSVRelationship(t *testing.T) {
+	assert := assert.New(t)
+
+	defer cleanDB(t, content10UUID, provision1UUID)
+
+	writeContent(assert, driver, content10UUID)
+
+	writeAnnotations(assert, driver, content10UUID, "manual", "./fixtures/Annotations-93e528d3-4ceb-452f-bf88-0ff6b99eab8b-manual.json")
+
+	writeConcept(assert, driver, "./fixtures/Sv-provision-a7a8748c-24f9-4034-809b-eb5fcabf96f4.json")
+
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
+
+	contentList, err := contentByConceptDriver.GetContentForConcept(provision1UUID, RequestParams{0, defaultLimit, 0, 0, nil})
+	assert.NoError(err, "Unexpected error for concept %s", provision1UUID)
+	assert.Equal(1, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
+	assert.Equal("http://www.ft.com/things/"+content10UUID, contentList[0].ID, "Didn't get the right content , content=%s", contentList)
+
 }
 
 func TestConceptService_Check(t *testing.T) {
