@@ -1,0 +1,12 @@
+{
+  "uuid": "93e528d3-4ceb-452f-bf88-0ff6b99eab8b",
+  "title": "SV content to be annotated with provision",
+  "identifiers": [
+    {
+      "authority": "8e6c705e-1132-42a2-8db0-c295e29e8658",
+      "identifierValue": "93e528d3-4ceb-452f-bf88-0ff6b99eab8b"
+    }
+  ],
+  "publishedDate": "2023-03-07T19:18:01.000Z",
+  "body": "<body>Yet another testing document</body>"
+}

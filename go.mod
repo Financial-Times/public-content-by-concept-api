@@ -3,7 +3,7 @@ module github.com/Financial-Times/public-content-by-concept-api/v2
 go 1.21
 
 require (
-	github.com/Financial-Times/annotations-rw-neo4j/v4 v4.9.0
+	github.com/Financial-Times/annotations-rw-neo4j/v4 v4.8.3
 	github.com/Financial-Times/api-endpoint v1.0.0
 	github.com/Financial-Times/base-ft-rw-app-go/v2 v2.0.0-20211207113529-d0faaa432d5d
 	github.com/Financial-Times/cm-neo4j-driver v1.1.1
@@ -21,8 +21,8 @@ require (
 )
 
 require (
-	github.com/Financial-Times/cm-annotations-ontology v1.0.2 // indirect
-	github.com/Financial-Times/cm-graph-ontology/v2 v2.0.2 // indirect
+	github.com/Financial-Times/cm-annotations-ontology v1.0.4 // indirect
+	github.com/Financial-Times/cm-graph-ontology/v2 v2.0.4 // indirect
 	github.com/Financial-Times/http-handlers-go v0.0.0-20180517120644-2c20324ab887 // indirect
 	github.com/Financial-Times/up-rw-app-api-go v0.0.0-20170710125828-d9d93a1f6895 // indirect
 	github.com/cyberdelia/go-metrics-graphite v0.0.0-20161219230853-39f87cc3b432 // indirect
