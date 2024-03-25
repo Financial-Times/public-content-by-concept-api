@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/Financial-Times/opa-client-go"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/policy"
 	"net/http"
 	"os"
 	"strconv"
@@ -32,7 +34,7 @@ type ServerConfig struct {
 	NeoURL string
 }
 
-func StartServer(config ServerConfig, log *logger.UPPLogger, dbLog *logger.UPPLogger, apiURL string) (func(), error) {
+func StartServer(config ServerConfig, log *logger.UPPLogger, dbLog *logger.UPPLogger, apiURL string, opaClient *opa.OpenPolicyAgentClient) (func(), error) {
 	apiEndpoint, err := api.NewAPIEndpointForFile(config.APIYMLPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serve the API Endpoint for this service from file %s: %w", config.APIYMLPath, err)
@@ -73,7 +75,13 @@ func StartServer(config ServerConfig, log *logger.UPPLogger, dbLog *logger.UPPLo
 		monitoredImplicitHandler = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoredImplicitHandler)
 	}
 
-	router.Handle("/content", monitoredHandler).Methods(http.MethodGet)
+	middlewareFunc := opa.CreateRequestMiddleware(opaClient, policy.PublicationPolicyKey, log, policy.IsAuthorizedPublication)
+
+	//only use middleware for GetContentByConcept
+	authorizedRoutes := router.NewRoute().Subrouter()
+	authorizedRoutes.Use(middlewareFunc)
+	authorizedRoutes.Handle("/content", monitoredHandler).Methods(http.MethodGet)
+
 	router.Handle("/content/{conceptUUID}/implicitly", monitoredImplicitHandler).Methods(http.MethodGet)
 
 	log.Debug("Registering admin handlers")
