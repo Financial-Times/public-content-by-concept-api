@@ -26,6 +26,14 @@ paths:
           schema:
             type: string
         - in: query
+          name: publication
+          required: false
+          description: Publication UUID
+          schema:
+            type: array
+            items:
+              type: string
+        - in: query
           name: fromDate
           description: Start date, in YYYY-MM-DD format.
           schema:
