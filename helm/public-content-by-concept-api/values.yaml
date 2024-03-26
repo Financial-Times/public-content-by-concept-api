@@ -8,7 +8,8 @@ replicaCount: 2
 image:
   repository: coco/public-content-by-concept-api
   pullPolicy: Always
-env: 
+env:
+  OPA_URL: "http://localhost:8181"
   app: 
     port: "8080"
   cache: 
@@ -21,3 +22,10 @@ resources:
     memory: 300Mi
   limits:
     memory: 600Mi
+
+openPolicyAgentSidecar:
+  name: open-policy-agent
+  repository: openpolicyagent/opa
+  tag: 0.62.1
+  pullPolicy: IfNotPresent
+serviceAccount: eksctl-public-content-by-concept-serviceaccount
