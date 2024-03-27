@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/policy"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -19,6 +20,12 @@ const (
 	testConceptID    = "44129750-7616-11e8-b45a-da24cd01f044"
 	testContentUUID  = "e89db5e2-760d-11e8-b45a-da24cd01f044"
 	anotherConceptID = "347e2eca-7860-11e8-b45a-da24cd01f044"
+)
+
+var (
+	isAuthorized           = policy.Result{true, false, []string{}}
+	isNotAuthorized        = policy.Result{false, false, []string{}}
+	addFilterByPublication = policy.Result{false, true, []string{"88fdde6c-2aa4-4f78-af02-9f680097cfd6", "8e6c705e-1132-42a2-8db0-c295e29e8658"}}
 )
 
 func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
@@ -38,6 +45,7 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 		expectedStatusCode int
 		expectedBody       string
 		backendError       error
+		opaPolicyResult    policy.Result
 	}{
 		{
 			testName:           "Success for request with full URL",
@@ -48,7 +56,31 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			page:               "5",
 			contentLimit:       "10",
 			publication:        []string{"88fdde6c-2aa4-4f78-af02-9f680097cfd6", "8e6c705e-1132-42a2-8db0-c295e29e8658"},
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
+			opaPolicyResult:    isAuthorized,
+		},
+		{
+			testName:           "Success for request with filter added by the middleware",
+			conceptID:          testConceptID,
+			contentList:        []string{testContentUUID},
+			fromDate:           "2018-01-01",
+			toDate:             "2018-06-20",
+			page:               "5",
+			contentLimit:       "10",
+			expectedStatusCode: http.StatusOK,
+			opaPolicyResult:    addFilterByPublication,
+		},
+		{
+			testName:           "Forbidden by policy resultg",
+			conceptID:          testConceptID,
+			contentList:        []string{testContentUUID},
+			fromDate:           "2018-01-01",
+			toDate:             "2018-06-20",
+			page:               "5",
+			contentLimit:       "10",
+			publication:        []string{"88fdde6c-2aa4-4f78-af02-9f680097cfd6", "8e6c705e-1132-42a2-8db0-c295e29e8658"},
+			expectedStatusCode: http.StatusForbidden,
+			opaPolicyResult:    isNotAuthorized,
 		},
 		{
 			testName:           "Success for request with no page",
@@ -57,7 +89,8 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			fromDate:           "2018-01-01",
 			toDate:             "2018-06-20",
 			contentLimit:       "10",
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Success for request with no content limit",
@@ -65,102 +98,116 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 			contentList:        []string{testContentUUID},
 			fromDate:           "2018-01-01",
 			toDate:             "2018-06-20",
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Success for request with no content limit, page, fromDate or toDate",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Bad Request: no isAnnotatedBy parameter",
 			conceptID:          "",
 			contentList:        []string{testContentUUID},
-			expectedStatusCode: 400,
+			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       `{"message": "Missing or empty query parameter isAnnotatedBy. Expecting valid absolute concept URI."}`,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Success: isAnnotatedBy has valid UUID",
 			conceptID:          anotherConceptID,
 			contentList:        []string{testContentUUID},
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
 			expectedBody:       "",
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Bad Request: isAnnotatedBy param has no URI/UUID",
 			conceptID:          "NullURI",
 			contentList:        []string{testContentUUID},
-			expectedStatusCode: 400,
+			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       `{"message": "Missing or empty query parameter isAnnotatedBy. Expecting valid absolute concept URI."}`,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Bad Request: isAnnotatedBy URI has invalid UUID",
 			conceptID:          "123456",
 			contentList:        []string{testContentUUID},
-			expectedStatusCode: 400,
+			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       `{"message": "123456 extracted from request URL was not valid uuid"}`,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Bad Request: query param 'page' is invalid",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
 			page:               "null",
-			expectedStatusCode: 400,
+			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       `{"message": "provided value for page, null, could not be parsed."}`,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Bad Request: query param 'page' is less than defaultPage value",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
 			page:               "0",
-			expectedStatusCode: 400,
+			expectedStatusCode: http.StatusBadRequest,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Bad Request: query param 'limit' is invalid",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
 			contentLimit:       "null",
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
 			expectedBody:       "",
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Bad Request: query param 'fromDate' is invalid",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
 			fromDate:           "null",
-			expectedStatusCode: 400,
+			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       `{"message": "From date value null could not be parsed"}`,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Bad Request: query param 'toDate' is invalid",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
 			toDate:             "null",
-			expectedStatusCode: 400,
+			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       `{"message": "To date value null could not be parsed"}`,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Backend Error returns 503",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
-			expectedStatusCode: 503,
+			expectedStatusCode: http.StatusServiceUnavailable,
 			expectedBody:       `{"message": "Backend error returning content for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
 			backendError:       errors.New("there was a problem"),
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "No content for concept returns 404",
 			conceptID:          testConceptID,
-			expectedStatusCode: 404,
+			expectedStatusCode: http.StatusNotFound,
 			expectedBody:       `{"message": "No content found for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
+			opaPolicyResult:    isAuthorized,
 		},
 		{
 			testName:           "Bad Request: query param 'publication' has invalid uuid",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
 			publication:        []string{"88fdde6c-2aa4-4f78-af02-9f680097cfd"},
-			expectedStatusCode: 400,
+			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       `{"message": "Publication array param contains value 88fdde6c-2aa4-4f78-af02-9f680097cfd which is not valid uuid"}`,
+			opaPolicyResult:    isAuthorized,
 		},
 	}
 
@@ -170,6 +217,10 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 		handler := Handler{ContentService: &ds, CacheControlHeader: "10", Log: log}
 
 		rec := httptest.NewRecorder()
+
+		r := mux.NewRouter()
+		r.HandleFunc("/content", handler.GetContentByConcept).Methods("GET")
+
 		if test.conceptID == "" {
 			reqURL = "/content"
 		} else if test.conceptID == "NullURI" {
@@ -179,7 +230,8 @@ func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
 		} else {
 			reqURL = buildURL(test.conceptID, test.fromDate, test.toDate, test.page, test.contentLimit, test.publication)
 		}
-		handler.GetContentByConcept(rec, newRequest("GET", reqURL))
+
+		policy.IsAuthorizedPublication(r, rec, newRequest("GET", reqURL), log, test.opaPolicyResult)
 		assert.Equal(test.expectedStatusCode, rec.Code, "There was an error returning the correct status code")
 		if test.expectedBody != "" {
 			assert.Equal(test.expectedBody, rec.Body.String(), "Wrong body")
@@ -204,27 +256,27 @@ func TestContentByConceptHandler_GetContentByConceptImplicitly(t *testing.T) {
 			testName:           "Successful request",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			testName:           "Bad Request: conceptUUID param has invalid URI/UUID",
 			conceptID:          "NullURI",
 			contentList:        []string{testContentUUID},
-			expectedStatusCode: 400,
+			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       `{"message": "NullURI extracted from request URL was not valid uuid"}`,
 		},
 		{
 			testName:           "Backend Error returns 503",
 			conceptID:          testConceptID,
 			contentList:        []string{testContentUUID},
-			expectedStatusCode: 503,
+			expectedStatusCode: http.StatusServiceUnavailable,
 			expectedBody:       `{"message": "Backend error returning content for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
 			backendError:       errors.New("there was a problem"),
 		},
 		{
 			testName:           "No content for concept returns 404",
 			conceptID:          testConceptID,
-			expectedStatusCode: 404,
+			expectedStatusCode: http.StatusNotFound,
 			expectedBody:       `{"message": "No content found for concept with uuid 44129750-7616-11e8-b45a-da24cd01f044"}`,
 		},
 	}

@@ -13,20 +13,21 @@ const (
 )
 
 type Result struct {
-	IsAuthorizedPublication bool     `json:"is_authorized_for_publication"`
-	AddFilterByPublication  bool     `json:"add_filter_by_publication"`
-	Publications            []string `json:"xpolicy_publications"`
+	IsAuthorizedForPublication bool     `json:"is_authorized_for_publication"`
+	AddFilterByPublication     bool     `json:"add_filter_by_publication"`
+	Publications               []string `json:"xpolicy_publications"`
 }
 
 func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Request, log *logger.UPPLogger, r Result) {
 
-	if r.IsAuthorizedPublication {
+	if r.IsAuthorizedForPublication {
 		n.ServeHTTP(w, req)
 	} else {
 		if r.AddFilterByPublication {
 			req.URL.RawQuery = req.URL.RawQuery + fmt.Sprintf("&publication=%s", strings.Join(r.Publications, ","))
 			n.ServeHTTP(w, req)
 		} else {
+			//add log reasons
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	}

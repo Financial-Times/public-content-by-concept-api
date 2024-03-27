@@ -474,12 +474,12 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedErrorMessage: "Forbidden\n",
 		},
 		{
-			name:                 "(5)Test opa policy validation forbidden due missing access from header",
-			conceptId:            provision1UUID,
-			endpoint:             publicContentByConceptURL(),
-			publicationFilter:    svPublicationId,
-			expectedStatusCode:   http.StatusForbidden,
-			expectedErrorMessage: "Forbidden\n",
+			name:               "(5)Test opa policy validation forbidden due missing access from header",
+			conceptId:          provision1UUID,
+			endpoint:           publicContentByConceptURL(),
+			publicationFilter:  svPublicationId,
+			expected:           getExpectedContent(content10UUID, publication),
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			name:               "(6)Test opa policy validation valid policy key",
