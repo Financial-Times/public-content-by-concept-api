@@ -3,15 +3,31 @@ version: 2.1
 orbs:
   ft-golang-ci: financial-times/golang-ci@1
 
+jobs:
+  test:
+    machine: true
+    working_directory: ~/public-content-by-concept-api
+    steps:
+      - checkout
+      - run:
+          name: Run integration tests
+          command:  docker-compose -f docker-compose-tests.yml up -d --build && docker logs -f test-runner && export TESTS_STATUS_CODE=$(docker inspect test-runner --format="{{.State.ExitCode}}") &&  docker-compose -f docker-compose-tests.yml down && exit $TESTS_STATUS_CODE
+  build-and-run-linters:
+    working_directory: /go/src/github.com/Financial-Times/public-content-by-concept-api
+    docker:
+      - image: golang:1
+    steps:
+      - checkout
+      - ft-golang-ci/build
+      - ft-golang-ci/lint
+
+
 workflows:
   tests_and_docker:
     jobs:
-      - ft-golang-ci/build-and-test:
-          name: build-and-test-project
-          executor-name:
-            name: ft-golang-ci/default-with-neo4j
-          context: 
-            - dockerhub-shared
+      - build-and-run-linters:
+          name: build-and-run-linters
+          context:
             - cm-team-github
       - ft-golang-ci/docker-build:
           name: build-docker-image
