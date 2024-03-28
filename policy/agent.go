@@ -2,9 +2,10 @@ package policy
 
 import (
 	"fmt"
-	"github.com/Financial-Times/go-logger/v2"
 	"net/http"
 	"strings"
+
+	"github.com/Financial-Times/go-logger/v2"
 )
 
 const (
@@ -19,7 +20,6 @@ type Result struct {
 }
 
 func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Request, log *logger.UPPLogger, r Result) {
-
 	if r.IsAuthorizedForPublication {
 		n.ServeHTTP(w, req)
 	} else {
@@ -28,7 +28,6 @@ func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Re
 			req.URL.RawQuery = req.URL.RawQuery + fmt.Sprintf("&publication=%s", strings.Join(r.Publications, ","))
 			n.ServeHTTP(w, req)
 		} else {
-
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	}

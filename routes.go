@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/Financial-Times/opa-client-go"
-	"github.com/Financial-Times/public-content-by-concept-api/v2/policy"
 	"net/http"
 	"os"
 	"strconv"
@@ -12,6 +10,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rcrowley/go-metrics"
+
+	"github.com/Financial-Times/opa-client-go"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/policy"
 
 	"github.com/Financial-Times/api-endpoint"
 	cmneo4j "github.com/Financial-Times/cm-neo4j-driver"

@@ -593,7 +593,6 @@ func TestOpaPolicyValidation(t *testing.T) {
 }
 
 func writeContent(assert *assert.Assertions, contentUUID string) {
-
 	endpoint := fmt.Sprintf("%s%s%s", contentRWNeo4jURL(), "/", contentUUID)
 
 	jsonData, err := os.ReadFile("./fixtures/Content-" + contentUUID + ".json")

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/Financial-Times/public-content-by-concept-api/v2/policy"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/Financial-Times/go-logger/v2"
 	opa "github.com/Financial-Times/opa-client-go"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/policy"
 	cli "github.com/jawher/mow.cli"
 )
 
