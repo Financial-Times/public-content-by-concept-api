@@ -50,6 +50,7 @@ const (
 	brand1UUID              = "5c7592a8-1f0c-11e4-b0cb-b2227cce2b54"
 	provision1UUID          = "a7a8748c-24f9-4034-809b-eb5fcabf96f4"
 	svPublicationID         = "8e6c705e-1132-42a2-8db0-c295e29e8658"
+	ftPinkPublicationtionID = "88fdde6c-2aa4-4f78-af02-9f680097cfd6"
 
 	apigURL = "http://api.ft.com"
 )
@@ -546,6 +547,32 @@ func TestOpaPolicyValidation(t *testing.T) {
 			xPolicy:              "PBLC_WRITE_8e6c705e-1132-42a2-8db0-c295e29e8658",
 			expectedStatusCode:   http.StatusForbidden,
 			expectedErrorMessage: "Forbidden\n",
+		},
+		{
+			name:                 "(14)Test opa policy validation for publication no x policy policy no publication filter - should not forbid",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			accessFrom:           "API Gateway",
+			expectedStatusCode:   http.StatusNotFound,
+			expectedErrorMessage: "{\"message\": \"No content found for concept with uuid a7a8748c-24f9-4034-809b-eb5fcabf96f4\"}",
+		},
+		{
+			name:                 "(15)Test opa policy validation for publication no x policy policy with publication filter - should  forbid",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			publicationFilter:    svPublicationID,
+			accessFrom:           "API Gateway",
+			expectedStatusCode:   http.StatusForbidden,
+			expectedErrorMessage: "Forbidden\n",
+		},
+		{
+			name:                 "(16)Test opa policy validation for publication no x policy policy with publication filter for ft - should  not forbid",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			publicationFilter:    ftPinkPublicationtionID,
+			accessFrom:           "API Gateway",
+			expectedStatusCode:   http.StatusNotFound,
+			expectedErrorMessage: "{\"message\": \"No content found for concept with uuid a7a8748c-24f9-4034-809b-eb5fcabf96f4\"}",
 		},
 	}
 
