@@ -675,7 +675,6 @@ func assertListContainsAll(assert *assert.Assertions, list interface{}, items ..
 	}
 }
 func getExpectedContent(content string, publications []string) Content {
-
 	return Content{
 		ID:          "http://www.ft.com/things/" + content,
 		APIURL:      "http://api.ft.com/content/" + content,
