@@ -32,7 +32,7 @@ workflows:
       - ft-golang-ci/docker-build:
           name: build-docker-image
           requires:
-            - build-and-test-project
+            - build-and-run-linters
           context: 
             - dockerhub-shared
             - cm-team-github
