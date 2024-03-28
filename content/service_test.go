@@ -439,19 +439,17 @@ func TestOpaPolicyValidation(t *testing.T) {
 		expectedErrorMessage string
 	}{
 		{
-			name:               "(1)Test opa policy validation authorized with basic authentication no publication id",
+			name:               "(1)Test opa policy validation authorized with basic authentication(no access from header) no publication id",
 			conceptID:          MSJConceptUUID,
 			endpoint:           publicContentByConceptURL(),
-			accessFrom:         "Basic Authentication",
 			expected:           getExpectedContent(contentUUID, nil),
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:               "(2)Test opa policy validation authorized with basic authentication with publication id filter",
+			name:               "(2)Test opa policy validation authorized with basic authentication(no access from header) with publication id filter",
 			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
 			publicationFilter:  svPublicationID,
-			accessFrom:         "Basic Authentication",
 			expected:           getExpectedContent(content10UUID, publication),
 			expectedStatusCode: http.StatusOK,
 		},
