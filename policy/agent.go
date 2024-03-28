@@ -24,12 +24,12 @@ func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Re
 		n.ServeHTTP(w, req)
 	} else {
 		if r.AddFilterByPublication {
+			log.Infof("Adding filter for publications: %s", r.Publications)
 			req.URL.RawQuery = req.URL.RawQuery + fmt.Sprintf("&publication=%s", strings.Join(r.Publications, ","))
 			n.ServeHTTP(w, req)
 		} else {
-			//add log reasons
+
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	}
-
 }

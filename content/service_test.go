@@ -49,7 +49,7 @@ const (
 	topic3UUID              = "2e7429bd-7a84-41cb-a619-2c702893e359"
 	brand1UUID              = "5c7592a8-1f0c-11e4-b0cb-b2227cce2b54"
 	provision1UUID          = "a7a8748c-24f9-4034-809b-eb5fcabf96f4"
-	svPublicationId         = "8e6c705e-1132-42a2-8db0-c295e29e8658"
+	svPublicationID         = "8e6c705e-1132-42a2-8db0-c295e29e8658"
 
 	apigURL = "http://api.ft.com"
 )
@@ -395,9 +395,9 @@ func TestSVRelationship(t *testing.T) {
 
 	defer cleanDB(t, content10UUID, provision1UUID)
 
-	publication := []string{svPublicationId}
+	publication := []string{svPublicationID}
 	writeContent(assert, content10UUID)
-	writeAnnotations(assert, driver, content10UUID, "manual", "./fixtures/Annotations-93e528d3-4ceb-452f-bf88-0ff6b99eab8b-manual.json", publication)
+	writeAnnotations(assert, driver, content10UUID, "manual", "./fixtures/Annotations-93e528d3-4ceb-452f-bf88-0ff6b99eab8b-manual.json", []interface{}{svPublicationID})
 	writeConcept(assert, driver, "./fixtures/Sv-provision-a7a8748c-24f9-4034-809b-eb5fcabf96f4.json")
 
 	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
@@ -415,10 +415,10 @@ func TestOpaPolicyValidation(t *testing.T) {
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, content2UUID, content10UUID, provision1UUID)
 
-	publication := []string{svPublicationId}
+	publication := []string{svPublicationID}
 
 	writeContent(assertion, content10UUID)
-	writeAnnotations(assertion, driver, content10UUID, "manual", "./fixtures/Annotations-93e528d3-4ceb-452f-bf88-0ff6b99eab8b-manual.json", publication)
+	writeAnnotations(assertion, driver, content10UUID, "manual", "./fixtures/Annotations-93e528d3-4ceb-452f-bf88-0ff6b99eab8b-manual.json", []interface{}{svPublicationID})
 	writeConcept(assertion, driver, "./fixtures/Sv-provision-a7a8748c-24f9-4034-809b-eb5fcabf96f4.json")
 
 	writeContent(assertion, contentUUID)
@@ -428,7 +428,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 
 	opaPolicyValidationTest := []struct {
 		name                 string
-		conceptId            string
+		conceptID            string
 		endpoint             string
 		publicationFilter    string
 		accessFrom           string
@@ -439,7 +439,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 	}{
 		{
 			name:               "(1)Test opa policy validation authorized with basic authentication no publication id",
-			conceptId:          MSJConceptUUID,
+			conceptID:          MSJConceptUUID,
 			endpoint:           publicContentByConceptURL(),
 			accessFrom:         "Basic Authentication",
 			expected:           getExpectedContent(contentUUID, nil),
@@ -447,18 +447,18 @@ func TestOpaPolicyValidation(t *testing.T) {
 		},
 		{
 			name:               "(2)Test opa policy validation authorized with basic authentication with publication id filter",
-			conceptId:          provision1UUID,
+			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
-			publicationFilter:  svPublicationId,
+			publicationFilter:  svPublicationID,
 			accessFrom:         "Basic Authentication",
 			expected:           getExpectedContent(content10UUID, publication),
 			expectedStatusCode: http.StatusOK,
 		},
 		{
 			name:                 "(3)Test opa policy validation forbidden due to nonmatching policy key",
-			conceptId:            provision1UUID,
+			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
-			publicationFilter:    svPublicationId,
+			publicationFilter:    svPublicationID,
 			accessFrom:           "API Gateway",
 			xPolicy:              "PBLC_READ_7e3c705e-1132-42a2-8db0-c295e29e8658",
 			expectedStatusCode:   http.StatusForbidden,
@@ -466,26 +466,26 @@ func TestOpaPolicyValidation(t *testing.T) {
 		},
 		{
 			name:                 "(4)Test opa policy validation forbidden due missing policy key",
-			conceptId:            provision1UUID,
+			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
-			publicationFilter:    svPublicationId,
+			publicationFilter:    svPublicationID,
 			accessFrom:           "API Gateway",
 			expectedStatusCode:   http.StatusForbidden,
 			expectedErrorMessage: "Forbidden\n",
 		},
 		{
 			name:               "(5)Test opa policy validation forbidden due missing access from header",
-			conceptId:          provision1UUID,
+			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
-			publicationFilter:  svPublicationId,
+			publicationFilter:  svPublicationID,
 			expected:           getExpectedContent(content10UUID, publication),
 			expectedStatusCode: http.StatusOK,
 		},
 		{
 			name:               "(6)Test opa policy validation valid policy key",
-			conceptId:          provision1UUID,
+			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
-			publicationFilter:  svPublicationId,
+			publicationFilter:  svPublicationID,
 			accessFrom:         "API Gateway",
 			xPolicy:            "PBLC_READ_8e6c705e-1132-42a2-8db0-c295e29e8658",
 			expected:           getExpectedContent(content10UUID, publication),
@@ -493,7 +493,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 		},
 		{
 			name:               "(7)Test opa policy validation to apply filter on requested resource",
-			conceptId:          provision1UUID,
+			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
 			accessFrom:         "API Gateway",
 			xPolicy:            "PBLC_READ_8e6c705e-1132-42a2-8db0-c295e29e8658",
@@ -502,7 +502,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 		},
 		{
 			name:                 "(8)Test opa policy validation to apply filter on requested resource",
-			conceptId:            provision1UUID,
+			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
 			accessFrom:           "API Gateway",
 			xPolicy:              "PBLC_READ_7e3c705e-1132-42a2-8db0-c295e29e8658",
@@ -511,7 +511,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 		},
 		{
 			name:               "(9)Test opa policy validation to apply filter on requested resource with two policies in key",
-			conceptId:          provision1UUID,
+			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
 			accessFrom:         "API Gateway",
 			xPolicy:            "PBLC_READ_8e6c705e-1132-42a2-8db0-c295e29e8658, PBLC_READ_7e3c705e-1132-42a2-8db0-c295e29e8658",
@@ -520,9 +520,9 @@ func TestOpaPolicyValidation(t *testing.T) {
 		},
 		{
 			name:               "(10)Test opa policy validation for publication id with two policies in key",
-			conceptId:          provision1UUID,
+			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
-			publicationFilter:  svPublicationId,
+			publicationFilter:  svPublicationID,
 			accessFrom:         "API Gateway",
 			xPolicy:            "PBLC_READ_8e6c705e-1132-42a2-8db0-c295e29e8658, PBLC_READ_7e3c705e-1132-42a2-8db0-c295e29e8658",
 			expected:           getExpectedContent(content10UUID, publication),
@@ -530,9 +530,9 @@ func TestOpaPolicyValidation(t *testing.T) {
 		},
 		{
 			name:                 "(11)Test opa policy validation for publication incorrect policy",
-			conceptId:            provision1UUID,
+			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
-			publicationFilter:    svPublicationId,
+			publicationFilter:    svPublicationID,
 			accessFrom:           "API Gateway",
 			xPolicy:              "PBLC_WRITE_8e6c705e-1132-42a2-8db0-c295e29e8658",
 			expectedStatusCode:   http.StatusForbidden,
@@ -540,7 +540,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 		},
 		{
 			name:                 "(12)Test opa policy validation for publication incorrect policy no publication filter",
-			conceptId:            provision1UUID,
+			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
 			accessFrom:           "API Gateway",
 			xPolicy:              "PBLC_WRITE_8e6c705e-1132-42a2-8db0-c295e29e8658",
@@ -552,7 +552,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 	for _, test := range opaPolicyValidationTest {
 		t.Run(test.name, func(t *testing.T) {
 			assertion := assert.New(t)
-			endpoint := fmt.Sprintf("%s%s%s", test.endpoint, "?isAnnotatedBy=", test.conceptId)
+			endpoint := fmt.Sprintf("%s%s%s", test.endpoint, "?isAnnotatedBy=", test.conceptID)
 
 			if test.publicationFilter != "" {
 				endpoint = endpoint + fmt.Sprintf("%s%s", "&publication=", test.publicationFilter)
@@ -578,9 +578,11 @@ func TestOpaPolicyValidation(t *testing.T) {
 			responseBody, err := io.ReadAll(response.Body)
 			assertion.NoError(err, "Error reading the response body: %v", err)
 
-			var contentList []Content
-			json.Unmarshal(responseBody, &contentList)
+			assertion.NoError(err, "Error unmarshalling the response: %v", err)
 			if test.expectedStatusCode == http.StatusOK {
+				var contentList []Content
+				err := json.Unmarshal(responseBody, &contentList)
+				assertion.NoError(err, "Error unmarshalling the response: %v", err)
 				assertListContainsAll(assertion, contentList, test.expected)
 			} else {
 				assertion.Equal(test.expectedErrorMessage, string(responseBody), "Didn't get expected error response")
@@ -588,7 +590,6 @@ func TestOpaPolicyValidation(t *testing.T) {
 			assertion.Equal(test.expectedStatusCode, response.StatusCode, "Didn't get expected status code")
 		})
 	}
-
 }
 
 func writeContent(assert *assert.Assertions, contentUUID string) {
@@ -614,7 +615,7 @@ func writeContent(assert *assert.Assertions, contentUUID string) {
 	assert.Equal(http.StatusOK, response.StatusCode)
 }
 
-func writeAnnotations(assert *assert.Assertions, driver *cmneo4j.Driver, contentUUID string, lifecycle string, fixtureFile string, publication []string) {
+func writeAnnotations(assert *assert.Assertions, driver *cmneo4j.Driver, contentUUID string, lifecycle string, fixtureFile string, publication []interface{}) {
 	annotationsRW, err := annrw.NewCypherAnnotationsService(driver, "http://api.ft.com")
 	assert.NoError(err)
 	assert.NoError(annotationsRW.Initialise())
@@ -622,7 +623,7 @@ func writeAnnotations(assert *assert.Assertions, driver *cmneo4j.Driver, content
 	assert.NoError(err)
 	anns, err := decode(f)
 	assert.NoError(err, "Error parsing file %s", fixtureFile)
-	_, err = annotationsRW.Write(contentUUID, lifecycle, "", nil, anns)
+	_, err = annotationsRW.Write(contentUUID, lifecycle, "", publication, anns)
 	assert.NoError(err)
 }
 
@@ -674,7 +675,6 @@ func assertListContainsAll(assert *assert.Assertions, list interface{}, items ..
 		assert.Contains(list, item)
 	}
 }
-
 func getExpectedContent(content string, publications []string) Content {
 
 	return Content{

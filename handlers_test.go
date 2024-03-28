@@ -23,9 +23,9 @@ const (
 )
 
 var (
-	isAuthorized           = policy.Result{true, false, []string{}}
-	isNotAuthorized        = policy.Result{false, false, []string{}}
-	addFilterByPublication = policy.Result{false, true, []string{"88fdde6c-2aa4-4f78-af02-9f680097cfd6", "8e6c705e-1132-42a2-8db0-c295e29e8658"}}
+	isAuthorized           = policy.Result{IsAuthorizedForPublication: true, AddFilterByPublication: false, Publications: []string{}}
+	isNotAuthorized        = policy.Result{IsAuthorizedForPublication: false, AddFilterByPublication: false, Publications: []string{}}
+	addFilterByPublication = policy.Result{IsAuthorizedForPublication: false, AddFilterByPublication: true, Publications: []string{"88fdde6c-2aa4-4f78-af02-9f680097cfd6", "8e6c705e-1132-42a2-8db0-c295e29e8658"}}
 )
 
 func TestContentByConceptHandler_GetContentByConcept(t *testing.T) {
