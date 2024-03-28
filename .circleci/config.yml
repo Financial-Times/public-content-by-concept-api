@@ -29,10 +29,16 @@ workflows:
           name: build-and-run-linters
           context:
             - cm-team-github
+      - test:
+          name: test-project
+          requires:
+            - build-and-run-linters
+          context:
+            - cm-team-github
       - ft-golang-ci/docker-build:
           name: build-docker-image
           requires:
-            - build-and-run-linters
+            - test-project
           context: 
             - dockerhub-shared
             - cm-team-github
