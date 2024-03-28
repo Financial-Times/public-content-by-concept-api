@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/Financial-Times/public-content-by-concept-api/v2/policy"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/public-content-by-concept-api/v2/content"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/policy"
 	"github.com/stretchr/testify/assert"
 )
 
