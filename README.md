@@ -51,7 +51,7 @@ Options:
 * `curl http://localhost:8080/content/http://api.ft.com/things/dbb0bdae-1f0c-11e4-b0cb-b2227cce2b54/implicitly `
 
 ## API definition
-Based on the following [google doc](https://docs.google.com/a/ft.com/document/d/1YjqNYEXkc0Ip-6bGttwnPcAh2XKG6tgzmojTdq8gM2s)
+Full API definition and description of supported endpoints can be found in the [Open API specification](./api/api.yml).
 
 ## Admin Enpoints
 Healthcheck: [http://localhost:8080/__health](http://localhost:8080/__health)

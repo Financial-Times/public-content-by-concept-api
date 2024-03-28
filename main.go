@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/Financial-Times/go-logger/v2"
+	opa "github.com/Financial-Times/opa-client-go"
+	"github.com/Financial-Times/public-content-by-concept-api/v2/policy"
 	cli "github.com/jawher/mow.cli"
 )
 
@@ -79,6 +81,13 @@ func main() {
 		EnvVar: "PUBLIC_API_URL",
 	})
 
+	openPolicyAgentURL := app.String(cli.StringOpt{
+		Name:   "openPolicyAgentURL",
+		Value:  "http://localhost:8181",
+		Desc:   "URL of the open policy angent",
+		EnvVar: "OPA_URL",
+	})
+
 	log := logger.NewUPPLogger(*appName, *logLevel)
 	dbLog := logger.NewUPPLogger(fmt.Sprintf("%s %s", *appName, "cmneo4j-driver"), *dbDriverLogLevel)
 
@@ -100,13 +109,19 @@ func main() {
 			NeoURL:         *neoURL,
 		}
 
-		stopSrv, err := StartServer(config, log, dbLog, *apiURL)
+		paths := map[string]string{
+			policy.PublicationPolicyKey: policy.OpaPolicyPath,
+		}
+		opaClient := opa.NewOpenPolicyAgentClient(*openPolicyAgentURL, paths, opa.WithLogger(log))
+
+		stopSrv, err := StartServer(config, log, dbLog, *apiURL, opaClient)
 		if err != nil {
 			log.WithError(err).Fatal("Could not start the server")
 		}
 		waitForSignal()
 		stopSrv()
 	}
+
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)

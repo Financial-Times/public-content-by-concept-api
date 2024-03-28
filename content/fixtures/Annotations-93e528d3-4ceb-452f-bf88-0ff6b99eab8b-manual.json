@@ -1,6 +1,17 @@
 [
     {
+        "predicate": "http://www.ft.com/ontology/annotation/hasReference",
         "id": "http://api.ft.com/things/a7a8748c-24f9-4034-809b-eb5fcabf96f4",
-        "predicate": "http://www.ft.com/ontology/annotation/hasReference"
+        "apiUrl": "http://api-t.ft.com/concepts/a7a8748c-24f9-4034-809b-eb5fcabf96f4",
+        "types": [
+            "http://www.ft.com/ontology/core/Thing",
+            "http://www.ft.com/ontology/concept/Concept",
+            "http://www.ft.com/ontology/Provision",
+            "http://www.ft.com/ontology/provision/SVProvision"
+        ],
+        "prefLabel": "Bulgarian Chamber of Mining and Geology Sustainability Code",
+        "publication": [
+            "8e6c705e-1132-42a2-8db0-c295e29e8658"
+        ]
     }
 ]
