@@ -62,7 +62,6 @@ services:
     environment:
       GITHUB_USERNAME: "${GITHUB_USERNAME}"
       GITHUB_TOKEN: "${GITHUB_TOKEN}"
-      BRANCH_NAME: "feature/UPPSF-4977-public-content-by-concept-api-policies"
       OPA_VERSION: 0.62.1
     container_name: opa-container
     ports:

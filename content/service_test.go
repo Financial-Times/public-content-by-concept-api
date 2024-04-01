@@ -439,14 +439,14 @@ func TestOpaPolicyValidation(t *testing.T) {
 		expectedErrorMessage string
 	}{
 		{
-			name:               "(1)Test opa policy validation authorized with basic authentication(no access from header) no publication id",
+			name:               "Test opa policy validation authorized with basic authentication(no access from header) no publication id",
 			conceptID:          MSJConceptUUID,
 			endpoint:           publicContentByConceptURL(),
 			expected:           getExpectedContent(contentUUID, nil),
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:               "(2)Test opa policy validation authorized with basic authentication(no access from header) with publication id filter",
+			name:               "Test opa policy validation authorized with basic authentication(no access from header) with publication id filter",
 			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
 			publicationFilter:  svPublicationID,
@@ -454,7 +454,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:                 "(3)Test opa policy validation forbidden due to nonmatching policy key",
+			name:                 "Test opa policy validation forbidden due to nonmatching policy key",
 			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
 			publicationFilter:    svPublicationID,
@@ -464,7 +464,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedErrorMessage: "Forbidden\n",
 		},
 		{
-			name:                 "(4)Test opa policy validation forbidden due missing policy key",
+			name:                 "Test opa policy validation forbidden due missing policy key",
 			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
 			publicationFilter:    svPublicationID,
@@ -473,7 +473,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedErrorMessage: "Forbidden\n",
 		},
 		{
-			name:               "(5)Test opa policy validation forbidden due missing access from header",
+			name:               "Test opa policy validation forbidden due missing access from header",
 			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
 			publicationFilter:  svPublicationID,
@@ -481,7 +481,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:               "(6)Test opa policy validation valid policy key",
+			name:               "Test opa policy validation valid policy key",
 			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
 			publicationFilter:  svPublicationID,
@@ -491,7 +491,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:               "(7)Test opa policy validation to apply filter on requested resource",
+			name:               "Test opa policy validation to apply filter on requested resource",
 			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
 			accessFrom:         "API Gateway",
@@ -500,7 +500,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:                 "(8)Test opa policy validation to apply filter on requested resource",
+			name:                 "Test opa policy validation to apply filter on requested resource",
 			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
 			accessFrom:           "API Gateway",
@@ -509,7 +509,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedErrorMessage: "{\"message\": \"No content found for concept with uuid a7a8748c-24f9-4034-809b-eb5fcabf96f4\"}",
 		},
 		{
-			name:               "(9)Test opa policy validation to apply filter on requested resource with two policies in key",
+			name:               "Test opa policy validation to apply filter on requested resource with two policies in key",
 			conceptID:          provision1UUID,
 			endpoint:           publicContentByConceptURL(),
 			accessFrom:         "API Gateway",
@@ -528,7 +528,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:                 "(11)Test opa policy validation for publication incorrect policy",
+			name:                 "Test opa policy validation for publication incorrect policy",
 			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
 			publicationFilter:    svPublicationID,
@@ -538,7 +538,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedErrorMessage: "Forbidden\n",
 		},
 		{
-			name:                 "(12)Test opa policy validation for publication incorrect policy no publication filter",
+			name:                 "Test opa policy validation for publication incorrect policy no publication filter",
 			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
 			accessFrom:           "API Gateway",
@@ -547,7 +547,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedErrorMessage: "Forbidden\n",
 		},
 		{
-			name:                 "(14)Test opa policy validation for publication no x policy policy no publication filter - should not forbid",
+			name:                 "Test opa policy validation for publication no x policy policy no publication filter - should not forbid",
 			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
 			accessFrom:           "API Gateway",
@@ -555,7 +555,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedErrorMessage: "{\"message\": \"No content found for concept with uuid a7a8748c-24f9-4034-809b-eb5fcabf96f4\"}",
 		},
 		{
-			name:                 "(15)Test opa policy validation for publication no x policy policy with publication filter - should  forbid",
+			name:                 "Test opa policy validation for publication no x policy policy with publication filter - should  forbid",
 			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
 			publicationFilter:    svPublicationID,
@@ -564,7 +564,7 @@ func TestOpaPolicyValidation(t *testing.T) {
 			expectedErrorMessage: "Forbidden\n",
 		},
 		{
-			name:                 "(16)Test opa policy validation for publication no x policy policy with publication filter for ft - should  not forbid",
+			name:                 "Test opa policy validation for publication no x policy policy with publication filter for ft - should  not forbid",
 			conceptID:            provision1UUID,
 			endpoint:             publicContentByConceptURL(),
 			publicationFilter:    ftPinkPublicationtionID,
