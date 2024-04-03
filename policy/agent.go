@@ -2,6 +2,7 @@ package policy
 
 import (
 	"fmt"
+	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
 	"net/http"
 	"strings"
 
@@ -20,6 +21,9 @@ type Result struct {
 }
 
 func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Request, log *logger.UPPLogger, r Result) {
+	transID := transactionidutils.GetTransactionIDFromRequest(req)
+	logEntry := log.WithTransactionID(transID)
+	logEntry.Debugf("Request url is %s", req.URL.RawQuery)
 	if r.IsAuthorizedForPublication {
 		n.ServeHTTP(w, req)
 	} else {
@@ -28,7 +32,7 @@ func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Re
 			req.URL.RawQuery = req.URL.RawQuery + fmt.Sprintf("&publication=%s", strings.Join(r.Publications, ","))
 			n.ServeHTTP(w, req)
 		} else {
-			log.Infof("Forbidding : %v, %v", req.URL.RawQuery, req.Header)
+			logEntry.Debugf("Forbiddenå")
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	}
