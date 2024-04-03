@@ -28,6 +28,7 @@ func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Re
 			req.URL.RawQuery = req.URL.RawQuery + fmt.Sprintf("&publication=%s", strings.Join(r.Publications, ","))
 			n.ServeHTTP(w, req)
 		} else {
+			log.Infof("Forbidding : %v, %v", req.URL.RawQuery, req.Header)
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	}
