@@ -32,7 +32,8 @@ func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Re
 			req.URL.RawQuery = req.URL.RawQuery + fmt.Sprintf("&publication=%s", strings.Join(r.Publications, ","))
 			n.ServeHTTP(w, req)
 		} else {
-			logEntry.Debugf("Forbiddenå")
+			fmt.Printf("Forbidden: %v \n", req.Header)
+			log.Errorf("Forbidden %v", req.Header)
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	}
