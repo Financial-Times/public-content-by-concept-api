@@ -22,18 +22,18 @@ type Result struct {
 
 func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Request, log *logger.UPPLogger, r Result) {
 	transID := transactionidutils.GetTransactionIDFromRequest(req)
-	log.WithTransactionID(transID)
+	logEntry := log.WithTransactionID(transID)
+
 	if r.IsAuthorizedForPublication {
 		n.ServeHTTP(w, req)
 	} else {
-		log.Infof("Request is not authorized%v", req.Header)
+		logEntry.Infof("Request is not authorized%v", req.Header)
 		if r.AddFilterByPublication {
-			log.Infof("Adding filter for publications: %s", r.Publications)
+			logEntry.Infof("Adding filter for publications: %s", r.Publications)
 			req.URL.RawQuery = req.URL.RawQuery + fmt.Sprintf("&publication=%s", strings.Join(r.Publications, ","))
 			n.ServeHTTP(w, req)
 		} else {
-			fmt.Printf("Forbidden: %v \n", req.Header)
-			log.Errorf("Forbidden %v", req.Header)
+			logEntry.Error("Request was forbidden by OPA Policy")
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	}
