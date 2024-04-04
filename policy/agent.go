@@ -2,11 +2,11 @@ package policy
 
 import (
 	"fmt"
-	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
 	"net/http"
 	"strings"
 
 	"github.com/Financial-Times/go-logger/v2"
+	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
 )
 
 const (
