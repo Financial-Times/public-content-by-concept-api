@@ -22,11 +22,11 @@ type Result struct {
 
 func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Request, log *logger.UPPLogger, r Result) {
 	transID := transactionidutils.GetTransactionIDFromRequest(req)
-	logEntry := log.WithTransactionID(transID)
-	logEntry.Debugf("Request url is %s", req.URL.RawQuery)
+	log.WithTransactionID(transID)
 	if r.IsAuthorizedForPublication {
 		n.ServeHTTP(w, req)
 	} else {
+		log.Infof("Request is not authorized%v", req.Header)
 		if r.AddFilterByPublication {
 			log.Infof("Adding filter for publications: %s", r.Publications)
 			req.URL.RawQuery = req.URL.RawQuery + fmt.Sprintf("&publication=%s", strings.Join(r.Publications, ","))
