@@ -24,11 +24,9 @@ type Result struct {
 func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Request, log *logger.UPPLogger, r Result) {
 	transID := transactionidutils.GetTransactionIDFromRequest(req)
 	logEntry := log.WithTransactionID(transID)
-
 	if r.IsAuthorizedForPublication {
 		n.ServeHTTP(w, req)
 	} else {
-
 		if r.AddFilterByPublication {
 			logEntry.Infof("Adding filter for publications: %s", r.Publications)
 			req.URL.RawQuery = req.URL.RawQuery + fmt.Sprintf("&publication=%s", strings.Join(r.Publications, ","))
