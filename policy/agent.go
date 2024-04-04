@@ -18,6 +18,7 @@ type Result struct {
 	IsAuthorizedForPublication bool     `json:"is_authorized_for_publication"`
 	AddFilterByPublication     bool     `json:"add_filter_by_publication"`
 	Publications               []string `json:"xpolicy_publications"`
+	Reasons                    []string `json:"reasons"`
 }
 
 func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Request, log *logger.UPPLogger, r Result) {
@@ -27,13 +28,13 @@ func IsAuthorizedPublication(n http.Handler, w http.ResponseWriter, req *http.Re
 	if r.IsAuthorizedForPublication {
 		n.ServeHTTP(w, req)
 	} else {
-		logEntry.Infof("Request is not authorized%v", req.Header)
+
 		if r.AddFilterByPublication {
 			logEntry.Infof("Adding filter for publications: %s", r.Publications)
 			req.URL.RawQuery = req.URL.RawQuery + fmt.Sprintf("&publication=%s", strings.Join(r.Publications, ","))
 			n.ServeHTTP(w, req)
 		} else {
-			logEntry.Error("Request was forbidden by OPA Policy")
+			logEntry.Infof("Request is forbidden due to missing or non-matching access policies: %s", r.Reasons)
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	}
