@@ -4,9 +4,11 @@
 package content
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -17,7 +19,6 @@ import (
 	"github.com/Financial-Times/base-ft-rw-app-go/v2/baseftrwapp"
 	cmneo4j "github.com/Financial-Times/cm-neo4j-driver"
 	"github.com/Financial-Times/concepts-rw-neo4j/concepts"
-	cnt "github.com/Financial-Times/content-rw-neo4j/v3/content"
 	"github.com/Financial-Times/go-logger/v2"
 )
 
@@ -48,6 +49,8 @@ const (
 	topic3UUID              = "2e7429bd-7a84-41cb-a619-2c702893e359"
 	brand1UUID              = "5c7592a8-1f0c-11e4-b0cb-b2227cce2b54"
 	provision1UUID          = "a7a8748c-24f9-4034-809b-eb5fcabf96f4"
+	svPublicationID         = "8e6c705e-1132-42a2-8db0-c295e29e8658"
+	ftPinkPublicationtionID = "88fdde6c-2aa4-4f78-af02-9f680097cfd6"
 
 	apigURL = "http://api.ft.com"
 )
@@ -74,11 +77,27 @@ func neoURL() string {
 	return url
 }
 
+func publicContentByConceptURL() string {
+	url := os.Getenv("PUBLIC_CONTENT_BY_CONCEPT_API")
+	if url == "" {
+		url = "localhost:8080"
+	}
+	return url
+}
+
+func contentRWNeo4jURL() string {
+	url := os.Getenv("CONTENT_RW_NEO4J")
+	if url == "" {
+		url = "localhost:8080"
+	}
+	return url
+}
+
 func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, driver, contentUUID)
-	writeAnnotations(assert, driver, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeContent(assert, contentUUID)
+	writeAnnotations(assert, driver, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json", nil)
 	writeConcept(assert, driver, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
@@ -88,14 +107,15 @@ func TestFindMatchingContentForV2Annotation(t *testing.T) {
 	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
-	assertListContainsAll(assert, contentList, getExpectedContent())
+	assertListContainsAll(assert, contentList, getExpectedContent(contentUUID, nil))
 }
 
 func TestFindMatchingContentForV1Annotation(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, driver, contentUUID)
-	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeContent(assert, contentUUID)
+
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json", nil)
 	writeConcept(assert, driver, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
@@ -105,15 +125,15 @@ func TestFindMatchingContentForV1Annotation(t *testing.T) {
 	contentList, err := contentByConceptDriver.GetContentForConcept(MetalMickeyConceptUUID, RequestParams{0, defaultLimit, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", MetalMickeyConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
-	assertListContainsAll(assert, contentList, getExpectedContent())
+	assertListContainsAll(assert, contentList, getExpectedContent(contentUUID, nil))
 }
 
 func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, driver, contentUUID)
-	writeContent(assert, driver, content2UUID)
-	writeAnnotations(assert, driver, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeContent(assert, contentUUID)
+	writeContent(assert, content2UUID)
+	writeAnnotations(assert, driver, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json", nil)
 	writeConcept(assert, driver, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, content2UUID)
@@ -123,14 +143,14 @@ func TestFindMatchingContentForV2AnnotationWithLimit(t *testing.T) {
 	contentList, err := contentByConceptDriver.GetContentForConcept(MSJConceptUUID, RequestParams{0, 1, 0, 0, nil})
 	assert.NoError(err, "Unexpected error for concept %s", MSJConceptUUID)
 	assert.Equal(1, len(contentList), "Didn't get the same list of content")
-	assertListContainsAll(assert, contentList, getExpectedContent())
+	assertListContainsAll(assert, contentList, getExpectedContent(contentUUID, nil))
 }
 
 func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, driver, contentUUID)
-	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
+	writeContent(assert, contentUUID)
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json", nil)
 	writeConcept(assert, driver, "./fixtures/Subject-MetalMickey-0483bef8-5797-40b8-9b25-b12e492f63c6.json")
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, MetalMickeyConceptUUID)
@@ -147,7 +167,7 @@ func TestRetrieveNoContentForV1AnnotationForExclusiveDatePeriod(t *testing.T) {
 func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, driver, contentUUID)
+	writeContent(assert, contentUUID)
 
 	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID)
 
@@ -161,9 +181,9 @@ func TestRetrieveNoContentWhenThereAreNoContentForThatConcept(t *testing.T) {
 func TestRetrieveNoContentWhenThereAreNoConceptsPresent(t *testing.T) {
 	assert := assert.New(t)
 
-	writeContent(assert, driver, contentUUID)
-	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json")
-	writeAnnotations(assert, driver, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json")
+	writeContent(assert, contentUUID)
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v1.json", nil)
+	writeAnnotations(assert, driver, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json", nil)
 
 	defer cleanDB(t, content2UUID, MSJConceptUUID, contentUUID, MetalMickeyConceptUUID, FakebookConceptUUID)
 
@@ -178,13 +198,13 @@ func TestBrandsDontReturnParentContent(t *testing.T) {
 	assert := assert.New(t)
 	defer cleanDB(t, content2UUID, content3UUID, content4UUID, OnyxPikeBrandUUID, OnyxPikeParentBrandUUID, OnyPikeyRightBrandUUID)
 
-	writeContent(assert, driver, content2UUID)
-	writeContent(assert, driver, content3UUID)
-	writeContent(assert, driver, content4UUID)
+	writeContent(assert, content2UUID)
+	writeContent(assert, content3UUID)
+	writeContent(assert, content4UUID)
 
-	writeAnnotations(assert, driver, content2UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content2UUID))
-	writeAnnotations(assert, driver, content3UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content3UUID))
-	writeAnnotations(assert, driver, content4UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content4UUID))
+	writeAnnotations(assert, driver, content2UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content2UUID), nil)
+	writeAnnotations(assert, driver, content3UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content3UUID), nil)
+	writeAnnotations(assert, driver, content4UUID, "v2", fmt.Sprintf("./fixtures/Annotations-%v-V2.json", content4UUID), nil)
 
 	writeConcept(assert, driver, fmt.Sprintf("./fixtures/Brand-OnyxPike-%v.json", OnyxPikeBrandUUID))
 	writeConcept(assert, driver, fmt.Sprintf("./fixtures/Brand-OnyxPikeParent-%v.json", OnyxPikeParentBrandUUID))
@@ -201,15 +221,15 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordance(t *testing.T) {
 
 	defer cleanDB(t, contentUUID, content2UUID, content3UUID, content4UUID, JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID)
 
-	writeContent(assert, driver, contentUUID)
-	writeContent(assert, driver, content2UUID)
-	writeContent(assert, driver, content3UUID)
-	writeContent(assert, driver, content4UUID)
+	writeContent(assert, contentUUID)
+	writeContent(assert, content2UUID)
+	writeContent(assert, content3UUID)
+	writeContent(assert, content4UUID)
 
-	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
-	writeAnnotations(assert, driver, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
-	writeAnnotations(assert, driver, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
-	writeAnnotations(assert, driver, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json", nil)
+	writeAnnotations(assert, driver, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json", nil)
+	writeAnnotations(assert, driver, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json", nil)
+	writeAnnotations(assert, driver, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json", nil)
 
 	writeConcept(assert, driver, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
@@ -230,15 +250,15 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithDateRestrictions(t *t
 
 	defer cleanDB(t, contentUUID, content2UUID, content3UUID, content4UUID, JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID)
 
-	writeContent(assert, driver, contentUUID)
-	writeContent(assert, driver, content2UUID)
-	writeContent(assert, driver, content3UUID)
-	writeContent(assert, driver, content4UUID)
+	writeContent(assert, contentUUID)
+	writeContent(assert, content2UUID)
+	writeContent(assert, content3UUID)
+	writeContent(assert, content4UUID)
 
-	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
-	writeAnnotations(assert, driver, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
-	writeAnnotations(assert, driver, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
-	writeAnnotations(assert, driver, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json", nil)
+	writeAnnotations(assert, driver, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json", nil)
+	writeAnnotations(assert, driver, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json", nil)
+	writeAnnotations(assert, driver, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json", nil)
 
 	writeConcept(assert, driver, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
@@ -260,15 +280,15 @@ func TestContentIsReturnedFromAllLeafNodesOfConcordanceWithPagination(t *testing
 
 	defer cleanDB(t, contentUUID, content2UUID, content3UUID, content4UUID, JohnSmithFSUUID, JohnSmithSmartlogicUUID, JohnSmithTMEUUID, JohnSmithOtherTMEUUID)
 
-	writeContent(assert, driver, contentUUID)
-	writeContent(assert, driver, content2UUID)
-	writeContent(assert, driver, content3UUID)
-	writeContent(assert, driver, content4UUID)
+	writeContent(assert, contentUUID)
+	writeContent(assert, content2UUID)
+	writeContent(assert, content3UUID)
+	writeContent(assert, content4UUID)
 
-	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json")
-	writeAnnotations(assert, driver, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json")
-	writeAnnotations(assert, driver, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json")
-	writeAnnotations(assert, driver, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json")
+	writeAnnotations(assert, driver, contentUUID, "v1", "./fixtures/Annotations-JohnSmith1-v1.json", nil)
+	writeAnnotations(assert, driver, content2UUID, "v1", "./fixtures/Annotations-JohnSmith2-v1.json", nil)
+	writeAnnotations(assert, driver, content3UUID, "v2", "./fixtures/Annotations-JohnSmith3-v2.json", nil)
+	writeAnnotations(assert, driver, content4UUID, "v2", "./fixtures/Annotations-JohnSmith4-v2.json", nil)
 
 	writeConcept(assert, driver, "./fixtures/Person-JohnSmith-f25b0f71-4cf9-4e3a-8510-14e86d922bfe.json")
 
@@ -308,11 +328,11 @@ func TestContentIsReturnedImplicitlyForHasBroaderOrHasParentOrIsPartOfRelationsh
 
 	defer cleanDB(t, content5UUID, content6UUID, topic1UUID, topic2UUID)
 
-	writeContent(assert, driver, content5UUID)
-	writeContent(assert, driver, content6UUID)
+	writeContent(assert, content5UUID)
+	writeContent(assert, content6UUID)
 
-	writeAnnotations(assert, driver, content5UUID, "v2", "./fixtures/Annotations-8a08dfe3-88c4-47dd-bee6-846ede810448-V2.json")
-	writeAnnotations(assert, driver, content6UUID, "v2", "./fixtures/Annotations-27c47a08-6bad-486d-8e06-ce24d583ae2a-V2.json")
+	writeAnnotations(assert, driver, content5UUID, "v2", "./fixtures/Annotations-8a08dfe3-88c4-47dd-bee6-846ede810448-V2.json", nil)
+	writeAnnotations(assert, driver, content6UUID, "v2", "./fixtures/Annotations-27c47a08-6bad-486d-8e06-ce24d583ae2a-V2.json", nil)
 
 	writeConcept(assert, driver, "./fixtures/Topic-18e24d65-c8e6-4e23-ab19-206e0d463205.json")
 	writeConcept(assert, driver, "./fixtures/Topic-64ba2208-0c0d-43e2-a883-beecb55c0d33.json")
@@ -338,11 +358,11 @@ func TestContentIsReturnedImplicitlyForImpliedByRelationship(t *testing.T) {
 
 	defer cleanDB(t, content7UUID, content8UUID, brand1UUID, topic3UUID)
 
-	writeContent(assert, driver, content7UUID)
-	writeContent(assert, driver, content8UUID)
+	writeContent(assert, content7UUID)
+	writeContent(assert, content8UUID)
 
-	writeAnnotations(assert, driver, content7UUID, "v2", "./fixtures/Annotations-df7e4deb-e048-43d7-9441-f7d152075a91-V2.json")
-	writeAnnotations(assert, driver, content8UUID, "v2", "./fixtures/Annotations-4e6a0098-94a9-45c1-835c-7572e1fcc567-V2.json")
+	writeAnnotations(assert, driver, content7UUID, "v2", "./fixtures/Annotations-df7e4deb-e048-43d7-9441-f7d152075a91-V2.json", nil)
+	writeAnnotations(assert, driver, content8UUID, "v2", "./fixtures/Annotations-4e6a0098-94a9-45c1-835c-7572e1fcc567-V2.json", nil)
 
 	writeConcept(assert, driver, "./fixtures/Brand-5c7592a8-1f0c-11e4-b0cb-b2227cce2b54.json")
 	writeConcept(assert, driver, "./fixtures/Topic-2e7429bd-7a84-41cb-a619-2c702893e359.json")
@@ -362,26 +382,6 @@ func TestContentIsReturnedImplicitlyForImpliedByRelationship(t *testing.T) {
 	assert.NoError(err, "Unexpected error for concept %s", brand1UUID)
 	assert.Equal(2, len(contentList3), "Didn't get the right number of content items, content=%s", contentList3)
 }
-func TestSVRelationship(t *testing.T) {
-	assert := assert.New(t)
-
-	defer cleanDB(t, content10UUID, provision1UUID)
-
-	writeContent(assert, driver, content10UUID)
-
-	writeAnnotations(assert, driver, content10UUID, "manual", "./fixtures/Annotations-93e528d3-4ceb-452f-bf88-0ff6b99eab8b-manual.json")
-
-	writeConcept(assert, driver, "./fixtures/Sv-provision-a7a8748c-24f9-4034-809b-eb5fcabf96f4.json")
-
-	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
-	assert.NoError(err)
-
-	contentList, err := contentByConceptDriver.GetContentForConcept(provision1UUID, RequestParams{0, defaultLimit, 0, 0, nil})
-	assert.NoError(err, "Unexpected error for concept %s", provision1UUID)
-	assert.Equal(1, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
-	assert.Equal("http://www.ft.com/things/"+content10UUID, contentList[0].ID, "Didn't get the right content , content=%s", contentList)
-
-}
 
 func TestConceptService_Check(t *testing.T) {
 	assert := assert.New(t)
@@ -391,13 +391,255 @@ func TestConceptService_Check(t *testing.T) {
 	assert.NoError(err, "Test should always pass when connected to db")
 }
 
-func writeContent(assert *assert.Assertions, driver *cmneo4j.Driver, contentUUID string) {
-	contentRW := cnt.NewContentService(driver)
-	assert.NoError(contentRW.Initialise())
-	writeJSONToService(contentRW, "./fixtures/Content-"+contentUUID+".json", assert)
+func TestSVRelationship(t *testing.T) {
+	assert := assert.New(t)
+
+	defer cleanDB(t, content10UUID, provision1UUID)
+
+	publication := []string{svPublicationID}
+	writeContent(assert, content10UUID)
+	writeAnnotations(assert, driver, content10UUID, "manual", "./fixtures/Annotations-93e528d3-4ceb-452f-bf88-0ff6b99eab8b-manual.json", []interface{}{svPublicationID})
+	writeConcept(assert, driver, "./fixtures/Sv-provision-a7a8748c-24f9-4034-809b-eb5fcabf96f4.json")
+
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
+
+	contentList, err := contentByConceptDriver.GetContentForConcept(provision1UUID, RequestParams{0, defaultLimit, 0, 0, publication})
+	assert.NoError(err, "Unexpected error for concept %s", provision1UUID)
+	assert.Equal(1, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
+	assertListContainsAll(assert, contentList, getExpectedContent(content10UUID, publication))
 }
 
-func writeAnnotations(assert *assert.Assertions, driver *cmneo4j.Driver, contentUUID string, lifecycle string, fixtureFile string) {
+// These tests are aiming the service from the outside to validate opa policy authorization based on access-from and x-policy headers
+func TestOpaPolicyValidation(t *testing.T) {
+	assertion := assert.New(t)
+
+	defer cleanDB(t, MSJConceptUUID, contentUUID, FakebookConceptUUID, content2UUID, content10UUID, provision1UUID)
+
+	publication := []string{svPublicationID}
+
+	writeContent(assertion, content10UUID)
+	writeAnnotations(assertion, driver, content10UUID, "manual", "./fixtures/Annotations-93e528d3-4ceb-452f-bf88-0ff6b99eab8b-manual.json", []interface{}{svPublicationID})
+	writeConcept(assertion, driver, "./fixtures/Sv-provision-a7a8748c-24f9-4034-809b-eb5fcabf96f4.json")
+
+	writeContent(assertion, contentUUID)
+	writeContent(assertion, content2UUID)
+	writeAnnotations(assertion, driver, contentUUID, "v2", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb31-v2.json", nil)
+	writeConcept(assertion, driver, "./fixtures/Organisation-MSJ-5d1510f8-2779-4b74-adab-0a5eb138fca6.json")
+
+	opaPolicyValidationTest := []struct {
+		name                 string
+		conceptID            string
+		endpoint             string
+		publicationFilter    string
+		accessFrom           string
+		xPolicy              string
+		expected             Content
+		expectedStatusCode   int
+		expectedErrorMessage string
+	}{
+		{
+			name:               "Test opa policy validation authorized with basic authentication(no access from header) no publication id",
+			conceptID:          MSJConceptUUID,
+			endpoint:           publicContentByConceptURL(),
+			expected:           getExpectedContent(contentUUID, nil),
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:               "Test opa policy validation authorized with basic authentication(no access from header) with publication id filter",
+			conceptID:          provision1UUID,
+			endpoint:           publicContentByConceptURL(),
+			publicationFilter:  svPublicationID,
+			expected:           getExpectedContent(content10UUID, publication),
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:                 "Test opa policy validation forbidden due to nonmatching policy key",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			publicationFilter:    svPublicationID,
+			accessFrom:           "API Gateway",
+			xPolicy:              "PBLC_READ_7e3c705e-1132-42a2-8db0-c295e29e8658",
+			expectedStatusCode:   http.StatusForbidden,
+			expectedErrorMessage: "Forbidden\n",
+		},
+		{
+			name:                 "Test opa policy validation forbidden due missing policy key",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			publicationFilter:    svPublicationID,
+			accessFrom:           "API Gateway",
+			expectedStatusCode:   http.StatusForbidden,
+			expectedErrorMessage: "Forbidden\n",
+		},
+		{
+			name:               "Test opa policy validation forbidden due missing access from header",
+			conceptID:          provision1UUID,
+			endpoint:           publicContentByConceptURL(),
+			publicationFilter:  svPublicationID,
+			expected:           getExpectedContent(content10UUID, publication),
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:               "Test opa policy validation valid policy key",
+			conceptID:          provision1UUID,
+			endpoint:           publicContentByConceptURL(),
+			publicationFilter:  svPublicationID,
+			accessFrom:         "API Gateway",
+			xPolicy:            "PBLC_READ_8e6c705e-1132-42a2-8db0-c295e29e8658",
+			expected:           getExpectedContent(content10UUID, publication),
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:               "Test opa policy validation to apply filter on requested resource",
+			conceptID:          provision1UUID,
+			endpoint:           publicContentByConceptURL(),
+			accessFrom:         "API Gateway",
+			xPolicy:            "PBLC_READ_8e6c705e-1132-42a2-8db0-c295e29e8658",
+			expected:           getExpectedContent(content10UUID, publication),
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:                 "Test opa policy validation to apply filter on requested resource",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			accessFrom:           "API Gateway",
+			xPolicy:              "PBLC_READ_7e3c705e-1132-42a2-8db0-c295e29e8658",
+			expectedStatusCode:   http.StatusNotFound,
+			expectedErrorMessage: "{\"message\": \"No content found for concept with uuid a7a8748c-24f9-4034-809b-eb5fcabf96f4\"}",
+		},
+		{
+			name:               "Test opa policy validation to apply filter on requested resource with two policies in key",
+			conceptID:          provision1UUID,
+			endpoint:           publicContentByConceptURL(),
+			accessFrom:         "API Gateway",
+			xPolicy:            "PBLC_READ_8e6c705e-1132-42a2-8db0-c295e29e8658, PBLC_READ_7e3c705e-1132-42a2-8db0-c295e29e8658",
+			expected:           getExpectedContent(content10UUID, publication),
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:               "(10)Test opa policy validation for publication id with two policies in key",
+			conceptID:          provision1UUID,
+			endpoint:           publicContentByConceptURL(),
+			publicationFilter:  svPublicationID,
+			accessFrom:         "API Gateway",
+			xPolicy:            "PBLC_READ_8e6c705e-1132-42a2-8db0-c295e29e8658, PBLC_READ_7e3c705e-1132-42a2-8db0-c295e29e8658",
+			expected:           getExpectedContent(content10UUID, publication),
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:                 "Test opa policy validation for publication incorrect policy",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			publicationFilter:    svPublicationID,
+			accessFrom:           "API Gateway",
+			xPolicy:              "PBLC_WRITE_8e6c705e-1132-42a2-8db0-c295e29e8658",
+			expectedStatusCode:   http.StatusForbidden,
+			expectedErrorMessage: "Forbidden\n",
+		},
+		{
+			name:                 "Test opa policy validation for publication incorrect policy no publication filter",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			accessFrom:           "API Gateway",
+			xPolicy:              "PBLC_WRITE_8e6c705e-1132-42a2-8db0-c295e29e8658",
+			expectedStatusCode:   http.StatusForbidden,
+			expectedErrorMessage: "Forbidden\n",
+		},
+		{
+			name:                 "Test opa policy validation for publication no x policy policy no publication filter - should not forbid",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			accessFrom:           "API Gateway",
+			expectedStatusCode:   http.StatusNotFound,
+			expectedErrorMessage: "{\"message\": \"No content found for concept with uuid a7a8748c-24f9-4034-809b-eb5fcabf96f4\"}",
+		},
+		{
+			name:                 "Test opa policy validation for publication no x policy policy with publication filter - should  forbid",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			publicationFilter:    svPublicationID,
+			accessFrom:           "API Gateway",
+			expectedStatusCode:   http.StatusForbidden,
+			expectedErrorMessage: "Forbidden\n",
+		},
+		{
+			name:                 "Test opa policy validation for publication no x policy policy with publication filter for ft - should  not forbid",
+			conceptID:            provision1UUID,
+			endpoint:             publicContentByConceptURL(),
+			publicationFilter:    ftPinkPublicationtionID,
+			accessFrom:           "API Gateway",
+			expectedStatusCode:   http.StatusNotFound,
+			expectedErrorMessage: "{\"message\": \"No content found for concept with uuid a7a8748c-24f9-4034-809b-eb5fcabf96f4\"}",
+		},
+	}
+
+	for _, test := range opaPolicyValidationTest {
+		t.Run(test.name, func(t *testing.T) {
+			assertion := assert.New(t)
+			endpoint := fmt.Sprintf("%s%s%s", test.endpoint, "?isAnnotatedBy=", test.conceptID)
+
+			if test.publicationFilter != "" {
+				endpoint = endpoint + fmt.Sprintf("%s%s", "&publication=", test.publicationFilter)
+			}
+			request, err := http.NewRequest(http.MethodGet, endpoint, nil)
+			assertion.NoError(err, "Error during the request prep: %v", err)
+
+			request.Header.Set("Content-Type", "application/json")
+			if test.accessFrom != "" {
+				request.Header.Set("Access-From", test.accessFrom)
+			}
+			if test.xPolicy != "" {
+				request.Header.Set("X-Policy", test.xPolicy)
+			}
+
+			client := http.DefaultClient
+
+			response, err := client.Do(request)
+			assertion.NoError(err, "Error while processing the request: %v", err)
+
+			defer response.Body.Close()
+
+			responseBody, err := io.ReadAll(response.Body)
+			assertion.NoError(err, "Error reading the response body: %v", err)
+
+			assertion.NoError(err, "Error unmarshalling the response: %v", err)
+			if test.expectedStatusCode == http.StatusOK {
+				var contentList []Content
+				err := json.Unmarshal(responseBody, &contentList)
+				assertion.NoError(err, "Error unmarshalling the response: %v", err)
+				assertListContainsAll(assertion, contentList, test.expected)
+			} else {
+				assertion.Equal(test.expectedErrorMessage, string(responseBody), "Didn't get expected error response")
+			}
+			assertion.Equal(test.expectedStatusCode, response.StatusCode, "Didn't get expected status code")
+		})
+	}
+}
+
+func writeContent(assert *assert.Assertions, contentUUID string) {
+	endpoint := fmt.Sprintf("%s%s%s", contentRWNeo4jURL(), "/", contentUUID)
+
+	jsonData, err := os.ReadFile("./fixtures/Content-" + contentUUID + ".json")
+	assert.NoError(err, "Error during reading payload from file")
+
+	request, err := http.NewRequest(http.MethodPut, endpoint, bytes.NewBuffer(jsonData))
+	assert.NoError(err, "Error during request prep")
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Access-From", "Basic Authentication")
+
+	client := http.DefaultClient
+
+	response, err := client.Do(request)
+	assert.NoError(err, "Error during processing the request")
+
+	defer response.Body.Close()
+
+	assert.Equal(http.StatusOK, response.StatusCode)
+}
+
+func writeAnnotations(assert *assert.Assertions, driver *cmneo4j.Driver, contentUUID string, lifecycle string, fixtureFile string, publication []interface{}) {
 	annotationsRW, err := annrw.NewCypherAnnotationsService(driver, "http://api.ft.com")
 	assert.NoError(err)
 	assert.NoError(annotationsRW.Initialise())
@@ -405,7 +647,7 @@ func writeAnnotations(assert *assert.Assertions, driver *cmneo4j.Driver, content
 	assert.NoError(err)
 	anns, err := decode(f)
 	assert.NoError(err, "Error parsing file %s", fixtureFile)
-	_, err = annotationsRW.Write(contentUUID, lifecycle, "", nil, anns)
+	_, err = annotationsRW.Write(contentUUID, lifecycle, "", publication, anns)
 	assert.NoError(err)
 }
 
@@ -457,11 +699,11 @@ func assertListContainsAll(assert *assert.Assertions, list interface{}, items ..
 		assert.Contains(list, item)
 	}
 }
-
-func getExpectedContent() Content {
+func getExpectedContent(content string, publications []string) Content {
 	return Content{
-		ID:     "http://www.ft.com/things/" + contentUUID,
-		APIURL: "http://api.ft.com/content/" + contentUUID,
+		ID:          "http://www.ft.com/things/" + content,
+		APIURL:      "http://api.ft.com/content/" + content,
+		Publication: publications,
 	}
 }
 
