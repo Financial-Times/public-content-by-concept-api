@@ -1,6 +1,6 @@
 module github.com/Financial-Times/public-content-by-concept-api/v2
 
-go 1.21
+go 1.22
 
 require (
 	github.com/Financial-Times/annotations-rw-neo4j/v4 v4.9.1
@@ -43,7 +43,7 @@ require (
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
-	google.golang.org/protobuf v1.26.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
