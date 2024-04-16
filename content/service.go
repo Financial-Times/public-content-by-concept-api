@@ -73,7 +73,7 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 		params.Publication = []string{ftPinkPublication}
 	}
 
-	if slices.Contains(params.Publication, ftPinkPublication) || len(params.Publication) == 0 {
+	if slices.Contains(params.Publication, ftPinkPublication) {
 		// include the old records that do not have publication field when publication filter is supplied
 		publicationFilter = " AND (c.publication IS NULL OR any(publication IN c.publication WHERE publication IN $publication))"
 	} else {
