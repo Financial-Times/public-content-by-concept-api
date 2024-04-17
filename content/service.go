@@ -3,6 +3,7 @@ package content
 import (
 	"errors"
 	"net/url"
+	"slices"
 	"strings"
 
 	cmneo4j "github.com/Financial-Times/cm-neo4j-driver"
@@ -70,6 +71,10 @@ func (cd *ConceptService) GetContentForConcept(conceptUUID string, params Reques
 	if len(params.Publication) == 0 {
 		// default to FT Pink if no publication param is supplied
 		params.Publication = []string{ftPinkPublication}
+	}
+
+	if slices.Contains(params.Publication, ftPinkPublication) {
+		// include the old records that do not have publication field when publication filter is supplied
 		publicationFilter = " AND (c.publication IS NULL OR any(publication IN c.publication WHERE publication IN $publication))"
 	} else {
 		publicationFilter = " AND any(publication IN c.publication WHERE publication IN $publication)"
