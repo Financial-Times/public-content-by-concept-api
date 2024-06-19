@@ -1,0 +1,13 @@
+{
+  "uuid": "22e528d3-4ceb-452f-bf88-0ff6b99eab22",
+  "title": "FTA content to be annotated with isSponsoredBy",
+  "identifiers": [
+    {
+      "authority": "19d50190-8656-4e91-8d34-82e646ada9c9",
+      "identifierValue": "22e528d3-4ceb-452f-bf88-0ff6b99eab22"
+    }
+  ],
+  "publication": ["19d50190-8656-4e91-8d34-82e646ada9c9"],
+  "publishedDate": "2023-03-07T19:18:01.000Z",
+  "body": "<body>Yet another testing document</body>"
+}
