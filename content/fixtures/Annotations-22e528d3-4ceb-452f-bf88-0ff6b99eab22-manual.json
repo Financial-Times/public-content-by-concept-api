@@ -1,0 +1,17 @@
+[
+    {
+        "predicate": "http://www.ft.com/ontology/annotation/isSponsoredBy",
+        "id": "http://api.ft.com/things/11a8748c-24f9-4034-809b-eb5fcabf9611",
+        "apiUrl": "http://api-t.ft.com/concepts/11a8748c-24f9-4034-809b-eb5fcabf9611",
+        "types": [
+            "http://www.ft.com/ontology/core/Thing",
+            "http://www.ft.com/ontology/concept/Concept",
+            "http://www.ft.com/ontology/classification/Classification",
+            "http://www.ft.com/ontology/FTAGenre"
+        ],
+        "prefLabel": "FTA Genre Test Label",
+        "publication": [
+            "19d50190-8656-4e91-8d34-82e646ada9c9"
+        ]
+    }
+]
