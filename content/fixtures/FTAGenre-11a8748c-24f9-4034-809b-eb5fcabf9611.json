@@ -5,13 +5,12 @@
     "sourceRepresentations": [
         {
             "authority": "19d50190-8656-4e91-8d34-82e646ada9c9",
-            "authorityValue": "72d7e1ff-afa5-427c-a5f1-205e08c83c97",
+            "authorityValue": "11a8748c-24f9-4034-809b-eb5fcabf9611",
             "lastModifiedEpoch": 1706788394,
             "prefLabel": "FTA Genre Test Label",
             "type": "FTAGenre",
             "uuid": "11a8748c-24f9-4034-809b-eb5fcabf9611"
         }
     ],
-    "type": "FTAGenre",
-    "publication": ["19d50190-8656-4e91-8d34-82e646ada9c9"]
+    "type": "FTAGenre"
 }
