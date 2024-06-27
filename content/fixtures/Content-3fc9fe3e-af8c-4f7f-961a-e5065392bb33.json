@@ -1,0 +1,13 @@
+{
+  "uuid": "3fc9fe3e-af8c-4f7f-961a-e5065392bb33",
+  "title": "FTPC content to be annotated with hasSource",
+  "identifiers": [
+    {
+      "authority": "724b5e36-6d45-4cf1-b1c2-3f676b21f21b",
+      "identifierValue": "3fc9fe3e-af8c-4f7f-961a-e5065392bb33"
+    }
+  ],
+  "publication": ["724b5e36-6d45-4cf1-b1c2-3f676b21f21b"],
+  "publishedDate": "2023-03-07T19:18:01.000Z",
+  "body": "<body>Yet another testing document</body>"
+}

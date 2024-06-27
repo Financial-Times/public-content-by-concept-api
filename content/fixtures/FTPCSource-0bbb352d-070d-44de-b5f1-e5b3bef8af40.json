@@ -1,0 +1,16 @@
+{
+    "prefLabel": "FTPC Source Test Label",
+    "prefUUID": "0bbb352d-070d-44de-b5f1-e5b3bef8af40",
+    "publicationDate": "01/01/1999",
+    "sourceRepresentations": [
+        {
+            "authority": "724b5e36-6d45-4cf1-b1c2-3f676b21f21b",
+            "authorityValue": "0bbb352d-070d-44de-b5f1-e5b3bef8af40",
+            "lastModifiedEpoch": 1706788394,
+            "prefLabel": "FTPC Source Test Label",
+            "type": "FTPCSource",
+            "uuid": "0bbb352d-070d-44de-b5f1-e5b3bef8af40"
+        }
+    ],
+    "type": "FTAGenre"
+}
