@@ -35,6 +35,7 @@ const (
 	content9UUID            = "3fc9fe3e-af8c-4f7f-961a-e5065392bb32"
 	content10UUID           = "93e528d3-4ceb-452f-bf88-0ff6b99eab8b"
 	content11UUID           = "22e528d3-4ceb-452f-bf88-0ff6b99eab22"
+	content12UUID           = "3fc9fe3e-af8c-4f7f-961a-e5065392bb33"
 	MSJConceptUUID          = "5d1510f8-2779-4b74-adab-0a5eb138fca6"
 	FakebookConceptUUID     = "eac853f5-3859-4c08-8540-55e043719400"
 	MetalMickeyConceptUUID  = "0483bef8-5797-40b8-9b25-b12e492f63c6"
@@ -54,6 +55,8 @@ const (
 	ftPinkPublicationtionID = "88fdde6c-2aa4-4f78-af02-9f680097cfd6"
 	FTAGenreUUID            = "11a8748c-24f9-4034-809b-eb5fcabf9611"
 	FTAPublicationUUUID     = "19d50190-8656-4e91-8d34-82e646ada9c9"
+	FTPCSourceUUID          = "0bbb352d-070d-44de-b5f1-e5b3bef8af40"
+	FTPCPublicationUUUID    = "724b5e36-6d45-4cf1-b1c2-3f676b21f21b"
 	apigURL                 = "http://api.ft.com"
 )
 
@@ -429,6 +432,25 @@ func TestFTARelationship(t *testing.T) {
 	assert.NoError(err, "Unexpected error for concept %s", FTAGenreUUID)
 	assert.Equal(1, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
 	assertListContainsAll(assert, contentList, getExpectedContent(content11UUID, publication))
+}
+
+func TestFTPCRelationship(t *testing.T) {
+	assert := assert.New(t)
+
+	defer cleanDB(t, content12UUID, FTPCSourceUUID)
+
+	publication := []string{FTPCPublicationUUUID}
+	writeContent(assert, content12UUID)
+	writeAnnotations(assert, driver, content12UUID, "manual", "./fixtures/Annotations-3fc9fe3e-af8c-4f7f-961a-e5065392bb33-manual.json", []interface{}{FTPCPublicationUUUID})
+	writeConcept(assert, driver, "./fixtures/FTPCSource-0bbb352d-070d-44de-b5f1-e5b3bef8af40.json")
+
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
+
+	contentList, err := contentByConceptDriver.GetContentForConcept(FTPCSourceUUID, RequestParams{0, defaultLimit, 0, 0, publication})
+	assert.NoError(err, "Unexpected error for concept %s", FTPCSourceUUID)
+	assert.Equal(1, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
+	assertListContainsAll(assert, contentList, getExpectedContent(content12UUID, publication))
 }
 
 // These tests are aiming the service from the outside to validate opa policy authorization based on access-from and x-policy headers
