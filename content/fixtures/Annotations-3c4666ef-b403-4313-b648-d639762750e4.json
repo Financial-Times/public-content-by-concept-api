@@ -1,0 +1,12 @@
+[
+  {
+    "id": "http://api.ft.com/things/3c4666ef-b403-4313-b648-d639762750e4",
+    "prefLabel": "Amy Winehouse",
+    "types": [
+      "Thing",
+      "Concept",
+      "Person"
+    ],
+    "predicate": "mentions"
+  }
+]
