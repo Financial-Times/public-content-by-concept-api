@@ -10,6 +10,8 @@ github.com/Financial-Times/cm-annotations-ontology v1.0.7 h1:rKFItLoD7jWvW39wSrb
 github.com/Financial-Times/cm-annotations-ontology v1.0.7/go.mod h1:/9uneekJE5KFWipqreEWMh2JEnxAivnHomEslrsNY9g=
 github.com/Financial-Times/cm-graph-ontology/v2 v2.0.12 h1:ws5SkuTkDp8QYddh3ba26cg9vlAIsic+HfSK3Cr37mI=
 github.com/Financial-Times/cm-graph-ontology/v2 v2.0.12/go.mod h1:HNytPLbek0HwF5KX8m5cGNZ/HTdtXwTisR3HmCk7O/o=
+github.com/Financial-Times/cm-graph-ontology/v2 v2.0.14 h1:W4OIzmHPSP++hoFuydrrx1/DYXL1N9uQwHFHg8vglfM=
+github.com/Financial-Times/cm-graph-ontology/v2 v2.0.14/go.mod h1:HNytPLbek0HwF5KX8m5cGNZ/HTdtXwTisR3HmCk7O/o=
 github.com/Financial-Times/cm-neo4j-driver v1.1.1 h1:kmgRa3boe58+tzNTbWTBx3IQnIZt5Hh57Yc2kHy85FM=
 github.com/Financial-Times/cm-neo4j-driver v1.1.1/go.mod h1:fQ77C8A+6I+ihwe6Ob8Y7sIzU3s/DTrjBZJGVQOeum0=
 github.com/Financial-Times/concepts-rw-neo4j v1.37.1 h1:9nYSbd3NvXwB/eSSzvNvK63A7zXgY6n2OpJRtQKzTfI=

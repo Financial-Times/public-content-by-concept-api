@@ -1,0 +1,17 @@
+{
+  "aliases": [
+    "Amy Winehouse"
+  ],
+  "prefLabel": "Amy Winehouse",
+  "prefUUID": "3c4666ef-b403-4313-b648-d639762750e4",
+  "sourceRepresentations": [
+    {
+      "authority": "Generic",
+      "authorityValue": "3c4666ef-b403-4313-b648-d639762750e4",
+      "prefLabel": "Amy Winehouse",
+      "type": "Person",
+      "uuid": "3c4666ef-b403-4313-b648-d639762750e4"
+    }
+  ],
+  "type": "Person"
+}

@@ -22,7 +22,7 @@ require (
 
 require (
 	github.com/Financial-Times/cm-annotations-ontology v1.0.7 // indirect
-	github.com/Financial-Times/cm-graph-ontology/v2 v2.0.12 // indirect
+	github.com/Financial-Times/cm-graph-ontology/v2 v2.0.14 // indirect
 	github.com/Financial-Times/http-handlers-go v0.0.0-20170809121007-229ac16f1d9e // indirect
 	github.com/Financial-Times/up-rw-app-api-go v0.0.0-20170710125828-d9d93a1f6895 // indirect
 	github.com/cyberdelia/go-metrics-graphite v0.0.0-20161219230853-39f87cc3b432 // indirect

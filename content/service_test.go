@@ -46,6 +46,7 @@ const (
 	JohnSmithSmartlogicUUID = "d46c09ce-7861-11e8-b45a-da24cd01f044"
 	JohnSmithTMEUUID        = "3af8b4e4-7862-11e8-b45a-da24cd01f044"
 	JohnSmithOtherTMEUUID   = "521a2338-2cc7-47dd-8da2-e757b4ceb7ef"
+	PersonUUID              = "3c4666ef-b403-4313-b648-d639762750e4"
 	topic1UUID              = "18e24d65-c8e6-4e23-ab19-206e0d463205"
 	topic2UUID              = "64ba2208-0c0d-43e2-a883-beecb55c0d33"
 	topic3UUID              = "2e7429bd-7a84-41cb-a619-2c702893e359"
@@ -449,6 +450,25 @@ func TestFTPCRelationship(t *testing.T) {
 
 	contentList, err := contentByConceptDriver.GetContentForConcept(FTPCSourceUUID, RequestParams{0, defaultLimit, 0, 0, publication})
 	assert.NoError(err, "Unexpected error for concept %s", FTPCSourceUUID)
+	assert.Equal(1, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
+	assertListContainsAll(assert, contentList, getExpectedContent(content12UUID, publication))
+}
+
+func TestGenericPerson(t *testing.T) {
+	assert := assert.New(t)
+
+	defer cleanDB(t, content12UUID, PersonUUID)
+
+	publication := []string{FTPCPublicationUUUID}
+	writeContent(assert, content12UUID)
+	writeAnnotations(assert, driver, content12UUID, "manual", "./fixtures/Annotations-3c4666ef-b403-4313-b648-d639762750e4.json", []interface{}{FTPCPublicationUUUID})
+	writeConcept(assert, driver, "./fixtures/Person-3c4666ef-b403-4313-b648-d639762750e4.json")
+
+	contentByConceptDriver, err := NewContentByConceptService(driver, apigURL)
+	assert.NoError(err)
+
+	contentList, err := contentByConceptDriver.GetContentForConcept(PersonUUID, RequestParams{0, defaultLimit, 0, 0, publication})
+	assert.NoError(err, "Unexpected error for concept %s", PersonUUID)
 	assert.Equal(1, len(contentList), "Didn't get the right number of content items, content=%s", contentList)
 	assertListContainsAll(assert, contentList, getExpectedContent(content12UUID, publication))
 }
